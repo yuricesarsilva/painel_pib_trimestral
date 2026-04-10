@@ -1,4 +1,4 @@
-﻿# Painel PIB Trimestral — Roraima
+# Painel PIB Trimestral — Roraima
 
 Indicador de Atividade Econômica Trimestral do Estado de Roraima, desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Roraima (SEPLAN/RR)** como proxy do PIB estadual trimestral.
 
@@ -49,7 +49,7 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 
 ## Estrutura do repositório
 
-```text
+```
 ├── R/
 │   ├── utils.R              # funções auxiliares: Denton, encadeamento, deflação
 │   ├── 01_agropecuaria.R    # Fase 1: lavouras (LSPA) e pecuária
@@ -63,7 +63,7 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 │   └── nota_tecnica.qmd     # nota técnica metodológica (Quarto → PDF)
 ├── Base metodológica/
 │   └── *.pdf                # referências metodológicas (IBCR, IBC-Br e experiências estaduais)
-├── plano_projeto.md         # plano metodológico detalhado
+├── plano_projeto.md                   # plano metodológico detalhado
 └── README.md
 ```
 
@@ -112,11 +112,12 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 
 ## Instituição
 
-**Secretaria de Estado do Planejamento e Desenvolvimento de Roraima — SEPLAN/RR**  
+**Secretaria de Planejamento e Orçamento de Roraima — SEPLAN/RR**  
 Coordenação-Geral de Estudos e Econômicos e Sociais - CGEES
-
 ## Autoria do projeto
 
-**Yuri Cesar de Lima e Silva**  
-Chefe da Divisão de Estudos e Análises Sociais - DIEAS  
+**Yuri Cesar de Lima e Silva**
+Chefe da Divisão de Estudos e Análises Sociais - DIEAS
 Coordenador da Equipe do PIB do Estado de Roraima - SEPLAN/RR
+
+
