@@ -31,8 +31,15 @@
 - [x] Criar pasta `R/` com script de produção `00_dados_referencia.R`
 - [x] Criar pasta `R/exploratorio/` com scripts históricos de exploração de dados
 - [x] Adicionar regras de localização e versionamento de scripts ao `regras.md`
+- [x] Criar `R/utils.R` com funções compartilhadas (validar_serie, denton, laspeyres, deflacionar)
+- [x] Criar `R/run_all.R` com orquestrador do pipeline completo
+- [x] Criar `logs/fontes_utilizadas.csv` para rastreabilidade dos dados por release
+- [x] Criar `.env.exemplo` com template de credenciais
+- [x] Adicionar `.env` e padrões `renv` ao `.gitignore`
+- [x] Adicionar regras de ambiente, credenciais, QA, vintagem, pipeline e release ao `regras.md`
 - [ ] Criar projeto R (`.Rproj`) na pasta raiz
-- [ ] Instalar pacotes R necessários
+- [ ] Inicializar `renv` (`renv::init()`) e commitar `renv.lock`
+- [ ] Instalar e registrar pacotes R necessários via `renv::snapshot()`
   - [ ] `sidrar`
   - [ ] `tempdisagg`
   - [ ] `seasonal`
@@ -41,6 +48,8 @@
   - [ ] `httr2` / `jsonlite`
   - [ ] `shiny` / `flexdashboard`
   - [ ] `quarto`
+  - [ ] `renv`
+  - [ ] `dotenv` (leitura do .env)
 
 ### 0.3 Dados de referência (anuais — IBGE Contas Regionais)
 - [x] Baixar publicação Contas Regionais 2023 do FTP do IBGE (Tabela5.xls — Roraima)

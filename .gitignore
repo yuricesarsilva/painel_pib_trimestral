@@ -10,6 +10,13 @@ data/raw/
 data/processed/
 data/output/
 
+# Credenciais — NUNCA versionar
+.env
+
+# renv — apenas o lock e activate.R são versionados; a library é local
+renv/library/
+renv/staging/
+
 # Outputs gerados
 notas/*.pdf
 notas/*.html

@@ -337,6 +337,45 @@ ser automáticos e idempotentes. Caminhos absolutos hardcoded são proibidos nos
 
 ---
 
+### Abril de 2026 — Governança do pipeline, reprodutibilidade e QA
+
+**O que foi feito:**
+
+Antes de iniciar a implementação dos scripts setoriais, estruturamos a governança completa do
+projeto: as regras que garantem que o indicador seja reproduzível, auditável e seguro.
+
+**O que foi criado e por quê:**
+
+- **`regras.md` ampliado**: ganhou seis novas seções obrigatórias —
+  - *Gestão do ambiente R*: define o uso de `renv` para congelar versões de pacotes
+  - *Credenciais e APIs*: define que tokens nunca entram em scripts (ficam no `.env`)
+  - *QA e validação*: define que todo script deve validar sua série antes de salvar
+  - *Vintagem dos dados*: define o registro de qual dado foi usado em cada release
+  - *Execução do pipeline*: define a sequência obrigatória e o uso do `run_all.R`
+  - *Release trimestral*: protocolo completo de publicação com tags git
+
+- **`R/utils.R`**: funções compartilhadas que todos os scripts setoriais vão usar —
+  deflação pelo IPCA, Denton-Cholette, índice de Laspeyres, validação de séries,
+  agregação mensal→trimestral e leitura segura de credenciais
+
+- **`R/run_all.R`**: script mestre que roda o pipeline de ponta a ponta na sequência correta,
+  com timestamps e parada imediata em caso de erro. Nunca rodar scripts setoriais avulsos.
+
+- **`logs/fontes_utilizadas.csv`**: tabela versionada que registra, a cada release, quais
+  dados foram usados, de qual período, baixados em que data. Garante auditabilidade.
+
+- **`.env.exemplo`**: template de variáveis de ambiente. O arquivo real (`.env`, com tokens)
+  fica local e nunca é commitado.
+
+- **`.gitignore`**: atualizado para excluir `.env` e a library do `renv`.
+
+**O que ainda precisa ser feito antes de rodar o primeiro script setorial:**
+- Criar o `.Rproj` na raiz do projeto
+- Inicializar o `renv` com `renv::init()` e commitar o `renv.lock`
+- Instalar os pacotes necessários e rodar `renv::snapshot()`
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -363,4 +402,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026 — regra de versionamento de scripts; criação da pasta R/ com script de produção*
+*Última atualização: 10 de abril de 2026 — governança completa do pipeline (renv, QA, credenciais, vintagem, release)*
