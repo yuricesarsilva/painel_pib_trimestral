@@ -56,21 +56,21 @@
 - [x] Extrair VAB por atividade para Roraima 2023 (13 atividades)
   - [x] Salvar em `data/processed/vab_roraima_2023.csv`
 - [x] Atualizar pesos no README, plano_projeto.md e checklist com dados reais de 2023
-- [ ] Baixar série histórica completa (2010–2023) de VAB por atividade para RR
-  - [ ] Agropecuária
-  - [ ] Indústrias extrativas
-  - [ ] Indústrias de transformação
-  - [ ] SIUP
-  - [ ] Construção
-  - [ ] Comércio e reparação de veículos
-  - [ ] Transporte, armazenagem e correio
-  - [ ] Informação e comunicação
-  - [ ] Atividades financeiras e seguros
-  - [ ] Atividades imobiliárias
-  - [ ] AAPP
-  - [ ] Outros serviços
-- [ ] Organizar tabela de pesos setoriais por ano (2010–2023)
-- [ ] Salvar em `data/processed/contas_regionais_RR_serie.csv`
+- [x] Baixar série histórica completa (2010–2023) de VAB por atividade para RR
+  - [x] Agropecuária
+  - [x] Indústrias extrativas
+  - [x] Indústrias de transformação
+  - [x] SIUP
+  - [x] Construção
+  - [x] Comércio e reparação de veículos
+  - [x] Transporte, armazenagem e correio
+  - [x] Informação e comunicação
+  - [x] Atividades financeiras e seguros
+  - [x] Atividades imobiliárias
+  - [x] AAPP
+  - [x] Outros serviços
+- [x] Organizar tabela de pesos setoriais por ano (2010–2023)
+- [x] Salvar em `data/processed/contas_regionais_RR_serie.csv`
 
 ---
 

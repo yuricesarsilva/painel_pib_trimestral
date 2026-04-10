@@ -5,10 +5,11 @@
 # Data    : 2026-04-10
 # Descrição: Download das Contas Regionais IBGE 2023 (FTP) e
 #            extração do VAB por atividade econômica para
-#            Roraima. Gera a tabela de pesos setoriais usada
-#            em todos os demais scripts do projeto.
+#            Roraima — série histórica 2010–2023. Gera a tabela
+#            de pesos setoriais usada em todos os demais scripts.
 # Entrada : FTP IBGE — Contas Regionais 2023, Tabela 5 (XLS)
 # Saída   : data/processed/vab_roraima_2023.csv
+#            data/processed/contas_regionais_RR_serie.csv
 # Depende : readxl
 # Nota    : Executar com o diretório de trabalho definido como
 #           a raiz do projeto (ou abrir via .Rproj).
@@ -22,9 +23,10 @@ dir_raw       <- file.path("data", "raw")
 dir_processed <- file.path("data", "processed")
 dir_extraido  <- file.path(dir_raw, "contas_regionais_2023")
 
-caminho_zip   <- file.path(dir_raw, "contas_regionais_2023.zip")
-caminho_xls   <- file.path(dir_extraido, "Tabela5.xls")
-caminho_saida <- file.path(dir_processed, "vab_roraima_2023.csv")
+caminho_zip        <- file.path(dir_raw, "contas_regionais_2023.zip")
+caminho_xls        <- file.path(dir_extraido, "Tabela5.xls")
+caminho_saida_2023 <- file.path(dir_processed, "vab_roraima_2023.csv")
+caminho_saida_hist <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 
 # URL do FTP do IBGE — Contas Regionais do Brasil 2023
 # Verificar endereço atual em: https://ftp.ibge.gov.br/Contas_Regionais/2023/
@@ -70,66 +72,82 @@ abas <- c(
   "Tabela5.13" = "Outros serviços"
 )
 
-# --- Função de extração do VAB de Roraima -------------------
+# --- Função de extração do VAB de Roraima — série histórica -
 # Estrutura da Tabela 5: cada aba contém séries anuais por UF.
 # A seção de VAB a preços correntes começa após a linha 43.
 # O ano aparece na coluna 1; o valor de Roraima está na coluna 6.
 
-extrair_vab_roraima <- function(arquivo, nome_aba) {
+extrair_vab_serie <- function(arquivo, nome_aba, anos = 2010:2023) {
   df  <- suppressWarnings(read_excel(arquivo, sheet = nome_aba, col_names = FALSE))
   mat <- as.matrix(df)
   mat[is.na(mat)] <- ""
 
-  # Linhas com o rótulo "2023" na coluna 1, restritas à seção VAB (após linha 43)
-  linhas_2023 <- which(mat[, 1] == "2023")
-  linha_vab   <- linhas_2023[linhas_2023 > 43][1]
+  linhas_por_ano <- lapply(anos, function(ano) {
+    linhas_ano <- which(mat[, 1] == as.character(ano))
+    # Preferir a ocorrência após linha 43 (seção VAB a preços correntes)
+    linha_vab  <- linhas_ano[linhas_ano > 43][1]
+    # Fallback: última ocorrência disponível
+    if (is.na(linha_vab)) linha_vab <- linhas_ano[length(linhas_ano)]
+    val <- suppressWarnings(as.numeric(mat[linha_vab, 6]))
+    data.frame(ano = ano, vab_mi = val, stringsAsFactors = FALSE)
+  })
 
-  # Fallback: última ocorrência de "2023" se não houver nenhuma após linha 43
-  if (is.na(linha_vab)) linha_vab <- linhas_2023[length(linhas_2023)]
-
-  suppressWarnings(as.numeric(mat[linha_vab, 6]))
+  do.call(rbind, linhas_por_ano)
 }
 
-# --- Extração por atividade ---------------------------------
+# --- Extração da série histórica (2010–2023) por atividade --
 
-message("\nExtraindo VAB por atividade — Roraima 2023...")
+anos_serie <- 2010:2023
 
-resultados <- data.frame(
-  atividade   = character(),
-  vab_2023_mi = numeric(),
-  stringsAsFactors = FALSE
-)
+message("\nExtraindo série histórica de VAB por atividade — Roraima 2010–2023...")
 
-for (nome_aba in names(abas)) {
-  val <- extrair_vab_roraima(caminho_xls, nome_aba)
-  resultados <- rbind(resultados, data.frame(
-    atividade   = abas[[nome_aba]],
-    vab_2023_mi = val,
-    stringsAsFactors = FALSE
-  ))
-}
+lista_atividades <- lapply(names(abas), function(nome_aba) {
+  serie <- extrair_vab_serie(caminho_xls, nome_aba, anos = anos_serie)
+  serie$atividade <- abas[[nome_aba]]
+  serie
+})
 
-# --- Participação no VAB total ------------------------------
+serie_completa <- do.call(rbind, lista_atividades)
 
-total_vab <- resultados$vab_2023_mi[resultados$atividade == "Total das Atividades"]
-resultados$participacao_pct <- round(resultados$vab_2023_mi / total_vab * 100, 2)
+# Calcular participação no VAB total por ano
+totais_anuais <- serie_completa[serie_completa$atividade == "Total das Atividades",
+                                c("ano", "vab_mi")]
+names(totais_anuais)[2] <- "total_mi"
 
-# --- Exibe resultado no console -----------------------------
+serie_completa <- merge(serie_completa, totais_anuais, by = "ano", all.x = TRUE)
+serie_completa$participacao_pct <- round(serie_completa$vab_mi / serie_completa$total_mi * 100, 2)
+serie_completa$total_mi <- NULL
 
-cat("\n=== VAB POR ATIVIDADE — RORAIMA 2023 (R$ milhões correntes) ===\n\n")
-cat(sprintf("%-65s %12s %8s\n", "Atividade", "VAB (R$ mi)", "% VAB"))
-cat(strrep("-", 88), "\n")
-for (i in seq_len(nrow(resultados))) {
+# Ordenar: por atividade, depois por ano
+serie_completa <- serie_completa[order(serie_completa$atividade, serie_completa$ano), ]
+
+# --- Exibe resumo no console --------------------------------
+
+cat("\n=== VAB POR ATIVIDADE — RORAIMA (R$ milhões correntes) ===\n\n")
+cat(sprintf("%-65s %6s %12s %8s\n", "Atividade", "Ano", "VAB (R$ mi)", "% VAB"))
+cat(strrep("-", 96), "\n")
+for (i in seq_len(nrow(serie_completa))) {
   cat(sprintf(
-    "%-65s %12.1f %7.2f%%\n",
-    resultados$atividade[i],
-    resultados$vab_2023_mi[i],
-    resultados$participacao_pct[i]
+    "%-65s %6d %12.1f %7.2f%%\n",
+    serie_completa$atividade[i],
+    serie_completa$ano[i],
+    serie_completa$vab_mi[i],
+    serie_completa$participacao_pct[i]
   ))
 }
 
-# --- Salva CSV ----------------------------------------------
+# --- Slice de 2023 para compatibilidade com scripts existentes
+
+resultados_2023 <- serie_completa[serie_completa$ano == 2023, c("atividade", "vab_mi", "participacao_pct")]
+names(resultados_2023)[2] <- "vab_2023_mi"
+rownames(resultados_2023) <- NULL
+
+# --- Salva CSVs ---------------------------------------------
 
 dir.create(dir_processed, recursive = TRUE, showWarnings = FALSE)
-write.csv(resultados, caminho_saida, row.names = FALSE)
-message(sprintf("\nArquivo salvo em: %s", caminho_saida))
+
+write.csv(serie_completa, caminho_saida_hist, row.names = FALSE)
+message(sprintf("Série histórica salva em: %s", caminho_saida_hist))
+
+write.csv(resultados_2023, caminho_saida_2023, row.names = FALSE)
+message(sprintf("Pesos 2023 salvos em:     %s", caminho_saida_2023))

@@ -1,2 +1,2 @@
 "fonte","descricao","periodo_coberto","data_download","versao_release","url_ou_fonte","observacao"
-"IBGE Contas Regionais","VAB por atividade econômica — Roraima (Tabela 5)","2002–2023","2026-04-10","planejamento","https://ftp.ibge.gov.br/Contas_Regionais/2023/","Publicação IBGE out/2025. Usado para pesos setoriais (vab_roraima_2023.csv). Série histórica completa (2010–2023) ainda não extraída."
+"IBGE Contas Regionais","VAB por atividade econômica — Roraima (Tabela 5)","2010–2023","2026-04-10","planejamento","https://ftp.ibge.gov.br/Contas_Regionais/2023/","Publicação IBGE out/2025. Série histórica completa (2010–2023) extraída para 13 atividades. Salvo em contas_regionais_RR_serie.csv e vab_roraima_2023.csv."

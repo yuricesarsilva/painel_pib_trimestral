@@ -398,6 +398,34 @@ Configuramos o ambiente R de forma completamente automatizada, sem intervenção
 
 ---
 
+### Abril de 2026 — Série histórica das Contas Regionais (2010–2023)
+
+**O que foi feito:**
+
+Concluímos a Fase 0.3 com a extração da série histórica completa de VAB por atividade econômica
+para Roraima, cobrindo os anos de 2010 a 2023.
+
+**O que foi gerado:**
+
+O script `R/00_dados_referencia.R` foi estendido para iterar sobre todos os 14 anos (2010–2023)
+e todas as 13 atividades das Contas Regionais, calculando a participação percentual no VAB total
+por ano. Foram gerados dois arquivos:
+
+- `data/processed/contas_regionais_RR_serie.csv` — série histórica completa (182 linhas:
+  13 atividades × 14 anos), com colunas `ano`, `atividade`, `vab_mi`, `participacao_pct`
+- `data/processed/vab_roraima_2023.csv` — recorte de 2023 para compatibilidade com demais scripts
+
+**Um dado que chama atenção:**
+
+O VAB do SIUP (eletricidade, gás, água e esgoto) de Roraima mostra variações extremas ao longo
+da série — com valores muito baixos em 2016 e picos em 2018 e 2020. Isso reflete de fato a
+instabilidade histórica do setor energético do estado (RR tem produção local limitada e passou
+por crises de abastecimento). O dado é do IBGE e está sendo usado como vem.
+
+**Com isso, toda a Fase 0 está concluída.**
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -424,4 +452,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026 — Fase 0 concluída; ambiente R configurado (R 4.4.0, 121 pacotes, renv.lock)*
+*Última atualização: 10 de abril de 2026 — Fase 0 concluída; série histórica Contas Regionais 2010–2023 extraída*
