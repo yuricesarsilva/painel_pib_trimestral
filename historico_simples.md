@@ -155,6 +155,52 @@ documentação.
 
 ---
 
+### Abril de 2026 — Registro de sugestões para aprimorar as proxies
+
+**O que foi feito:**
+
+Foi criado o arquivo **`sugestoes1.md`** com uma avaliação crítica das proxies escolhidas para cada
+setor do indicador.
+
+O documento não altera a metodologia oficial do projeto neste momento. Ele funciona como um caderno
+de recomendações para as próximas decisões técnicas, indicando onde as proxies atuais estão mais
+fortes, onde estão mais frágeis e quais complementos poderiam melhorar a qualidade do índice.
+
+**Principais pontos registrados:**
+
+- manutenção da espinha dorsal metodológica do projeto;
+- cuidado maior com proxies baseadas apenas em ICMS, emprego formal e diesel;
+- recomendação de proxies compostas em vez de proxies únicas em alguns setores;
+- sugestões de reforço para comércio, construção, transportes, outros serviços e setor financeiro.
+
+**Arquivo criado:**
+- `sugestoes1.md` — observações e recomendações metodológicas para evolução futura do indicador
+
+---
+
+### Abril de 2026 — Registro de sugestões para aprimorar as proxies
+
+**O que foi feito:**
+
+Foi criado o arquivo **`sugestoes1.md`** com uma avaliação crítica das proxies escolhidas para cada
+setor do indicador.
+
+O documento não altera a metodologia oficial do projeto neste momento. Ele funciona como um caderno
+de recomendações para as próximas decisões técnicas, indicando onde as proxies atuais estão mais
+fortes, onde estão mais frágeis e quais complementos poderiam melhorar a qualidade do índice.
+
+**Principais pontos registrados:**
+
+- manutenção da espinha dorsal metodológica do projeto;
+- cuidado maior com proxies baseadas apenas em ICMS, emprego formal e diesel;
+- recomendação de proxies compostas em vez de proxies únicas em alguns setores;
+- sugestões de reforço para comércio, construção, transportes, outros serviços e setor financeiro.
+
+**Arquivo criado:**
+- `sugestoes1.md` — observações e recomendações metodológicas para evolução futura do indicador
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**

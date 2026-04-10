@@ -16,6 +16,7 @@
 - [x] Definir deflator para séries nominais (IPCA nacional)
 - [x] Mapear proxies por setor e respectivas fontes
 - [x] Documentar decisões metodológicas no plano
+- [x] Registrar sugestões de aprimoramento das proxies em `sugestoes1.md`
 
 ### 0.2 Infraestrutura do projeto
 - [x] Criar estrutura de pastas (`data/`, `R/`, `dashboard/`, `notas/`)
