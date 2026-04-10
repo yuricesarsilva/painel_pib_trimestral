@@ -376,6 +376,28 @@ projeto: as regras que garantem que o indicador seja reproduzível, auditável e
 
 ---
 
+### Abril de 2026 — Ambiente R configurado e Fase 0 concluída
+
+**O que foi feito:**
+
+Configuramos o ambiente R de forma completamente automatizada, sem intervenção manual:
+
+- **`.Rproj` criado**: o arquivo `painel_pib_trimestral.Rproj` foi adicionado à raiz do projeto.
+  Ao abrir este arquivo no RStudio, o diretório de trabalho é definido automaticamente como a
+  raiz do projeto — pré-requisito para que todos os caminhos relativos dos scripts funcionem.
+
+- **`renv` inicializado**: o ambiente R do projeto foi congelado na versão 4.4.0, com
+  **121 pacotes** registrados no `renv.lock` com versões exatas. Isso garante que qualquer
+  pessoa que clone o repositório e rode `renv::restore()` obterá exatamente o mesmo ambiente.
+
+- **Pacotes instalados**: todos os pacotes necessários foram instalados e registrados —
+  `sidrar`, `tempdisagg`, `seasonal`, `tidyverse`, `writexl`, `openxlsx`, `httr2`,
+  `jsonlite`, `shiny`, `flexdashboard`, `quarto`, `dotenv`, `readxl`, entre outros.
+
+**A Fase 0 está concluída.** O projeto está pronto para começar a implementação.
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -402,4 +424,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026 — governança completa do pipeline (renv, QA, credenciais, vintagem, release)*
+*Última atualização: 10 de abril de 2026 — Fase 0 concluída; ambiente R configurado (R 4.4.0, 121 pacotes, renv.lock)*

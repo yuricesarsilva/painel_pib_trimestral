@@ -37,19 +37,19 @@
 - [x] Criar `.env.exemplo` com template de credenciais
 - [x] Adicionar `.env` e padrões `renv` ao `.gitignore`
 - [x] Adicionar regras de ambiente, credenciais, QA, vintagem, pipeline e release ao `regras.md`
-- [ ] Criar projeto R (`.Rproj`) na pasta raiz
-- [ ] Inicializar `renv` (`renv::init()`) e commitar `renv.lock`
-- [ ] Instalar e registrar pacotes R necessários via `renv::snapshot()`
-  - [ ] `sidrar`
-  - [ ] `tempdisagg`
-  - [ ] `seasonal`
-  - [ ] `tidyverse` (dplyr, tidyr, ggplot2, lubridate, readr)
-  - [ ] `writexl` / `openxlsx`
-  - [ ] `httr2` / `jsonlite`
-  - [ ] `shiny` / `flexdashboard`
-  - [ ] `quarto`
-  - [ ] `renv`
-  - [ ] `dotenv` (leitura do .env)
+- [x] Criar projeto R (`painel_pib_trimestral.Rproj`) na pasta raiz
+- [x] Inicializar `renv` (`renv::init()`) e commitar `renv.lock`
+- [x] Instalar e registrar pacotes R necessários via `renv::snapshot()` (121 pacotes, R 4.4.0)
+  - [x] `sidrar`
+  - [x] `tempdisagg`
+  - [x] `seasonal`
+  - [x] `tidyverse` (dplyr, tidyr, ggplot2, lubridate, readr)
+  - [x] `writexl` / `openxlsx`
+  - [x] `httr2` / `jsonlite`
+  - [x] `shiny` / `flexdashboard`
+  - [x] `quarto`
+  - [x] `renv`
+  - [x] `dotenv` (leitura do .env)
 
 ### 0.3 Dados de referência (anuais — IBGE Contas Regionais)
 - [x] Baixar publicação Contas Regionais 2023 do FTP do IBGE (Tabela5.xls — Roraima)
@@ -358,7 +358,7 @@
 
 | Fase | Descrição | Status |
 |---|---|---|
-| 0 | Planejamento e infraestrutura | 🟡 Em andamento |
+| 0 | Planejamento e infraestrutura | 🟢 Concluída |
 | 1 | Agropecuária | ⚪ Não iniciada |
 | 2 | Administração Pública | ⚪ Não iniciada |
 | 3 | Indústria | ⚪ Não iniciada |

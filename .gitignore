@@ -3,7 +3,7 @@
 .Rhistory
 .RData
 .Ruserdata
-*.Rproj
+# Nota: painel_pib_trimestral.Rproj é versionado intencionalmente
 
 # Dados brutos e sensíveis
 data/raw/
