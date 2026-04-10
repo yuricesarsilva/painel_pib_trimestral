@@ -298,6 +298,45 @@ sensibilidade (versão A vs. versão B do índice) na fase de validação.
 
 ---
 
+### Abril de 2026 — Regra de versionamento de scripts e reorganização de código
+
+**O que foi feito:**
+
+Estabelecemos uma regra explícita no projeto: **todos os scripts R devem ficar na pasta `R/`
+e ser commitados no repositório**. A pasta `data/` é exclusivamente para dados — nunca para código.
+
+**Por que era necessário:**
+
+Os scripts de download e processamento das Contas Regionais tinham sido criados dentro de
+`data/raw/`, que está no `.gitignore`. Isso significava que o código estava invisível no
+repositório público — qualquer pessoa que clonasse o projeto saberia que o CSV
+`vab_roraima_2023.csv` existe, mas não teria como reproduzir a coleta dos dados. Isso contradiz
+o princípio de reprodutibilidade do projeto.
+
+**O que foi reorganizado:**
+
+- Criada a pasta `R/` (que estava prevista no plano mas ainda não existia)
+- Criado `R/00_dados_referencia.R`: o script de produção das Contas Regionais, reescrito com:
+  - Download automático do FTP do IBGE (não precisa baixar manualmente)
+  - Caminhos relativos à raiz do projeto (sem paths hardcoded)
+  - Idempotente: pode ser rodado mais de uma vez sem erros
+  - Cabeçalho padronizado completo
+- Criada a pasta `R/exploratorio/` com os 4 scripts de exploração usados durante o desenvolvimento
+  inicial (`debug_xls.R`, `ler_xls.R`, `ler_xls2.R`, `ler_vab.R`), todos com cabeçalho e
+  caminhos relativos
+
+**Regra adicionada ao `regras.md`:**
+
+A partir de agora, é proibido ter scripts em `data/`. Todo código vai em `R/`. Downloads devem
+ser automáticos e idempotentes. Caminhos absolutos hardcoded são proibidos nos scripts.
+
+**Arquivos criados/modificados:**
+- `regras.md` — nova seção de regras de localização e versionamento
+- `R/00_dados_referencia.R` — script de produção das Contas Regionais
+- `R/exploratorio/debug_xls.R`, `ler_xls.R`, `ler_xls2.R`, `ler_vab.R` — scripts históricos
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -324,4 +363,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026 — revisão crítica das proxies e incorporação de melhorias metodológicas*
+*Última atualização: 10 de abril de 2026 — regra de versionamento de scripts; criação da pasta R/ com script de produção*

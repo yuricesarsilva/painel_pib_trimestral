@@ -79,3 +79,47 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
 - Nomes de arquivos e variáveis em R: usar `snake_case` em português (ex: `serie_lavouras`, `peso_vbp`)
 - Comentários nos scripts R: em português
 - Cada script deve começar com um cabeçalho padronizado (autor, data, descrição, dependências)
+
+---
+
+## Regras sobre localização e versionamento de scripts
+
+### A pasta `data/` é para dados — nunca para código
+
+- **Todos os scripts R ficam em `R/`** — sem exceção
+- Scripts exploratórios e de depuração ficam em **`R/exploratorio/`** (também versionados)
+- Nenhum arquivo `.R` deve estar em `data/raw/`, `data/processed/` ou `data/output/`
+
+### Todos os downloads devem ser automatizados e versionados
+
+- **Nenhum arquivo de dado pode ser baixado manualmente** sem que exista um script em `R/`
+  correspondente que faça o mesmo download de forma automática
+- Se um dado foi obtido manualmente em algum momento, o script de download automático deve ser
+  criado e commitado antes de continuar o projeto
+- O script de download deve ser **idempotente**: ao ser rodado mais de uma vez, não deve gerar
+  erros nem duplicar dados (verificar se o arquivo já existe antes de baixar)
+
+### Caminhos nos scripts
+
+- Usar sempre **caminhos relativos à raiz do projeto** — nunca caminhos absolutos hardcoded
+  (ex: usar `file.path("data", "raw", "arquivo.csv")`, nunca
+  `"C:/Users/fulano/OneDrive/..."`)
+- O script deve ser executado com o diretório de trabalho definido como a raiz do projeto
+  (`setwd()` ou via RStudio com o `.Rproj` aberto)
+
+### Cabeçalho padronizado obrigatório
+
+Todo script em `R/` deve começar com o seguinte cabeçalho:
+
+```r
+# ============================================================
+# Projeto : Indicador de Atividade Econômica Trimestral — RR
+# Script  : nome_do_script.R
+# Autor   : Yuri Cesar de Lima e Silva (DIEAS/SEPLAN-RR)
+# Data    : AAAA-MM-DD
+# Descrição: O que este script faz, em uma ou duas linhas.
+# Entrada : arquivos ou APIs consumidos
+# Saída   : arquivos gerados em data/processed/ ou data/output/
+# Depende : pacotes R necessários
+# ============================================================
+```

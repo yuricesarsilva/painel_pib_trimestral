@@ -28,6 +28,9 @@
 - [x] Criar checklist do projeto (`checklist.md`)
 - [x] Criar `regras.md` com protocolo obrigatório de fim de sessão
 - [x] Versionar a pasta `Base metodológica/` com os PDFs de referência
+- [x] Criar pasta `R/` com script de produção `00_dados_referencia.R`
+- [x] Criar pasta `R/exploratorio/` com scripts históricos de exploração de dados
+- [x] Adicionar regras de localização e versionamento de scripts ao `regras.md`
 - [ ] Criar projeto R (`.Rproj`) na pasta raiz
 - [ ] Instalar pacotes R necessários
   - [ ] `sidrar`
