@@ -38,12 +38,25 @@
   - [ ] `quarto`
 
 ### 0.3 Dados de referência (anuais — IBGE Contas Regionais)
-- [ ] Baixar VAB por setor de Roraima das Contas Regionais do IBGE (série histórica)
+- [x] Baixar publicação Contas Regionais 2023 do FTP do IBGE (Tabela5.xls — Roraima)
+- [x] Extrair VAB por atividade para Roraima 2023 (13 atividades)
+  - [x] Salvar em `data/processed/vab_roraima_2023.csv`
+- [x] Atualizar pesos no README, plano_projeto.md e checklist com dados reais de 2023
+- [ ] Baixar série histórica completa (2010–2023) de VAB por atividade para RR
   - [ ] Agropecuária
-  - [ ] Indústria total (extrativa, transformação, construção, SIUP)
-  - [ ] Serviços total (comércio, transportes, AAPP, outros)
-- [ ] Organizar tabela de pesos setoriais por ano (participação % no VAB total)
-- [ ] Salvar em `data/processed/contas_regionais_RR.csv`
+  - [ ] Indústrias extrativas
+  - [ ] Indústrias de transformação
+  - [ ] SIUP
+  - [ ] Construção
+  - [ ] Comércio e reparação de veículos
+  - [ ] Transporte, armazenagem e correio
+  - [ ] Informação e comunicação
+  - [ ] Atividades financeiras e seguros
+  - [ ] Atividades imobiliárias
+  - [ ] AAPP
+  - [ ] Outros serviços
+- [ ] Organizar tabela de pesos setoriais por ano (2010–2023)
+- [ ] Salvar em `data/processed/contas_regionais_RR_serie.csv`
 
 ---
 

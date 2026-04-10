@@ -18,17 +18,23 @@ O indicador é um **índice encadeado de volume** (sem unidade monetária), com 
 
 ### Estrutura setorial e proxies
 
-| Setor | Peso aprox. | Proxy principal | Fonte |
-|---|---|---|---|
-| Administração Pública | ~32% | Folha de pagamento (federal + estadual) | SIAPE / SEPLAN-RR |
-| Outros serviços | ~13% | Emprego formal setorial + crédito | CAGED / BCB Estban |
-| Comércio | ~12% | ICMS por atividade econômica | SEFAZ-RR |
-| Construção Civil | ~8% | Emprego na construção | CAGED |
-| Agropecuária | ~6% | Produção física de lavouras e pecuária | LSPA + IBGE Abate / SIDRA |
-| Transportes | ~4% | Passageiros aéreos + vendas de diesel | ANAC / ANP |
-| SIUP | ~3% | Consumo de energia elétrica | ANEEL / EPE |
-| Intermediação financeira | ~3% | Depósitos e operações de crédito | BCB Estban |
-| Indústria de transformação | ~2% | Emprego industrial + ICMS industrial | CAGED / SEFAZ-RR |
+Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do IBGE — Roraima 2023**
+(publicação IBGE out/2025, VAB total = R$ 23,0 bilhões).
+
+| Atividade (nomenclatura IBGE) | % VAB 2023 | VAB 2023 (R$ mi) | Proxy principal | Fonte |
+|---|---|---|---|---|
+| Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | 10.629 | Folha de pagamento (federal + estadual) | SIAPE / SEPLAN-RR |
+| Comércio e reparação de veículos automotores e motocicletas | 12,25% | 2.817 | ICMS por atividade econômica | SEFAZ-RR |
+| Agropecuária | 8,87% | 2.040 | Produção física de lavouras e pecuária | LSPA / IBGE SIDRA |
+| Atividades imobiliárias | 7,68% | 1.767 | Estoque de domicílios (tendência suavizada) | IBGE Censo / PNAD |
+| Outros serviços | 7,63% | 1.756 | Emprego formal em serviços | CAGED |
+| Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | 1.243 | Consumo de energia elétrica | ANEEL / EPE |
+| Construção | 4,89% | 1.125 | Emprego na construção + ICMS | CAGED / SEFAZ-RR |
+| Atividades financeiras, de seguros e serviços relacionados | 2,78% | 639 | Depósitos e operações de crédito | BCB Estban |
+| Transporte, armazenagem e correio | 1,92% | 441 | Passageiros aéreos + vendas de diesel | ANAC / ANP |
+| Indústrias de transformação | 1,31% | 301 | Emprego industrial + ICMS industrial | CAGED / SEFAZ-RR |
+| Informação e comunicação | 1,01% | 233 | Emprego em TI e telecom | CAGED |
+| Indústrias extrativas | 0,05% | 12 | Peso negligenciável — absorvida em "Outros" | — |
 
 ### Principais escolhas metodológicas
 

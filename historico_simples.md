@@ -95,6 +95,42 @@ Criamos três arquivos que vão acompanhar o projeto do início ao fim:
 
 ---
 
+### Abril de 2026 — Atualização dos pesos setoriais com dados reais das Contas Regionais 2023
+
+**O que foi feito:**
+
+Obtivemos os dados reais do VAB (Valor Adicionado Bruto) de Roraima diretamente da publicação
+oficial do IBGE — **Contas Regionais do Brasil 2023** (publicada em outubro de 2025). Os dados
+foram baixados automaticamente do FTP do IBGE e processados com R.
+
+**O que descobrimos:**
+
+Os pesos dos setores são bem diferentes do que estimávamos inicialmente. Os principais destaques:
+
+| Atividade | Peso real 2023 | Observação |
+|---|---|---|
+| Administração pública (governo) | 46,2% | Acima do estimado (32%) |
+| Comércio e reparação de veículos | 12,3% | Conforme esperado |
+| Agropecuária | 8,9% | Acima do estimado (6%) |
+| Atividades imobiliárias | 7,7% | Setor não estava no plano original |
+| Outros serviços | 7,6% | Inclui saúde/educação privada, turismo etc. |
+| Energia elétrica, água e saneamento (SIUP) | 5,4% | Acima do estimado (3%) |
+| Construção civil | 4,9% | Abaixo do estimado (8%) |
+| Transportes | 1,9% | Abaixo do estimado (4%) |
+| Indústria de transformação | 1,3% | Conforme esperado |
+| Indústrias extrativas | 0,05% | Negligenciável |
+
+**Nota sobre atividades imobiliárias (7,7%):** A maior parte é "aluguel imputado" — o valor
+estimado que donos de imóveis próprios "pagariam" a si mesmos de aluguel. Como não existe dado
+mensal para isso, será tratado como tendência suave entre os valores anuais do IBGE.
+
+**Arquivos gerados:**
+- `data/raw/contas_regionais_2023.zip` — dados brutos do IBGE (FTP)
+- `data/processed/vab_roraima_2023.csv` — VAB por atividade, Roraima 2023
+- `README.md`, `plano_projeto.md` e `checklist.md` atualizados com estrutura real de 13 atividades
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**

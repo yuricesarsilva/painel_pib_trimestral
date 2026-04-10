@@ -127,7 +127,7 @@ nem mudanças de lotação — todos capturados pelo SIAPE.
 
 ---
 
-### 4. SIUP — Serviços de Utilidade Pública (~3% do VAB)
+### 4. SIUP — Eletricidade, gás, água, esgoto e resíduos (5,40% do VAB)
 
 | Proxy | Fonte | Frequência |
 |---|---|---|
@@ -135,18 +135,18 @@ nem mudanças de lotação — todos capturados pelo SIAPE.
 
 ---
 
-### 5. Indústria de Transformação (~2% do VAB)
+### 5. Indústria de Transformação (1,31% do VAB)
 
 | Proxy | Fonte | Frequência |
 |---|---|---|
 | Vínculos na indústria de transformação (CNAE C) | CAGED | Mensal |
 | ICMS sobre bens industriais | SEFAZ-RR (por atividade econômica) | Mensal |
 
-**Nota**: Sem PIM-PF para RR. Peso < 3% minimiza o impacto de uma proxy menos precisa.
+**Nota**: Sem PIM-PF para RR. Peso de 1,31% minimiza o impacto de uma proxy menos precisa.
 
 ---
 
-### 6. Comércio (~12% do VAB)
+### 6. Comércio e reparação de veículos automotores e motocicletas (12,25% do VAB)
 
 | Proxy | Fonte | Frequência | Qualidade |
 |---|---|---|---|
@@ -158,7 +158,7 @@ alíquota e regimes especiais. Usar como proxy primário; CAGED como verificaç�
 
 ---
 
-### 7. Transportes (~4% do VAB)
+### 7. Transporte, armazenagem e correio (1,92% do VAB)
 
 | Proxy | Fonte | Frequência | Cobertura |
 |---|---|---|---|
@@ -173,29 +173,75 @@ diesel é usado **exclusivamente neste setor** como componente de índice compos
 
 ---
 
-### 8. Outros serviços / saúde / educação (~13% do VAB)
+### 8. Informação e comunicação (1,01% do VAB)
 
 | Proxy | Fonte | Frequência |
 |---|---|---|
-| Vínculos em saúde e educação privadas (CNAE P+Q) | CAGED | Mensal |
+| Vínculos em TI, telecom e mídia (CNAE J) | CAGED | Mensal |
+
+---
+
+### 9. Atividades financeiras, de seguros e serviços relacionados (2,78% do VAB)
+
+| Proxy | Fonte | Frequência |
+|---|---|---|
 | Operações de crédito (RR) | BCB Estban | Mensal |
 | Depósitos bancários (RR) | BCB Estban | Mensal |
 
 ---
 
+### 10. Atividades imobiliárias (7,68% do VAB)
+
+| Proxy | Fonte | Frequência |
+|---|---|---|
+| Tendência suavizada (interpolação linear entre benchmarks IBGE) | Contas Regionais IBGE | Anual |
+
+**Nota metodológica importante**: atividades imobiliárias em grande parte representa **aluguel
+imputado de imóveis próprios** (imputação de aluguel nas Contas Nacionais), o que não possui
+proxy observable de alta frequência. O componente é relativamente estável e será tratado como
+tendência linear interpolada entre os valores anuais do IBGE. Não requer dado mensal próprio.
+
+---
+
+### 11. Outros serviços (7,63% do VAB)
+
+Inclui: alojamento e alimentação, atividades profissionais e científicas, atividades administrativas,
+saúde e educação privadas, artes, cultura e esporte, serviços domésticos.
+
+| Proxy | Fonte | Frequência |
+|---|---|---|
+| Vínculos em saúde e educação privadas (CNAE P+Q) | CAGED | Mensal |
+| Vínculos em alojamento e alimentação (CNAE I) | CAGED | Mensal |
+| Vínculos em atividades profissionais e admin. (CNAE M+N) | CAGED | Mensal |
+
+---
+
+### 12. Indústrias extrativas (0,05% do VAB — negligenciável)
+
+Peso inferior a 0,1% — absorvida no componente "Outros" ou mantida com interpolação linear
+entre benchmarks anuais do IBGE. Não justifica proxy específico.
+
+---
+
 ## Mapa de pesos e prioridades
 
-| Setor | % VAB RR | Qualidade do proxy | Prioridade |
-|---|---|---|---|
-| Adm. Pública | ~32% | Alta (SIAPE) | 2ª fase |
-| Comércio | ~12% | Média-alta (ICMS+CAGED) | 4ª fase |
-| Construção | ~8% | Média (CAGED+ICMS) | 3ª fase |
-| Agropecuária | ~6% | Alta (LSPA+Censo) | **1ª fase** |
-| Transportes | ~4% | Média (ANAC+diesel) | 4ª fase |
-| SIUP | ~3% | Alta (ANEEL) | 3ª fase |
-| Ind. Transformação | ~2% | Média (CAGED+ICMS) | 3ª fase |
-| Outros serviços | ~13% | Média (CAGED+BCB) | 4ª fase |
-| Intermediação financeira | ~3% | Média (BCB Estban) | 4ª fase |
+Pesos extraídos das **Contas Regionais do IBGE — Roraima 2023** (VAB a preços correntes,
+publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
+
+| Atividade (IBGE) | % VAB 2023 | VAB (R$ mi) | Qualidade do proxy | Prioridade |
+|---|---|---|---|---|
+| Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (SIAPE + folha estadual) | **2ª fase** |
+| Comércio e reparação de veículos | 12,25% | 2.817 | Média-alta (ICMS + CAGED) | 4ª fase |
+| Agropecuária | 8,87% | 2.040 | Alta (LSPA + Censo + abate) | **1ª fase** |
+| Atividades imobiliárias | 7,68% | 1.767 | Baixa (tendência suavizada) | 4ª fase |
+| Outros serviços | 7,63% | 1.756 | Média (CAGED serviços) | 4ª fase |
+| SIUP | 5,40% | 1.243 | Alta (ANEEL) | 3ª fase |
+| Construção | 4,89% | 1.125 | Média (CAGED + ICMS) | 3ª fase |
+| Atividades financeiras e seguros | 2,78% | 639 | Média (BCB Estban) | 4ª fase |
+| Transporte, armazenagem e correio | 1,92% | 441 | Média (ANAC + ANP diesel) | 4ª fase |
+| Indústrias de transformação | 1,31% | 301 | Média (CAGED + ICMS) | 3ª fase |
+| Informação e comunicação | 1,01% | 233 | Média (CAGED TI/telecom) | 4ª fase |
+| Indústrias extrativas | 0,05% | 12 | — (negligenciável) | Absorvida |
 
 ---
 
