@@ -1,0 +1,25 @@
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Dados brutos e sensíveis
+data/raw/
+data/processed/
+data/output/
+
+# Outputs gerados
+notas/*.pdf
+notas/*.html
+dashboard/rsconnect/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporários
+*.tmp
+*.log
