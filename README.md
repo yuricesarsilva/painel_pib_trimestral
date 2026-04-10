@@ -116,8 +116,8 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 Coordenação-Geral de Estudos e Econômicos e Sociais - CGEES
 ## Autoria do projeto
 
-**Yuri Cesar de Lima e Silva**
-Chefe da Divisão de Estudos e Análises Sociais - DIEAS
+**Yuri Cesar de Lima e Silva**  
+Chefe da Divisão de Estudos e Análises Sociais - DIEAS  
 Coordenador da Equipe do PIB do Estado de Roraima - SEPLAN/RR
 
 
