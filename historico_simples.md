@@ -201,6 +201,44 @@ fortes, onde estão mais frágeis e quais complementos poderiam melhorar a quali
 
 ---
 
+### Abril de 2026 — Ajuste metodológico: PAM como fonte primária de lavouras
+
+**O que foi feito:**
+
+Refinamos a metodologia da agropecuária para deixar mais clara a hierarquia entre as duas
+pesquisas de produção agrícola do IBGE.
+
+**A mudança:**
+
+Antes, o plano descrevia a LSPA como a fonte de produção anual de lavouras. Agora ficou definido
+que:
+
+- **A PAM (Produção Agrícola Municipal) é a fonte principal** — ela é o dado oficial e consolidado,
+  publicado anualmente pelo IBGE (com cerca de 1 ano de defasagem). Para todos os anos em que a PAM
+  estiver disponível, usaremos os números dela.
+
+- **A LSPA é um substituto temporário** — usada apenas para o ano mais recente que ainda não foi
+  coberto pela PAM. Quando a PAM for publicada, o valor da LSPA é descartado e substituído pelo
+  dado definitivo.
+
+**Por que isso importa:**
+
+A LSPA e a PAM medem a mesma coisa: a produção anual de lavouras. A diferença é que a LSPA é uma
+estimativa em construção (revisada mês a mês durante o ano), enquanto a PAM é o número final
+revisado. Usar a PAM sempre que possível torna o índice mais preciso e auditável.
+
+**O método de "distribuição mensal" não mudou:**
+
+Em ambos os casos — PAM ou LSPA — o valor anual de produção é distribuído pelos meses do ano
+usando o calendário agrícola do Censo Agropecuário de 2006 (que mostra em quais meses cada cultura
+é colhida em Roraima). Essa parte da metodologia permanece exatamente igual.
+
+**Arquivos atualizados:**
+- `plano_projeto.md` — seção 1a e etapa 1.2 da Fase 1 reescritas
+- `checklist.md` — etapas 1.0 e 1.2 atualizadas
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -227,4 +265,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026*
+*Última atualização: 10 de abril de 2026 — ajuste metodológico agropecuária (PAM primária, LSPA complementar)*

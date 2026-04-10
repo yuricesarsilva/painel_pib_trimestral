@@ -41,16 +41,33 @@ X-13ARIMA-SEATS via pacote `seasonal`. Publicar série com e sem ajuste sazonal.
 
 ### 1. Agropecuária (~6% do VAB) — detalhamento especial
 
-#### 1a. Lavouras — metodologia de desagregação mensal da LSPA
+#### 1a. Lavouras — metodologia de desagregação mensal (PAM + LSPA)
 
-**Problema central**: A LSPA não publica produção mensal — ela publica **revisões mensais da
-projeção de produção anual** (ex: "em março projetamos 10.000 t de arroz para 2024"). Para obter
-um fluxo mensal/trimestral de produção, é necessário:
+**Hierarquia das fontes de produção anual:**
 
-1. Usar o **valor final (dezembro) da LSPA** de cada ano como produção anual de referência
+A PAM (Produção Agrícola Municipal) é o **dado consolidado e definitivo** de produção de lavouras,
+publicada anualmente pelo IBGE com defasagem de aproximadamente um ano (ex: PAM 2023 publicada em
+2024). A LSPA (Levantamento Sistemático da Produção Agrícola), por sua vez, publica **revisões
+mensais da projeção de produção anual** — ela é o canal de atualização corrente antes da PAM ser
+publicada. De fato, o valor da LSPA de dezembro de cada ano converge para o valor que será
+consolidado na PAM.
+
+**Regra de uso das fontes:**
+
+- **Anos com PAM disponível**: usar a quantidade produzida da PAM como valor anual de referência —
+  é o dado mais preciso e revisado.
+- **Ano mais recente sem PAM disponível**: usar o **valor de dezembro da LSPA** daquele ano como
+  estimativa provisória da produção anual. Quando a PAM for publicada, substituir automaticamente.
+
+**Método de desagregação intra-anual (igual para PAM e LSPA):**
+
+A produção anual — seja de fonte PAM ou LSPA — não tem desagregação mensal publicada. Para obter
+um fluxo mensal/trimestral de produção, aplica-se o seguinte procedimento em ambos os casos:
+
+1. Tomar a **produção anual por cultura** (PAM consolidada ou LSPA dezembro do ano corrente)
 2. Obter a **estrutura sazonal de colheita** do **Censo Agropecuário 2006** (tabelas de época de
    colheita por cultura e por estado — última publicação com essa granularidade)
-3. Aplicar os coeficientes mensais do censo como pesos de distribuição da produção anual ao longo
+3. Aplicar os coeficientes mensais do Censo como pesos de distribuição da produção anual ao longo
    dos 12 meses → produção mensal estimada por cultura
 4. Agregar meses em trimestres
 5. Aplicar Denton-Cholette contra o VAB agropecuário anual das Contas Regionais
@@ -59,22 +76,22 @@ um fluxo mensal/trimestral de produção, é necessário:
 agroclimático de Roraima, que é relativamente estável. Verificar se o Censo 2017 publicou tabela
 equivalente de época de colheita — se sim, atualizar os coeficientes.
 
-**Lavouras cobertas pela LSPA em Roraima:**
+**Lavouras cobertas e fontes:**
 
-| Proxy (cultura) | Fonte | SIDRA | Frequência | Uso no índice |
+| Cultura | Fonte (anos consolidados) | Fonte (ano corrente) | SIDRA | Uso no índice |
 |---|---|---|---|---|
-| Arroz — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Feijão — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Milho — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Soja — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Banana — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Cacau — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Cana-de-açúcar — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Laranja — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Mandioca — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Tomate — quantidade produzida | LSPA | Tab. 6588 | Mensal (proj. anual) | Volume; peso = VBP PAM |
-| Pesos (VBP por cultura) | PAM | Tab. 5457 / 5558 | Anual | Estrutura Laspeyres |
-| Coefic. sazonais de colheita | Censo Agropecuário 2006 | — | Fixo (anual) | Distribuição intra-anual |
+| Arroz — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Feijão — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Milho — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Soja — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Banana — quantidade produzida | PAM | LSPA (dez) | Tab. 5558 / 6588 | Volume; peso = VBP PAM |
+| Cacau — quantidade produzida | PAM | LSPA (dez) | Tab. 5558 / 6588 | Volume; peso = VBP PAM |
+| Cana-de-açúcar — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Laranja — quantidade produzida | PAM | LSPA (dez) | Tab. 5558 / 6588 | Volume; peso = VBP PAM |
+| Mandioca — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Tomate — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
+| Pesos (VBP por cultura) | PAM | PAM (último ano disponível) | Tab. 5457 / 5558 | Estrutura Laspeyres |
+| Coefic. sazonais de colheita | Censo Agropecuário 2006 | Censo 2006 | — | Distribuição intra-anual |
 
 **Análise de cobertura (entrega obrigatória):**
 Calcular via PAM o percentual do VBP total de lavouras em Roraima coberto pelas 10 culturas acima.
@@ -249,12 +266,12 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 
 ### Fase 1 — Agropecuária
 
-**Etapa 1.0 — Análise de cobertura da LSPA (entrega de transparência):**
+**Etapa 1.0 — Análise de cobertura (entrega de transparência):**
 - Puxar PAM via `sidrar` (tabelas 5457/5558 — lavouras temporárias e permanentes) para Roraima
 - Calcular VBP total de todas as lavouras
-- Calcular VBP das 10 culturas cobertas pela LSPA (Arroz, Feijão, Milho, Soja, Banana, Cacau,
+- Calcular VBP das 10 culturas incluídas no índice (Arroz, Feijão, Milho, Soja, Banana, Cacau,
   Cana-de-açúcar, Laranja, Mandioca, Tomate)
-- Gerar tabela: participação % de cada cultura + cobertura total
+- Gerar tabela: participação % de cada cultura + cobertura total do VBP de lavouras
 - Este número de cobertura vai constar na nota técnica final
 
 **Etapa 1.1 — Estrutura sazonal do Censo Agropecuário:**
@@ -263,8 +280,10 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Verificar razoabilidade com calendário agroclimático de RR (período chuvoso dez–abr, seco mai–set)
 
 **Etapa 1.2 — Série mensal de produção de lavouras:**
-- Puxar LSPA (valor final anual por cultura) via `sidrar`
-- Aplicar coeficientes do Censo → produção mensal por cultura
+- Para cada ano com PAM disponível: usar quantidade produzida da PAM (tabelas 5457/5558) como valor anual
+- Para o ano mais recente sem PAM: usar valor de dezembro da LSPA (tabela 6588) como estimativa provisória
+  - Ao ser publicada a PAM do período, substituir o valor da LSPA automaticamente
+- Aplicar coeficientes do Censo → produção mensal por cultura (mesmo procedimento para PAM e LSPA)
 - Calcular índice de Laspeyres de quantidade com pesos PAM (VBP)
 - Agregar em trimestres
 
@@ -347,16 +366,22 @@ PIB Trimestral - Projeto 2026/
 
 ## Decisões metodológicas a documentar na nota técnica
 
-1. **LSPA é projeção anual, não fluxo mensal**: distribuição intra-anual feita via coeficientes de
-   colheita do Censo Agropecuário 2006 (melhor aproximação disponível).
-2. **Cobertura da LSPA**: X% do VBP total de lavouras de Roraima (calculado via PAM, ver Etapa 1.0).
-3. **Ausência de PIM-PF**: compensada por CAGED + ICMS industrial; peso < 3%.
-4. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
-5. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
-6. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
-7. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
-8. **Benchmarking Denton**: assegura consistência anual com IBGE.
-9. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
+1. **PAM como fonte primária, LSPA como substituto temporário**: para anos com PAM disponível, usa-se
+   a quantidade produzida da PAM (dado consolidado). Para o ano corrente ainda não coberto pela PAM,
+   usa-se o valor de dezembro da LSPA (estimativa provisória). Quando a PAM for publicada, o valor
+   é substituído. A distribuição intra-anual é feita da mesma forma em ambos os casos: coeficientes
+   de colheita do Censo Agropecuário 2006.
+2. **LSPA não é fluxo mensal**: a LSPA publica revisões mensais da projeção de produção anual —
+   não a produção mês a mês. A desagregação mensal é sempre derivada dos coeficientes do Censo.
+3. **Cobertura das culturas no índice**: X% do VBP total de lavouras de Roraima (calculado via PAM,
+   ver Etapa 1.0).
+4. **Ausência de PIM-PF**: compensada por CAGED + ICMS industrial; peso < 3%.
+5. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
+6. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
+7. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
+8. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
+9. **Benchmarking Denton**: assegura consistência anual com IBGE.
+10. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
 
 ---
 

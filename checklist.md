@@ -64,7 +64,7 @@
 
 ## Fase 1 — Agropecuária
 
-### 1.0 Análise de cobertura da LSPA (transparência metodológica)
+### 1.0 Análise de cobertura das culturas incluídas no índice (transparência metodológica)
 - [ ] Baixar PAM (Produção Agrícola Municipal) para Roraima via `sidrar`
   - [ ] Lavouras temporárias (tabela 5457)
   - [ ] Lavouras permanentes (tabela 5558)
@@ -96,10 +96,13 @@
 - [ ] Salvar matriz em `data/processed/coef_sazonais_colheita.csv`
 
 ### 1.2 Série mensal de produção de lavouras
-- [ ] Baixar LSPA para Roraima via `sidrar` (tabela 6588)
-  - [ ] Coletar valor de dezembro de cada ano como produção anual definitiva
-  - [ ] Coletar todas as 10 culturas disponíveis para RR
-- [ ] Aplicar coeficientes sazonais do Censo → produção mensal por cultura
+- [ ] Baixar PAM para Roraima via `sidrar` (tabelas 5457/5558 — temporárias e permanentes)
+  - [ ] Coletar quantidade produzida das 10 culturas para todos os anos disponíveis
+  - [ ] Identificar o último ano coberto pela PAM (define a fronteira PAM/LSPA)
+- [ ] Para o ano corrente não coberto pela PAM: baixar LSPA (tabela 6588) e usar valor de dezembro
+  - [ ] Documentar o ano de corte (PAM até X, LSPA para X+1)
+  - [ ] Ao publicar nova PAM, substituir valor LSPA automaticamente no script
+- [ ] Aplicar coeficientes sazonais do Censo → produção mensal por cultura (mesma lógica para PAM e LSPA)
 - [ ] Calcular índice de Laspeyres de quantidade com pesos PAM (VBP)
   - [ ] Definir ano-base dos pesos (média 2018–2022 ou último triênio disponível)
   - [ ] Verificar consistência: soma ponderada deve refletir estrutura produtiva
