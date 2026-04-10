@@ -173,21 +173,34 @@
 - [ ] Baixar vínculos ativos na construção (CNAE F) do CAGED para RR (2020–presente)
 - [ ] Baixar ICMS sobre materiais de construção da SEFAZ-RR por atividade econômica
   - [ ] Deflacionar ICMS pelo IPCA nacional
-- [ ] Construir índice composto (CAGED + ICMS) com pesos a definir
+  - [ ] Registrar datas de quebras tributárias (mudanças de alíquota/regime) → dummy no script
+- [ ] Baixar vendas de cimento em RR via SNIC (mensal)
+- [ ] Construir índice composto (CAGED + ICMS + cimento) com pesos explícitos
+  - [ ] Documentar pesos escolhidos e justificativa
 - [ ] Agregar em trimestres
 - [ ] Salvar em `data/processed/serie_construcao_trimestral.csv`
 
 ### 3.2 SIUP — Serviços de Utilidade Pública
-- [ ] Baixar consumo mensal de energia elétrica de Roraima (ANEEL / EPE / BEN)
-  - [ ] Verificar desagregação: residencial, comercial, industrial, outros
+- [ ] Baixar consumo mensal de energia elétrica de Roraima desagregado por classe (ANEEL)
+  - [ ] Residencial
+  - [ ] Comercial (salvar separado — será reaproveitado em Comércio)
+  - [ ] Industrial (salvar separado — será reaproveitado em Indústria de Transformação)
+  - [ ] Poder público
+- [ ] Construir índice composto ponderado por classe para o SIUP
+  - [ ] Documentar pesos escolhidos (residencial recebe peso menor)
 - [ ] Calcular índice de volume trimestral
-- [ ] Salvar em `data/processed/serie_siup_trimestral.csv`
+- [ ] Salvar série SIUP em `data/processed/serie_siup_trimestral.csv`
+- [ ] Salvar série energia comercial em `data/processed/energia_comercial_rr.csv`
+- [ ] Salvar série energia industrial em `data/processed/energia_industrial_rr.csv`
 
 ### 3.3 Indústria de Transformação
+- [ ] Usar série de energia industrial coletada no SIUP (3.2) — sem coleta adicional
 - [ ] Baixar vínculos ativos na indústria de transformação (CNAE C) do CAGED para RR
 - [ ] Baixar ICMS sobre bens industriais da SEFAZ-RR
   - [ ] Deflacionar pelo IPCA nacional
-- [ ] Construir índice composto
+  - [ ] Registrar datas de quebras tributárias → dummy no script
+- [ ] Construir índice composto (energia industrial + CAGED + ICMS) com pesos explícitos
+  - [ ] Energia industrial com peso prioritário (único componente de volume físico)
 - [ ] Salvar em `data/processed/serie_transformacao_trimestral.csv`
 
 ### 3.4 Índice industrial agregado e benchmarking
@@ -203,11 +216,14 @@
 ## Fase 4 — Serviços Privados
 
 ### 4.1 Comércio
+- [ ] Usar série de energia comercial coletada no SIUP (3.2) — sem coleta adicional
 - [ ] Obter ICMS por atividade econômica da SEFAZ-RR — segmento comércio
   - [ ] Deflacionar pelo IPCA nacional
+  - [ ] Registrar datas de quebras tributárias (mudanças de alíquota/regime) → dummy no script
 - [ ] Baixar vínculos ativos no comércio (CNAE G) do CAGED para RR
-- [ ] Construir índice composto (ICMS primário + CAGED como controle)
-- [ ] Verificar e documentar eventuais mudanças de alíquota ou regime no período
+- [ ] Construir índice composto (energia comercial + ICMS + CAGED) com pesos explícitos
+  - [ ] Energia comercial como componente prioritário (volume físico independente de preço)
+  - [ ] Documentar pesos escolhidos e justificativa
 - [ ] Salvar em `data/processed/serie_comercio_trimestral.csv`
 
 ### 4.2 Transportes
@@ -215,19 +231,30 @@
   - [ ] Passageiros embarcados e desembarcados (mensal)
   - [ ] Carga aérea (mensal)
 - [ ] Baixar vendas de óleo diesel em Roraima via ANP (mensal)
-- [ ] Construir índice composto (ANAC + diesel) com pesos a definir
-  - [ ] Documentar sobreposição do diesel com agropecuária e construção
+- [ ] Construir índice composto com pesos explícitos (diesel com peso menor)
+  - [ ] Sugestão inicial: passageiros ANAC 40%, carga ANAC 30%, diesel 30%
+  - [ ] Documentar sobreposição do diesel com agropecuária e construção na nota técnica
 - [ ] Agregar em trimestres
 - [ ] Salvar em `data/processed/serie_transportes_trimestral.csv`
 
-### 4.3 Outros serviços (saúde, educação, financeiro)
+### 4.3 Atividades financeiras
+- [ ] Baixar concessões de crédito por UF para RR via BCB (Nota de Crédito)
+  - [ ] Deflacionar pelo IPCA nacional
+  - [ ] Aplicar suavização (média móvel 3 meses) antes de calcular o índice
+- [ ] Baixar saldo de depósitos bancários em RR via BCB Estban (componente secundário)
+  - [ ] Deflacionar pelo IPCA nacional
+- [ ] Construir índice composto (concessões como proxy principal, depósitos como secundário)
+- [ ] Salvar em `data/processed/serie_financeiro_trimestral.csv`
+
+### 4.4 Outros serviços
 - [ ] Baixar vínculos em saúde e educação privadas (CNAE P+Q) do CAGED para RR
-- [ ] Baixar operações de crédito e depósitos bancários em RR via BCB Estban
-- [ ] Construir índice composto
+- [ ] Baixar vínculos em alojamento e alimentação (CNAE I) do CAGED para RR
+- [ ] Baixar vínculos em atividades profissionais e administrativas (CNAE M+N) do CAGED para RR
+- [ ] Construir índice composto por subgrupo com pesos explícitos (participação no VAB de outros serviços)
 - [ ] Salvar em `data/processed/serie_outros_servicos_trimestral.csv`
 
-### 4.4 Índice de serviços privados e benchmarking
-- [ ] Combinar comércio + transportes + outros com pesos das Contas Regionais
+### 4.5 Índice de serviços privados e benchmarking
+- [ ] Combinar comércio + transportes + financeiro + outros com pesos das Contas Regionais
 - [ ] Calcular índice de serviços privados trimestral (base 2020 = 100)
 - [ ] Aplicar Denton-Cholette contra VAB serviços privados anual das Contas Regionais
 - [ ] Validar resultado
@@ -245,20 +272,27 @@
 - [ ] Aplicar Denton-Cholette final contra PIB total de RR das Contas Regionais
 - [ ] Salvar em `data/output/indice_geral_rr.csv`
 
-### 5.2 Ajuste sazonal
+### 5.2 Teste de sensibilidade (versão A vs. versão B)
+- [ ] Gerar versão B do índice com variação de hipótese a definir, por exemplo:
+  - [ ] Calendário agrícola alternativo (Censo 2017 se disponível, ou hipótese simplificada)
+  - [ ] Pesos alternativos nos índices compostos (ex: ICMS com peso maior em Comércio)
+- [ ] Comparar versão A e versão B: calcular divergência trimestral e anual
+- [ ] Documentar resultado do teste na nota técnica
+
+### 5.3 Ajuste sazonal
 - [ ] Aplicar X-13ARIMA-SEATS (`seasonal`) ao índice geral
 - [ ] Aplicar X-13ARIMA-SEATS a cada componente setorial
 - [ ] Publicar duas versões: com ajuste sazonal e sem ajuste sazonal
 - [ ] Salvar em `data/output/indice_geral_rr_sa.csv` (série dessazonalizada)
 
-### 5.3 Validação final
+### 5.4 Validação final
 - [ ] Variação anual do índice geral vs. Contas Regionais IBGE (todos os anos disponíveis)
 - [ ] Comparar perfil de ciclo com IBC-BR e IBCR Norte (Banco Central)
 - [ ] Verificar correlação com arrecadação tributária total de RR
 - [ ] Verificar comportamento em 2020 (queda COVID) vs. estados vizinhos
 - [ ] Documentar e justificar eventuais divergências
 
-### 5.4 Exportação dos dados
+### 5.5 Exportação dos dados
 - [ ] Gerar arquivo Excel com todas as séries (índice geral + setoriais + SA)
   - [ ] Aba: índice geral
   - [ ] Aba: componentes setoriais
@@ -267,7 +301,7 @@
 - [ ] Gerar arquivo CSV para cada série
 - [ ] Salvar em `data/output/`
 
-### 5.5 Dashboard interativo
+### 5.6 Dashboard interativo
 - [ ] Criar estrutura do app (`dashboard/app.R`)
 - [ ] Implementar gráfico do índice geral (com e sem ajuste sazonal)
 - [ ] Implementar gráfico de contribuição setorial
@@ -276,13 +310,15 @@
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 
-### 5.6 Nota técnica
+### 5.7 Nota técnica
 - [ ] Criar arquivo `notas/nota_tecnica.qmd` (Quarto)
 - [ ] Escrever seção de metodologia
-  - [ ] Justificativa das proxies por setor
-  - [ ] Cobertura da LSPA (% do VBP agropecuário — resultado da Etapa 1.0)
-  - [ ] Tratamento da LSPA (coeficientes do Censo 2006)
+  - [ ] Justificativa das proxies por setor (com classificação de qualidade: forte / aceitável / fraca)
+  - [ ] Tabela de tipologia das proxies (volume / valor nominal / fluxo / estoque / insumo)
+  - [ ] Cobertura das culturas agrícolas no índice (% do VBP — resultado da Etapa 1.0)
+  - [ ] Tratamento da PAM/LSPA e coeficientes do Censo 2006
   - [ ] Método Denton-Cholette: explicação em linguagem acessível
+  - [ ] Resultado do teste de sensibilidade (versão A vs. B)
   - [ ] Limitações e ressalvas do indicador
 - [ ] Escrever seção de análise conjuntural (trimestre mais recente)
 - [ ] Inserir gráficos e tabelas

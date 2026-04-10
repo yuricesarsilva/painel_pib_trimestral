@@ -239,6 +239,65 @@ usando o calendário agrícola do Censo Agropecuário de 2006 (que mostra em qua
 
 ---
 
+### Abril de 2026 — Revisão crítica das proxies e incorporação de melhorias
+
+**O que foi feito:**
+
+Fizemos uma análise detalhada das sugestões registradas em `sugestoes1.md`, avaliando cada
+proposta do ponto de vista metodológico e da viabilidade de dados para Roraima. Incorporamos
+as sugestões que representavam ganho real sem custo excessivo de coleta; descartamos as que não
+têm dado disponível ou que poderiam introduzir ruído sem benefício equivalente.
+
+**O que mudou no plano:**
+
+Quatro setores tiveram suas proxies melhoradas:
+
+- **Comércio**: deixou de ter o ICMS como proxy única com CAGED apenas "de controle". Passou a
+  ser um **índice composto** de três componentes com pesos explícitos: ICMS deflacionado,
+  vínculos CAGED e — a novidade — **consumo de energia comercial** (ANEEL). A energia comercial
+  é o componente mais robusto porque mede volume físico, independente de preço ou alíquota.
+  Adicionamos também uma regra formal para tratar quebras tributárias no ICMS.
+
+- **Construção**: ganhou um terceiro componente físico — as **vendas de cimento** publicadas
+  pelo SNIC (Sindicato Nacional da Indústria do Cimento). O cimento é uma proxy direta de
+  atividade construtiva, disponível mensalmente por estado, e é usada em várias metodologias
+  estaduais de PIB trimestral. Era a principal lacuna do desenho original.
+
+- **SIUP (energia)**: em vez de coletar o consumo total de energia, passamos a coletar
+  **desagregado por classe** (residencial, comercial, industrial, poder público). O custo é
+  zero — o dado vem na mesma consulta. O ganho é duplo: o índice do SIUP fica mais preciso, e
+  as séries de energia comercial e industrial ficam disponíveis para reaproveitamento nos
+  setores de Comércio e Indústria de Transformação sem coleta adicional.
+
+- **Atividades financeiras**: a proxy principal trocou de **saldo de crédito** (estoque) para
+  **concessões de crédito** (fluxo mensal de novos créditos, publicado pelo BCB por UF). Fluxo
+  é muito mais representativo da atividade corrente do setor do que saldo, que pode crescer sem
+  que haja atividade nova.
+
+**O que ficou igual (e por quê):**
+
+- *Administração pública*: folha de pagamento continua como proxy principal — é a mesma variável
+  que o IBGE usa. Investigar separação ativos/inativos fica para a fase de implementação.
+- *Atividades imobiliárias*: mantida a interpolação linear entre benchmarks anuais. Adicionar
+  proxy de mercado (financiamentos, por exemplo) captaria algo diferente do que o IBGE mede
+  (aluguel imputado), podendo distorcer em vez de melhorar.
+- *Informação e comunicação*: CAGED mantido. Peso de 1,01% não justifica esforço de coleta de
+  dados que, de qualquer forma, não estão disponíveis de forma sistemática para RR.
+
+**Novidades de processo (padrões transversais):**
+
+Adicionamos ao plano uma seção de **Padrões de Implementação**, que define boas práticas
+obrigatórias para todos os scripts: classificação de qualidade das proxies (forte / aceitável /
+fraca mas necessária), tipologia de cada proxy (volume / valor / fluxo / estoque / insumo),
+pesos explícitos nos índices compostos, regra de quebras tributárias para ICMS, e teste de
+sensibilidade (versão A vs. versão B do índice) na fase de validação.
+
+**Arquivos atualizados:**
+- `plano_projeto.md` — seções 3–9 e mapa de pesos; nova seção de padrões de implementação
+- `checklist.md` — fases 3, 4 e 5 revisadas
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -265,4 +324,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026 — ajuste metodológico agropecuária (PAM primária, LSPA complementar)*
+*Última atualização: 10 de abril de 2026 — revisão crítica das proxies e incorporação de melhorias metodológicas*

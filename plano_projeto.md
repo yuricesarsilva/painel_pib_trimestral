@@ -137,41 +137,69 @@ nem mudanças de lotação — todos capturados pelo SIAPE.
 
 ### 3. Construção Civil (~8% do VAB)
 
-| Proxy | Fonte | Frequência |
-|---|---|---|
-| Vínculos ativos na construção (CNAE F) | CAGED novo (a partir de 2020) | Mensal |
-| ICMS sobre materiais de construção | SEFAZ-RR (por atividade econômica) | Mensal |
+| Proxy | Fonte | Frequência | Tipo de medida |
+|---|---|---|---|
+| Vínculos ativos na construção (CNAE F) | CAGED novo (a partir de 2020) | Mensal | Insumo (emprego) |
+| ICMS sobre materiais de construção | SEFAZ-RR (por atividade econômica) | Mensal | Valor nominal |
+| Vendas de cimento (RR) | SNIC — Sindicato Nacional da Indústria do Cimento | Mensal | Volume físico |
+
+**Nota sobre cimento**: O SNIC publica vendas de cimento por estado em frequência mensal — proxy
+física direta de atividade construtiva, usada em diversas metodologias estaduais de PIB trimestral
+(inclusive como referência do IBCR). É o único insumo com dado físico de alta frequência disponível
+para RR. Deflação não necessária (já é volume). Classificação de qualidade: **forte**.
 
 ---
 
 ### 4. SIUP — Eletricidade, gás, água, esgoto e resíduos (5,40% do VAB)
 
-| Proxy | Fonte | Frequência |
-|---|---|---|
-| Consumo total de energia elétrica (RR) | ANEEL / EPE / BEN | Mensal |
+| Proxy | Fonte | Frequência | Tipo de medida |
+|---|---|---|---|
+| Consumo de energia elétrica — residencial (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
+| Consumo de energia elétrica — comercial (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
+| Consumo de energia elétrica — industrial (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
+| Consumo de energia elétrica — poder público (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
+
+**Nota sobre desagregação**: a ANEEL disponibiliza consumo por classe de consumidor e por UF na
+mesma consulta, sem custo adicional de coleta. Coletar desagregado desde o início permite: (a)
+construir um índice composto ponderado para o SIUP; (b) reaproveitar a série de **energia
+comercial** no setor de Comércio e a série de **energia industrial** na Indústria de Transformação,
+sem necessidade de coleta adicional. O consumo residencial é mais influenciado por fatores
+populacionais e climáticos do que pela atividade econômica — recebe peso menor no índice do SIUP.
+Classificação de qualidade do bloco: **forte**.
 
 ---
 
 ### 5. Indústria de Transformação (1,31% do VAB)
 
-| Proxy | Fonte | Frequência |
-|---|---|---|
-| Vínculos na indústria de transformação (CNAE C) | CAGED | Mensal |
-| ICMS sobre bens industriais | SEFAZ-RR (por atividade econômica) | Mensal |
+| Proxy | Fonte | Frequência | Tipo de medida |
+|---|---|---|---|
+| Consumo de energia industrial (RR) | ANEEL (classe industrial — coletado no SIUP) | Mensal | Volume |
+| Vínculos na indústria de transformação (CNAE C) | CAGED | Mensal | Insumo (emprego) |
+| ICMS sobre bens industriais | SEFAZ-RR (por atividade econômica) | Mensal | Valor nominal |
 
-**Nota**: Sem PIM-PF para RR. Peso de 1,31% minimiza o impacto de uma proxy menos precisa.
+**Nota**: Sem PIM-PF para RR. Peso de 1,31% minimiza o impacto de proxies menos precisas. A
+energia industrial é o componente mais próximo de volume físico e recebe peso prioritário no índice
+composto. ICMS requer deflação e atenção a quebras tributárias. A série de energia industrial é
+obtida sem coleta adicional, como subproduto da coleta do SIUP.
 
 ---
 
 ### 6. Comércio e reparação de veículos automotores e motocicletas (12,25% do VAB)
 
-| Proxy | Fonte | Frequência | Qualidade |
-|---|---|---|---|
-| ICMS sobre comércio (por atividade econômica) | SEFAZ-RR | Mensal | Primário |
-| Vínculos no comércio (CNAE G) | CAGED | Mensal | Controle de consistência |
+| Proxy | Fonte | Frequência | Tipo de medida | Qualidade |
+|---|---|---|---|---|
+| ICMS sobre comércio (por atividade econômica) | SEFAZ-RR | Mensal | Valor nominal | Aceitável |
+| Vínculos no comércio (CNAE G) | CAGED | Mensal | Insumo (emprego) | Aceitável |
+| Consumo de energia comercial (RR) | ANEEL (classe comercial — coletado no SIUP) | Mensal | Volume | Forte |
 
-**Nota sobre ICMS**: deflacionar pelo IPCA nacional para obter volume. Atentar a mudanças de
-alíquota e regimes especiais. Usar como proxy primário; CAGED como verificação.
+**Composição do índice**: índice composto com pesos explícitos a calibrar (sugestão inicial:
+energia comercial 40%, ICMS deflacionado 40%, CAGED 20%). A energia comercial é o componente
+mais robusto por medir volume físico independente de preço ou alíquota.
+
+**Regra para quebras tributárias**: toda vez que houver alteração de alíquota, benefício fiscal
+ou mudança de regime tributário que afete a arrecadação de ICMS do comércio, documentar a data
+e inserir variável de ajuste de nível (dummy) no script. Isso protege a série contra saltos
+artificiais. Monitorar os Decretos da SEFAZ-RR periodicamente.
 
 ---
 
@@ -183,10 +211,12 @@ alíquota e regimes especiais. Usar como proxy primário; CAGED como verificaç�
 | Carga aérea (Boa Vista) | ANAC | Mensal | Aéreo de cargas |
 | Vendas de óleo diesel (RR) | ANP (por UF) | Mensal | Frete rodoviário |
 
-**Nota sobre diesel**: Proxy razoável para frete rodoviário em Roraima (BR-174, abastecimento de
-Boa Vista). Limitação: diesel também abastece máquinas agrícolas e de construção. Por isso, o
-diesel é usado **exclusivamente neste setor** como componente de índice composto ponderado com ANAC
-— nunca duplicado em agropecuária ou construção. A sobreposição deve ser documentada na nota técnica.
+**Composição do índice**: composto ponderado com pesos explícitos a calibrar (sugestão inicial:
+passageiros ANAC 40%, carga aérea ANAC 30%, diesel ANP 30%). O diesel recebe peso menor por ser
+uma proxy contaminada — abastece também máquinas agrícolas, de construção e geração térmica, além
+do frete rodoviário. O diesel é usado **exclusivamente neste setor** e nunca duplicado em
+agropecuária ou construção. A sobreposição e o peso reduzido do diesel devem ser documentados na
+nota técnica.
 
 ---
 
@@ -200,10 +230,18 @@ diesel é usado **exclusivamente neste setor** como componente de índice compos
 
 ### 9. Atividades financeiras, de seguros e serviços relacionados (2,78% do VAB)
 
-| Proxy | Fonte | Frequência |
-|---|---|---|
-| Operações de crédito (RR) | BCB Estban | Mensal |
-| Depósitos bancários (RR) | BCB Estban | Mensal |
+| Proxy | Fonte | Frequência | Tipo de medida | Qualidade |
+|---|---|---|---|---|
+| Concessões de crédito (RR) | BCB — Nota de Crédito por UF | Mensal | Fluxo (volume corrente) | Aceitável |
+| Depósitos bancários (RR) | BCB Estban | Mensal | Estoque | Fraca mas necessária |
+
+**Nota metodológica**: o BCB Estban fornece *saldos* (estoque) de crédito e depósitos — variáveis
+de estado que podem crescer mesmo com atividade corrente estável ou em queda. As **concessões de
+crédito** (Nota de Crédito do BCB, disponível por UF) medem o *fluxo* de novos créditos
+concedidos a cada mês — muito mais próximo da atividade corrente do setor. Usar concessões como
+componente principal e saldo de depósitos como componente secundário. Ambos devem ser deflacionados
+pelo IPCA nacional para obter volume. Aplicar suavização (média móvel de 3 meses) antes de
+calcular o índice, pois concessões têm volatilidade mensal alta.
 
 ---
 
@@ -248,16 +286,16 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 | Atividade (IBGE) | % VAB 2023 | VAB (R$ mi) | Qualidade do proxy | Prioridade |
 |---|---|---|---|---|
 | Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (SIAPE + folha estadual) | **2ª fase** |
-| Comércio e reparação de veículos | 12,25% | 2.817 | Média-alta (ICMS + CAGED) | 4ª fase |
-| Agropecuária | 8,87% | 2.040 | Alta (LSPA + Censo + abate) | **1ª fase** |
+| Comércio e reparação de veículos | 12,25% | 2.817 | Média-alta (ICMS + CAGED + energia comercial) | 4ª fase |
+| Agropecuária | 8,87% | 2.040 | Alta (PAM/LSPA + Censo + abate) | **1ª fase** |
 | Atividades imobiliárias | 7,68% | 1.767 | Baixa (tendência suavizada) | 4ª fase |
-| Outros serviços | 7,63% | 1.756 | Média (CAGED serviços) | 4ª fase |
-| SIUP | 5,40% | 1.243 | Alta (ANEEL) | 3ª fase |
-| Construção | 4,89% | 1.125 | Média (CAGED + ICMS) | 3ª fase |
-| Atividades financeiras e seguros | 2,78% | 639 | Média (BCB Estban) | 4ª fase |
-| Transporte, armazenagem e correio | 1,92% | 441 | Média (ANAC + ANP diesel) | 4ª fase |
-| Indústrias de transformação | 1,31% | 301 | Média (CAGED + ICMS) | 3ª fase |
-| Informação e comunicação | 1,01% | 233 | Média (CAGED TI/telecom) | 4ª fase |
+| Outros serviços | 7,63% | 1.756 | Média (CAGED por subgrupo CNAE) | 4ª fase |
+| SIUP | 5,40% | 1.243 | Alta (ANEEL por classe de consumo) | 3ª fase |
+| Construção | 4,89% | 1.125 | Média-alta (CAGED + ICMS + cimento SNIC) | 3ª fase |
+| Atividades financeiras e seguros | 2,78% | 639 | Média (BCB concessões + depósitos) | 4ª fase |
+| Transporte, armazenagem e correio | 1,92% | 441 | Média (ANAC passag./carga + diesel ponderado) | 4ª fase |
+| Indústrias de transformação | 1,31% | 301 | Média (energia industrial + CAGED + ICMS) | 3ª fase |
+| Informação e comunicação | 1,01% | 233 | Fraca mas necessária (CAGED TI/telecom) | 4ª fase |
 | Indústrias extrativas | 0,05% | 12 | — (negligenciável) | Absorvida |
 
 ---
@@ -309,13 +347,15 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Denton-Cholette contra VAB AAPP anual
 
 ### Fase 3 — Indústria composta (Construção + SIUP + Transformação)
-- CAGED construção + ICMS construção + ANEEL
-- CAGED transformação + ICMS industrial
+- Construção: CAGED + ICMS materiais + cimento SNIC (índice composto com pesos explícitos)
+- SIUP: ANEEL desagregado por classe de consumo (residencial, comercial, industrial, público)
+- Transformação: energia industrial (da coleta SIUP) + CAGED + ICMS industrial
 
 ### Fase 4 — Serviços privados (Comércio + Transportes + Outros)
-- ICMS comércio + CAGED comércio
-- ANAC passageiros/carga + ANP diesel (composto ponderado)
-- CAGED serviços + BCB Estban
+- Comércio: energia comercial (da coleta SIUP) + ICMS deflacionado + CAGED (índice composto)
+- Transportes: ANAC passageiros + ANAC carga + ANP diesel (composto ponderado, diesel com peso menor)
+- Outros serviços: CAGED por subgrupo CNAE (I, M+N, P+Q) com pesos explícitos
+- Financeiro: concessões de crédito BCB + depósitos BCB Estban
 
 ### Fase 5 — Agregação, ajuste sazonal e publicação
 - Laspeyres encadeado com pesos das Contas Regionais
@@ -345,6 +385,57 @@ PIB Trimestral - Projeto 2026/
 │   └── nota_tecnica.qmd
 └── Base metodológica/
 ```
+
+---
+
+## Padrões de implementação (boas práticas obrigatórias)
+
+Estes padrões aplicam-se a todos os scripts e à nota técnica, independentemente do setor.
+
+### Classificação de qualidade de cada proxy
+
+Todo componente deve ser classificado em uma de três categorias na nota técnica:
+
+| Categoria | Critério |
+|---|---|
+| **Forte** | Mede diretamente volume físico ou é conceitualmente a mesma variável usada pelo IBGE |
+| **Aceitável** | Correlacionada com a atividade do setor, mas contaminada por preço, estoque ou informalidade |
+| **Fraca mas necessária** | Melhor opção disponível para RR, com limitações documentadas |
+
+### Tipologia das proxies
+
+Cada proxy deve ter seu tipo documentado explicitamente:
+
+| Tipo | Exemplos no projeto |
+|---|---|
+| **Volume físico** | Cimento (t), energia elétrica (MWh), produção agrícola (t) |
+| **Valor nominal** | ICMS (R$) — requer deflação pelo IPCA |
+| **Fluxo** | Concessões de crédito (R$), emissão de notas fiscais |
+| **Estoque** | Saldo de depósitos, vínculos de emprego (CAGED acumulado) |
+| **Insumo** | Vínculos ativos CAGED (proxy de emprego, não de produção) |
+
+### Pesos explícitos dentro de cada setor
+
+Quando um setor usa mais de uma proxy (índice composto), os pesos devem ser definidos
+explicitamente no script — nunca implícitos. Os pesos iniciais seguem o critério de qualidade
+(proxies mais fortes recebem peso maior) e podem ser revisados se os testes de sensibilidade
+indicarem instabilidade.
+
+### Regra de quebras tributárias (ICMS)
+
+Para toda série baseada em ICMS (Comércio, Construção, Indústria de Transformação):
+1. Manter um registro de datas de alteração de alíquota, regime ou benefício fiscal da SEFAZ-RR
+2. No script, criar variável dummy para cada quebra estrutural identificada
+3. Ajustar a série ou documentar o impacto na nota técnica trimestral
+4. Monitorar: Diário Oficial de RR e Decretos da SEFAZ-RR
+
+### Teste de sensibilidade
+
+Na Fase 5 (agregação), gerar duas versões do índice:
+- **Versão A**: proxies e pesos conforme definidos no plano
+- **Versão B**: variação de hipótese (ex: calendário agrícola alternativo, pesos diferentes nos
+  compostos, excluindo uma proxy de qualidade mais fraca)
+- Comparar e documentar a diferença. Se a divergência for pequena, reforça a robustez do índice.
 
 ---
 
