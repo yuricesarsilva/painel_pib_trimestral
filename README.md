@@ -114,3 +114,7 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 
 **Secretaria de Estado do Planejamento e Desenvolvimento de Roraima — SEPLAN/RR**  
 Diretoria de Estudos e Pesquisas Econômicas
+
+## Autoria do projeto
+
+**Projeto de autoria de Yuri Cesar de Lima e Silva.**
