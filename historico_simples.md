@@ -131,6 +131,30 @@ mensal para isso, será tratado como tendência suave entre os valores anuais do
 
 ---
 
+### Abril de 2026 — Inclusão da base metodológica no repositório
+
+**O que foi feito:**
+
+Incluímos no GitHub a pasta **`Base metodológica/`**, que reúne os documentos de referência usados
+para orientar a construção do indicador trimestral de Roraima.
+
+Esses arquivos já existiam localmente, mas ainda não estavam registrados no controle de versão.
+Com isso, a fundamentação técnica do projeto passa a ficar preservada junto com o restante da
+documentação.
+
+**Por que isso é importante:**
+
+- facilita a consulta das metodologias que inspiram o projeto;
+- preserva o histórico das referências utilizadas;
+- ajuda qualquer pessoa que entrar no projeto a entender de onde vieram as escolhas metodológicas.
+
+**Arquivos incluídos no repositório:**
+- metodologias do IBC-BR e do IBCR;
+- metodologias estaduais de PIB trimestral e mensal;
+- referências comparativas de outros estados e instituições.
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -157,4 +181,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: abril de 2026*
+*Última atualização: 10 de abril de 2026*

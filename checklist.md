@@ -26,6 +26,7 @@
 - [x] Criar histórico em linguagem simples (`historico_simples.md`)
 - [x] Criar checklist do projeto (`checklist.md`)
 - [x] Criar `regras.md` com protocolo obrigatório de fim de sessão
+- [x] Versionar a pasta `Base metodológica/` com os PDFs de referência
 - [ ] Criar projeto R (`.Rproj`) na pasta raiz
 - [ ] Instalar pacotes R necessários
   - [ ] `sidrar`

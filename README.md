@@ -61,6 +61,8 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 │   └── app.R                # dashboard interativo (Shiny / flexdashboard)
 ├── notas/
 │   └── nota_tecnica.qmd     # nota técnica metodológica (Quarto → PDF)
+├── Base metodológica/
+│   └── *.pdf                # referências metodológicas (IBCR, IBC-Br e experiências estaduais)
 ├── plano_projeto.md                   # plano metodológico detalhado
 └── README.md
 ```
