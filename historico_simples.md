@@ -80,6 +80,20 @@ https://github.com/yuricesarsilva/painel_pib_trimestral
 
 ---
 
+### Abril de 2026 — Criação dos arquivos de controle do projeto
+
+**O que foi feito:**
+
+Criamos três arquivos que vão acompanhar o projeto do início ao fim:
+
+- **`checklist.md`**: lista completa e detalhada de todas as tarefas do projeto, organizadas em 6 fases e dezenas de subetapas, com caixinhas para marcar quando cada item for concluído.
+
+- **`regras.md`**: protocolo obrigatório que deve ser seguido ao final de cada sessão de trabalho — garante que o histórico, o checklist e o repositório GitHub estejam sempre atualizados e que nada seja "esquecido" no controle de versão.
+
+- **`historico_simples.md`** (este arquivo): atualizado continuamente para que qualquer pessoa saiba o que foi feito e em que ponto o projeto está.
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**

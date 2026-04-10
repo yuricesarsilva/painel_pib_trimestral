@@ -25,6 +25,7 @@
 - [x] Publicar README no GitHub
 - [x] Criar histórico em linguagem simples (`historico_simples.md`)
 - [x] Criar checklist do projeto (`checklist.md`)
+- [x] Criar `regras.md` com protocolo obrigatório de fim de sessão
 - [ ] Criar projeto R (`.Rproj`) na pasta raiz
 - [ ] Instalar pacotes R necessários
   - [ ] `sidrar`
