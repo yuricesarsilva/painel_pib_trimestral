@@ -1,0 +1,109 @@
+# Histórico do Projeto — Painel PIB Trimestral de Roraima
+
+Este arquivo registra, em linguagem simples, tudo o que foi feito no projeto e em que etapa estamos.
+Qualquer pessoa pode ler e entender o andamento do trabalho.
+
+---
+
+## O que é este projeto?
+
+Estamos construindo um **termômetro trimestral da economia de Roraima**. Como o IBGE só divulga o
+PIB dos estados uma vez por ano (e com quase dois anos de atraso), este indicador vai permitir que a
+SEPLAN/RR acompanhe como a economia do estado está se comportando a cada três meses — antes mesmo
+de o IBGE publicar os números oficiais.
+
+O indicador não vai dizer "o PIB de Roraima foi R$ X bilhões", mas sim "a economia de Roraima
+cresceu ou caiu X% em relação ao trimestre anterior". É um índice, como o termômetro que diz se a
+temperatura subiu ou caiu, sem necessariamente dizer o valor absoluto em graus.
+
+---
+
+## Linha do tempo
+
+### Abril de 2026 — Planejamento do projeto
+
+**O que foi feito:**
+
+Definimos o plano completo de como construir o indicador. As principais decisões foram:
+
+- **O que vamos medir**: um índice de volume (sem valor em reais), que mostra se a economia cresceu
+  ou caiu a cada trimestre. Isso resolve o maior problema técnico: Roraima não tem um índice de
+  preços próprio.
+
+- **Como vamos calcular**: seguindo a metodologia do Banco Central do Brasil (chamada IBCR), que já
+  faz algo parecido para todos os estados. A ideia é combinar dados de várias fontes (emprego,
+  produção agrícola, consumo de energia, arrecadação fiscal, etc.) para montar um retrato trimestral
+  da economia.
+
+- **Como vamos garantir que o número bate com o IBGE**: usaremos uma técnica estatística chamada
+  Denton-Cholette, que "ancora" nosso indicador trimestral aos valores anuais oficiais do IBGE.
+  Assim, quando o IBGE diz que a economia cresceu X% no ano, nossos quatro trimestres daquele ano
+  somam exatamente esse X%.
+
+- **Por onde começar**: decidimos começar pelo setor agropecuário (mais fácil de medir), depois
+  partir para o setor público (maior parte da economia de Roraima, com dados excelentes), e por
+  fim completar com indústria e serviços.
+
+- **Ferramenta**: R (linguagem de programação especializada em estatística).
+
+- **Período coberto**: a partir de 2020.
+
+**Fontes de dados mapeadas por setor:**
+
+| O que mede | De onde vem o dado |
+|---|---|
+| Produção agrícola (arroz, soja, milho etc.) | IBGE — pesquisa LSPA |
+| Criação de animais (abate, leite, ovos) | IBGE — pesquisas trimestrais |
+| Servidores públicos federais | Portal da Transparência (SIAPE) |
+| Servidores estaduais | SEPLAN/SEFAZ-RR |
+| Empregos na construção, comércio e serviços | Ministério do Trabalho — CAGED |
+| Impostos sobre comércio e indústria | SEFAZ-RR (ICMS por atividade) |
+| Consumo de energia elétrica | ANEEL |
+| Passageiros e cargas no aeroporto de Boa Vista | ANAC |
+| Vendas de diesel (frete rodoviário) | ANP |
+| Crédito e depósitos bancários | Banco Central — Estban |
+
+**Problema técnico identificado e resolvido no plano:**
+A pesquisa agrícola do IBGE (LSPA) não divulga a produção mês a mês — ela divulga uma estimativa
+do total anual, revisada todo mês. Para transformar isso em números trimestrais, usaremos o
+calendário de colheita do Censo Agropecuário de 2006, que mostra em quais meses cada cultura é
+colhida em Roraima.
+
+**Arquivos criados:**
+- `plano_indicador_trimestral_RR.md` — plano técnico detalhado
+- `README.md` — apresentação do projeto para o GitHub
+- Estrutura de pastas do projeto (`data/`, `R/`, `dashboard/`, `notas/`)
+
+**Repositório no GitHub criado:**
+O código do projeto está disponível publicamente em:
+https://github.com/yuricesarsilva/painel_pib_trimestral
+
+---
+
+## Onde estamos agora
+
+**Etapa atual: início da implementação**
+
+O planejamento está concluído e aprovado. A próxima etapa é começar a escrever os códigos em R,
+seguindo esta ordem:
+
+1. **`utils.R`** — funções básicas que serão usadas por todos os outros scripts
+   (como a função de "ancoragem" Denton-Cholette e a de deflação pelo IPCA)
+
+2. **`01_agropecuaria.R`** — primeiro setor a ser implementado:
+   - Calcular quanto do valor da produção agrícola de Roraima é coberto pelos dados do IBGE
+   - Montar a série trimestral de lavouras usando LSPA + calendário de colheita do Censo 2006
+   - Verificar disponibilidade de dados de abate, leite e ovos para Roraima
+   - Ancoragem Denton ao VAB agropecuário anual do IBGE
+
+3. **`02_adm_publica.R`** — setor público (32% da economia de RR)
+
+4. **`03_industria.R`** — construção civil, energia e indústria
+
+5. **`04_servicos.R`** — comércio, transportes e outros serviços
+
+6. **`05_agregacao.R`** — juntar tudo, ajustar sazonalmente e gerar os outputs finais
+
+---
+
+*Última atualização: abril de 2026*
