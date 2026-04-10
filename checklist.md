@@ -21,7 +21,7 @@
 - [x] Criar estrutura de pastas (`data/`, `R/`, `dashboard/`, `notas/`)
 - [x] Criar repositório público no GitHub (`painel_pib_trimestral`)
 - [x] Configurar `.gitignore` (excluir `data/`, arquivos R temporários)
-- [x] Publicar plano metodológico (`plano_indicador_trimestral_RR.md`)
+- [x] Publicar plano metodológico (`plano_projeto.md`)
 - [x] Publicar README no GitHub
 - [x] Criar histórico em linguagem simples (`historico_simples.md`)
 - [x] Criar checklist do projeto (`checklist.md`)

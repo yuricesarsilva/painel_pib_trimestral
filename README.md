@@ -55,7 +55,7 @@ O indicador é um **índice encadeado de volume** (sem unidade monetária), com 
 │   └── app.R                # dashboard interativo (Shiny / flexdashboard)
 ├── notas/
 │   └── nota_tecnica.qmd     # nota técnica metodológica (Quarto → PDF)
-├── plano_indicador_trimestral_RR.md   # plano metodológico detalhado
+├── plano_projeto.md                   # plano metodológico detalhado
 └── README.md
 ```
 

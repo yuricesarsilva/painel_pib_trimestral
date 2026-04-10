@@ -23,7 +23,12 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
 - Manter a seção de estrutura do repositório sempre refletindo o estado atual dos arquivos
 - Não é necessário atualizar a cada pequena mudança — apenas quando algo relevante para quem visita o repositório mudar
 
-### 4. Atualizar `checklist.md`
+### 4. Atualizar `plano_projeto.md` (se necessário)
+- Atualizar se houver mudanças metodológicas, novas decisões de design, correções de proxies ou fontes
+- Manter as decisões metodológicas sempre refletindo o estado atual do projeto
+- Não é necessário atualizar a cada pequena mudança — apenas quando algo alterar a estratégia ou metodologia
+
+### 5. Atualizar `checklist.md`
 - Marcar com `[x]` todos os itens concluídos na sessão
 - Adicionar novos itens se tarefas não previstas foram identificadas durante o trabalho
 - Atualizar a tabela de **Status geral** no final do arquivo
@@ -31,7 +36,7 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
   - 🟡 Em andamento — fase iniciada mas não concluída
   - ⚪ Não iniciada — nenhum item da fase foi iniciado
 
-### 5. Commit em português
+### 6. Commit em português
 - Fazer commit de **todos** os arquivos modificados (inclusive os de controle acima)
 - A mensagem do commit deve ser em **português**
 - A mensagem deve descrever claramente o que foi feito, ex:
@@ -40,7 +45,7 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
   - `"Atualiza checklist e histórico após conclusão da Fase 2"`
 - Incluir sempre ao final: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
 
-### 6. Push para o GitHub
+### 7. Push para o GitHub
 - Fazer push após o commit
 - Verificar se o push foi bem-sucedido antes de encerrar a sessão
 
@@ -57,11 +62,13 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
         ↓
 4. README.md  (se necessário)
         ↓
-5. checklist.md
+5. plano_projeto.md  (se necessário)
         ↓
-6. git commit -m "mensagem em português"
+6. checklist.md
         ↓
-7. git push
+7. git commit -m "mensagem em português"
+        ↓
+8. git push
 ```
 
 ---
