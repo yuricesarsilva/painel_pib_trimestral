@@ -43,7 +43,6 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
   - `"Adiciona script de cobertura PAM — Fase 1, Etapa 1.0"`
   - `"Corrige cálculo do índice de Laspeyres em 01_agropecuaria.R"`
   - `"Atualiza checklist e histórico após conclusão da Fase 2"`
-- Incluir sempre ao final: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
 
 ### 7. Push para o GitHub
 - Fazer push após o commit
