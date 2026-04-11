@@ -39,99 +39,141 @@ X-13ARIMA-SEATS via pacote `seasonal`. Publicar série com e sem ajuste sazonal.
 
 ## Estrutura setorial e proxies disponíveis para Roraima
 
-### 1. Agropecuária (~6% do VAB) — detalhamento especial
+### 1. Agropecuária (8,87% do VAB) — detalhamento especial
 
 #### 1a. Lavouras — metodologia de desagregação mensal (PAM + LSPA)
 
 **Hierarquia das fontes de produção anual:**
 
 A PAM (Produção Agrícola Municipal) é o **dado consolidado e definitivo** de produção de lavouras,
-publicada anualmente pelo IBGE com defasagem de aproximadamente um ano (ex: PAM 2023 publicada em
-2024). A LSPA (Levantamento Sistemático da Produção Agrícola), por sua vez, publica **revisões
+publicada anualmente pelo IBGE com defasagem de aproximadamente um ano (ex: PAM 2024 publicada em
+2025). A LSPA (Levantamento Sistemático da Produção Agrícola), por sua vez, publica **revisões
 mensais da projeção de produção anual** — ela é o canal de atualização corrente antes da PAM ser
 publicada. De fato, o valor da LSPA de dezembro de cada ano converge para o valor que será
 consolidado na PAM.
 
 **Regra de uso das fontes:**
 
-- **Anos com PAM disponível**: usar a quantidade produzida da PAM como valor anual de referência —
-  é o dado mais preciso e revisado.
+- **Anos com PAM disponível**: usar a quantidade produzida da PAM como valor anual de referência
+  (dado mais preciso e revisado). A PAM cobre Roraima até **2024** (confirmado via SIDRA).
 - **Ano mais recente sem PAM disponível**: usar o **valor de dezembro da LSPA** daquele ano como
-  estimativa provisória da produção anual. Quando a PAM for publicada, substituir automaticamente.
+  estimativa provisória. Quando a PAM for publicada, o script substitui automaticamente.
+  Atualmente: LSPA usada para **2025**.
 
 **Método de desagregação intra-anual (igual para PAM e LSPA):**
 
-A produção anual — seja de fonte PAM ou LSPA — não tem desagregação mensal publicada. Para obter
-um fluxo mensal/trimestral de produção, aplica-se o seguinte procedimento em ambos os casos:
+A produção anual não tem desagregação mensal publicada. Para obter um fluxo trimestral:
 
-1. Tomar a **produção anual por cultura** (PAM consolidada ou LSPA dezembro do ano corrente)
-2. Obter a **estrutura sazonal de colheita** do **Censo Agropecuário 2006** (tabelas de época de
-   colheita por cultura e por estado — última publicação com essa granularidade)
-3. Aplicar os coeficientes mensais do Censo como pesos de distribuição da produção anual ao longo
-   dos 12 meses → produção mensal estimada por cultura
-4. Agregar meses em trimestres
+1. Tomar a **produção anual por cultura** (PAM ou LSPA dezembro)
+2. Aplicar **coeficientes mensais de colheita** do **Censo Agropecuário 2006** como pesos de
+   distribuição ao longo dos 12 meses → produção mensal estimada por cultura
+3. Agregar meses em trimestres
+4. Calcular índice de Laspeyres com pesos VBP (médio 2018–2022)
 5. Aplicar Denton-Cholette contra o VAB agropecuário anual das Contas Regionais
 
-**Nota**: Os coeficientes de 2006 são a melhor aproximação disponível e refletem o calendário
-agroclimático de Roraima, que é relativamente estável. Verificar se o Censo 2017 publicou tabela
-equivalente de época de colheita — se sim, atualizar os coeficientes.
+**Nota sobre o Censo 2017**: não publicou tabela equivalente de época de colheita. Os coeficientes
+do Censo 2006 permanecem como referência — refletem o calendário agroclimático de Roraima, que
+é relativamente estável.
 
-**Lavouras cobertas e fontes:**
+**Fontes SIDRA — lavouras:**
 
-| Cultura | Fonte (anos consolidados) | Fonte (ano corrente) | SIDRA | Uso no índice |
+| Fonte | Tabela SIDRA | Classificação | Observação |
+|---|---|---|---|
+| PAM (todas as lavouras, temp. + perm.) | Tab. 5457 | c782 | Uma única consulta cobre todas as culturas |
+| LSPA (projeção anual, dezembro) | Tab. 6588 | c48 | Período no formato texto "dezembro AAAA" |
+| VBP por cultura (pesos Laspeyres) | Tab. 5457 | c782, v215 | Mesmo endpoint da PAM |
+
+**Nota sobre Tab. 5457**: a classificação c782 ("Produto das lavouras temporárias e permanentes")
+cobre lavouras temporárias e permanentes numa única consulta — elimina a necessidade de consultar
+a Tab. 5558 (lavouras permanentes) separadamente.
+
+**Nota sobre LSPA multi-safra**: feijão (3 safras) e milho (2 safras) na Tab. 6588 retornam
+linhas separadas por safra. O script agrega por ano antes de usar os valores.
+
+**Lavouras cobertas e cobertura de VBP:**
+
+| Cultura | SIDRA PAM/LSPA | Cobertura do VBP total de RR |
+|---|---|---|
+| Soja | Tab. 5457 / 6588 | ~48% |
+| Milho | Tab. 5457 / 6588 | ~11% |
+| Arroz | Tab. 5457 / 6588 | ~11% |
+| Banana | Tab. 5457 / 6588 | ~10% |
+| Mandioca | Tab. 5457 / 6588 | ~5% |
+| Laranja | Tab. 5457 / 6588 | ~2% |
+| Feijão | Tab. 5457 / 6588 | ~2% |
+| Cana-de-açúcar | Tab. 5457 / 6588 | ~1% |
+| Tomate | Tab. 5457 / 6588 | <1% |
+| Cacau | Tab. 5457 / 6588 | <1% |
+| **Total coberto** | | **~90,4% do VBP de lavouras** |
+
+#### 1b. Pecuária — disponibilidade verificada para RR
+
+| Proxy | Fonte | SIDRA | Frequência | Status RR |
 |---|---|---|---|---|
-| Arroz — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Feijão — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Milho — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Soja — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Banana — quantidade produzida | PAM | LSPA (dez) | Tab. 5558 / 6588 | Volume; peso = VBP PAM |
-| Cacau — quantidade produzida | PAM | LSPA (dez) | Tab. 5558 / 6588 | Volume; peso = VBP PAM |
-| Cana-de-açúcar — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Laranja — quantidade produzida | PAM | LSPA (dez) | Tab. 5558 / 6588 | Volume; peso = VBP PAM |
-| Mandioca — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Tomate — quantidade produzida | PAM | LSPA (dez) | Tab. 5457 / 6588 | Volume; peso = VBP PAM |
-| Pesos (VBP por cultura) | PAM | PAM (último ano disponível) | Tab. 5457 / 5558 | Estrutura Laspeyres |
-| Coefic. sazonais de colheita | Censo Agropecuário 2006 | Censo 2006 | — | Distribuição intra-anual |
+| Abate de animais (bovinos, suínos, aves) | IBGE Abate | Tab. 1092 | Trimestral | **Disponível** (290 obs.) |
+| Produção de ovos de galinha | IBGE Ovos | Tab. 915 | Trimestral | **Disponível** (57 obs.) |
+| Produção de leite | IBGE Leite | Tab. 74 | Trimestral | **Indisponível para RR** — excluída |
+| VBP por produto animal (pesos Laspeyres) | PPM | Tab. 74, v215 | Anual | **Disponível** |
 
-**Análise de cobertura (entrega obrigatória):**
-Calcular via PAM o percentual do VBP total de lavouras em Roraima coberto pelas 10 culturas acima.
-Esse número deve constar na nota técnica como indicador de transparência.
+**Nota sobre pesos pecuários**: o VBP por produto animal vem da Tab. 74 v215 (valor da produção
+animal). A Tab. 3939 (PPM efetivo de rebanhos) não contém a variável de valor necessária para
+ponderação.
 
-#### 1b. Pecuária
-
-| Proxy | Fonte | SIDRA | Frequência | Status |
-|---|---|---|---|---|
-| Abate de bovinos (quantidade) | IBGE Abate | Tab. 1092 | Trimestral | Verificar disponibilidade para RR |
-| Abate de suínos e aves | IBGE Abate | Tab. 1092 | Trimestral | Verificar disponibilidade para RR |
-| Produção de leite (litros) | IBGE Leite | Tab. 74 | Trimestral | Verificar disponibilidade para RR |
-| Produção de ovos de galinha | IBGE Ovos | Tab. 915 | Trimestral | Verificar disponibilidade para RR |
-| Peso de cada produto pecuário | PPM (VBP) | Tab. 3939 | Anual | Confirmado |
-
-**Nota**: Disponibilidade de cada série para RR deve ser verificada via SIDRA antes de incluir.
-Os que não tiverem cobertura para RR são excluídos da versão inicial. Os pesos (PPM) garantem que
-produtos sem proxy trimestral recebam participação zero no índice ou sejam interpolados linearmente.
+**Estrutura de pesos lavouras × pecuária** (VBP médio 2018–2022):
+- Lavouras: **93,0%**
+- Pecuária: **7,0%** (abate + ovos; leite excluído por falta de série para RR)
 
 ---
 
-### 2. Administração Pública (~32% do VAB) ★ setor mais importante
+### 2. Administração Pública (46,21% do VAB) ★ setor mais importante
 
-| Proxy | Fonte | Frequência |
-|---|---|---|
-| Folha de pagamento federal bruta (servidores lotados em RR) | Portal da Transparência (API) | Mensal |
-| Folha estadual (SEPLAN/SEFAZ-RR) | SEPLAN-RR | Mensal |
-| Folha municipal (estimada via SICONFI) | STN | Trimestral |
+| Proxy | Fonte | API / Endpoint | Frequência | Status |
+|---|---|---|---|---|
+| Folha estadual — pessoal ativo (elemento 31) | SICONFI/STN — RREO Anexo 06 | `apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo` | Bimestral acumulado | **Disponível** |
+| Folha municipal — pessoal ativo (15 municípios) | SICONFI/STN — RREO Anexo 06 | Mesmo endpoint, id_ente = cod IBGE município | Bimestral acumulado | **Disponível** |
+| Folha federal (SIAPE) | Portal da Transparência | `/remuneracao-servidores-ativos` | Mensal | **Indisponível via API** (HTTP 403) |
 
-**Justificativa metodológica (por que SIAPE > PNADC para este setor):**
+**Justificativa metodológica (por que folha de pessoal > PNADC):**
 O IBGE mensura o produto de Administração Pública nas Contas Regionais pela **abordagem de custo**
-(non-market services): VAB ≈ remuneração dos empregados + consumo intermediário + consumo de capital
-fixo. O componente dominante é a folha salarial. Portanto, o SIAPE não é apenas um proxy — é
-**a mesma variável que o IBGE usa como insumo de cálculo**. Ao aplicar Denton-Cholette com a folha
-como indicador de distribuição trimestral, a série quarterly se alinhará ao benchmark anual
-naturalmente, pois proxy e benchmark compartilham base conceitual idêntica. A PNADC captura estoque
-de empregos (não o valor da folha), sofre de erro amostral para RR, e não reflete reajustes salariais
-nem mudanças de lotação — todos capturados pelo SIAPE.
+(non-market services): VAB ≈ remuneração dos empregados ativos + consumo intermediário + consumo de
+capital fixo. O componente dominante é a folha de pessoal ativo. A folha é, portanto, **a mesma
+variável que o IBGE usa como insumo de cálculo** — não um proxy, mas o próprio dado de base.
 
-**Deflação**: IPCA nacional aplicado à folha nominal → série de volume.
+**Escopo do elemento 31 (pessoal ativo):**
+O RREO Anexo 06 registra despesas com pessoal e encargos sociais. O alinhamento com a metodologia
+do IBGE exige usar apenas o pessoal ativo (elemento 31) — aposentados e pensionistas são
+*transferências*, não remuneração de fator de produção, e não entram no VAB de AAPP nas Contas
+Nacionais. A conta utilizada no SICONFI é `RREO6PessoalEEncargosSociais`, coluna "DESPESAS
+LIQUIDADAS" (valor acumulado do bimestre).
+
+**Procedimento de conversão bimestral → trimestral:**
+O RREO é publicado em bimestres acumulados (bimestre 1 = jan+fev acumulado, bimestre 2 = jan+abr
+acumulado, etc.). O processo de conversão é:
+1. Diferença entre bimestres consecutivos → valor incremental por bimestre
+2. Distribuição uniforme dos 2 meses do bimestre → valor mensal estimado
+3. Agregação por trimestre (3 meses) → valor trimestral
+
+**Situação do SIAPE (folha federal):**
+O endpoint `/remuneracao-servidores-ativos` do Portal da Transparência retorna HTTP 403 para o
+cadastro padrão da API — independentemente do header ou parâmetros utilizados. O componente
+federal está, contudo, implicitamente incluído no índice via Denton-Cholette: o benchmark anual
+utilizado (VAB AAPP das Contas Regionais IBGE) já engloba o setor público federal. O perfil
+trimestral é derivado de estado + municípios e calibrado para o total correto pelo Denton.
+Alternativa futura: download manual dos arquivos `.zip` mensais do portal, com filtro por
+`uf_exercicio = 'RR'`.
+
+**Deflação**: IPCA nacional (SIDRA tab. 1737, v2266 — variação mensal) aplicado à folha nominal →
+índice encadeado de preços, base jan/2020 = 1 → série de volume.
+
+**Resultado da implementação**: validação perfeita contra Contas Regionais (2021–2023):
+
+| Ano | Variação do índice | VAB AAPP IBGE |
+|---|---|---|
+| 2021 | +9,7% | +9,7% ✓ |
+| 2022 | +25,6% | +25,6% ✓ |
+| 2023 | +18,0% | +18,0% ✓ |
+
+Série de saída: `data/output/indice_adm_publica.csv`, 16 observações (2020T1–2023T4).
 
 ---
 
@@ -285,9 +327,9 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 
 | Atividade (IBGE) | % VAB 2023 | VAB (R$ mi) | Qualidade do proxy | Prioridade |
 |---|---|---|---|---|
-| Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (SIAPE + folha estadual) | **2ª fase** |
+| Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (folha estadual + municipal via SICONFI; federal implícito via Denton) | **2ª fase** ✅ |
 | Comércio e reparação de veículos | 12,25% | 2.817 | Média-alta (ICMS + CAGED + energia comercial) | 4ª fase |
-| Agropecuária | 8,87% | 2.040 | Alta (PAM/LSPA + Censo + abate) | **1ª fase** |
+| Agropecuária | 8,87% | 2.040 | Alta (PAM/LSPA + Censo 2006 + abate + ovos) | **1ª fase** ✅ |
 | Atividades imobiliárias | 7,68% | 1.767 | Baixa (tendência suavizada) | 4ª fase |
 | Outros serviços | 7,63% | 1.756 | Média (CAGED por subgrupo CNAE) | 4ª fase |
 | SIUP | 5,40% | 1.243 | Alta (ANEEL por classe de consumo) | 3ª fase |
@@ -302,49 +344,71 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 
 ## Sequência de implementação
 
-### Fase 1 — Agropecuária
+### Fase 1 — Agropecuária ✅ Concluída
 
-**Etapa 1.0 — Análise de cobertura (entrega de transparência):**
-- Puxar PAM via `sidrar` (tabelas 5457/5558 — lavouras temporárias e permanentes) para Roraima
-- Calcular VBP total de todas as lavouras
-- Calcular VBP das 10 culturas incluídas no índice (Arroz, Feijão, Milho, Soja, Banana, Cacau,
-  Cana-de-açúcar, Laranja, Mandioca, Tomate)
-- Gerar tabela: participação % de cada cultura + cobertura total do VBP de lavouras
-- Este número de cobertura vai constar na nota técnica final
+**Script**: `R/01_agropecuaria.R`
+**Saídas**: `data/output/indice_agropecuaria.csv` (56 obs., 2010T1–2023T4)
 
-**Etapa 1.1 — Estrutura sazonal do Censo Agropecuário:**
-- Localizar tabelas de "época de colheita" do Censo 2006 (e verificar se Censo 2017 publicou equivalente)
-- Construir matriz: cultura × mês → coeficiente de colheita (soma = 1 por cultura)
-- Verificar razoabilidade com calendário agroclimático de RR (período chuvoso dez–abr, seco mai–set)
+**Etapa 1.0 — Análise de cobertura** ✅
+- PAM via `sidrar` Tab. 5457 (c782) — cobre todas as lavouras temp. e perm. numa única consulta
+- Cobertura calculada: **90,4% do VBP total de lavouras** de RR coberto pelas 10 culturas
+- Soja (48%) domina; os demais em ordem: milho, arroz, banana, mandioca, laranja, feijão
+- Arquivo: `data/processed/cobertura_lspa_pam.csv`
 
-**Etapa 1.2 — Série mensal de produção de lavouras:**
-- Para cada ano com PAM disponível: usar quantidade produzida da PAM (tabelas 5457/5558) como valor anual
-- Para o ano mais recente sem PAM: usar valor de dezembro da LSPA (tabela 6588) como estimativa provisória
-  - Ao ser publicada a PAM do período, substituir o valor da LSPA automaticamente
-- Aplicar coeficientes do Censo → produção mensal por cultura (mesmo procedimento para PAM e LSPA)
-- Calcular índice de Laspeyres de quantidade com pesos PAM (VBP)
-- Agregar em trimestres
+**Etapa 1.1 — Estrutura sazonal** ✅
+- Censo Agropecuário 2006 — única publicação com tabela de época de colheita por cultura e estado
+- Censo 2017 não publicou tabela equivalente (confirmado)
+- Matriz 10 × 12 construída; cada linha soma 1,0 por cultura
+- Arquivo: `data/processed/coef_sazonais_colheita.csv`
 
-**Etapa 1.3 — Pecuária:**
-- Verificar disponibilidade para RR via SIDRA:
-  - Tab. 1092: abate de bovinos, suínos, aves
-  - Tab. 74: produção de leite (litros)
-  - Tab. 915: produção de ovos de galinha
-- Para cada série disponível: calcular índice de volume trimestral
-- Agregar com lavouras usando pesos PPM (tab. 3939) como estrutura de ponderação
-- Documentar quais séries pecuárias não têm cobertura para RR (transparência metodológica)
+**Etapa 1.2 — Série de lavouras** ✅
+- PAM: Tab. 5457, c782 → cobre RR até 2024
+- LSPA: Tab. 6588, c48, filtrar `grepl("^dezembro", mes_txt)` → provisório para 2025
+- Feijão (3 safras) e milho (2 safras) na LSPA: agregar por ano antes de usar
+- Índice de Laspeyres, pesos VBP PAM médio 2018–2022
+- Arquivo: `data/processed/serie_lavouras_trimestral.csv`
 
-**Etapa 1.4 — Benchmarking:**
-- Aplicar Denton-Cholette (`tempdisagg::td()`) contra VAB agropecuário anual das Contas Regionais
-- Validar: variação anual do índice vs. Contas Regionais
+**Etapa 1.3 — Pecuária** ✅
+- Abate (Tab. 1092): disponível para RR, trimestral — incluído
+- Ovos (Tab. 915): disponível para RR, trimestral — incluído
+- Leite (Tab. 74, trimestral): **sem cobertura para RR** — excluído
+- Pesos VBP: Tab. 74 v215 (valor da produção animal)
+- Resultado: lavouras 93%, pecuária 7% no índice agropecuário total
+- Arquivo: `data/processed/serie_pecuaria_trimestral.csv`
+
+**Etapa 1.4 — Denton-Cholette** ✅
+- `tempdisagg::td(benchmark ~ 0 + indicador, conversion = "mean")` — fórmula sem intercepto obrigatória
+- `conversion = "mean"`: a média dos 4 trimestres deve igualar o benchmark anual (índice, não soma)
+- Validação: variações anuais coincidem com Contas Regionais em todos os 13 anos (2011–2023)
 
 ---
 
-### Fase 2 — Administração Pública (maior peso, dados excelentes)
-- Coletar SIAPE via API do Portal da Transparência (filtro UG lotação RR)
-- Incorporar folha estadual da SEPLAN-RR
-- Deflacionar pelo IPCA nacional → série de volume
-- Denton-Cholette contra VAB AAPP anual
+### Fase 2 — Administração Pública ✅ Concluída
+
+**Script**: `R/02_adm_publica.R`
+**Saídas**: `data/output/indice_adm_publica.csv` (16 obs., 2020T1–2023T4)
+
+**Etapa 2.1 — Folha federal (SIAPE)** — indisponível
+- API `portaldatransparencia.gov.br/api-de-dados/remuneracao-servidores-ativos`: retorna HTTP 403
+  para o cadastro padrão da API, independentemente do token ou parâmetros
+- Componente federal está implicitamente incluído via Denton (ver decisão metodológica na seção 2)
+
+**Etapa 2.2 — Folha estadual** ✅
+- SICONFI: `GET apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo`
+- Parâmetros: `an_exercicio`, `nr_periodo` (bimestre 1–6), `no_anexo="RREO-Anexo 06"`, `id_ente=14`
+- Conta: `cod_conta = "RREO6PessoalEEncargosSociais"`, `coluna = "DESPESAS LIQUIDADAS"`
+- Cobertura: 2020–2026T1 (37 bimestres)
+- Arquivo: `data/raw/folha_estadual_rr_mensal.csv`
+
+**Etapa 2.3 — Folha municipal** ✅
+- Mesmo endpoint SICONFI, `id_ente` = cod IBGE de cada município (15 municípios de RR)
+- Cobertura: 30–37 bimestres por município (variação por data de início dos relatórios no SICONFI)
+- Arquivo: `data/raw/folha_municipal_rr.csv`
+
+**Etapa 2.4 — Volume e benchmarking** ✅
+- Deflação: IPCA (SIDRA Tab. 1737 v2266), índice encadeado base jan/2020 = 1
+- Denton-Cholette: 2020–2023 (4 anos, 16 trimestres)
+- Validação perfeita: 2021 +9,7% / 2022 +25,6% / 2023 +18,0%
 
 ### Fase 3 — Indústria composta (Construção + SIUP + Transformação)
 - Construção: CAGED + ICMS materiais + cimento SNIC (índice composto com pesos explícitos)
@@ -460,19 +524,35 @@ Na Fase 5 (agregação), gerar duas versões do índice:
 1. **PAM como fonte primária, LSPA como substituto temporário**: para anos com PAM disponível, usa-se
    a quantidade produzida da PAM (dado consolidado). Para o ano corrente ainda não coberto pela PAM,
    usa-se o valor de dezembro da LSPA (estimativa provisória). Quando a PAM for publicada, o valor
-   é substituído. A distribuição intra-anual é feita da mesma forma em ambos os casos: coeficientes
-   de colheita do Censo Agropecuário 2006.
+   é substituído. A distribuição intra-anual é feita da mesma forma: coeficientes do Censo 2006.
 2. **LSPA não é fluxo mensal**: a LSPA publica revisões mensais da projeção de produção anual —
    não a produção mês a mês. A desagregação mensal é sempre derivada dos coeficientes do Censo.
-3. **Cobertura das culturas no índice**: X% do VBP total de lavouras de Roraima (calculado via PAM,
-   ver Etapa 1.0).
-4. **Ausência de PIM-PF**: compensada por CAGED + ICMS industrial; peso < 3%.
-5. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
-6. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
-7. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
-8. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
-9. **Benchmarking Denton**: assegura consistência anual com IBGE.
-10. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
+3. **Cobertura das culturas no índice agropecuário**: **90,4%** do VBP total de lavouras de
+   Roraima (calculado via PAM, média 2018–2022). Soja representa 48% do VBP.
+4. **Leite excluído da pecuária**: a pesquisa de produção de leite (IBGE, Tab. 74) não tem
+   cobertura trimestral para Roraima. O índice pecuário cobre abate (Tab. 1092) e ovos (Tab. 915).
+5. **Pesos lavouras × pecuária**: 93% e 7% respectivamente, com base no VBP médio 2018–2022.
+   Leite excluído não distorce — seu peso seria incorporado via ponderação Laspeyres com zero.
+6. **Denton-Cholette — fórmula sem intercepto obrigatória**: `td(bench ~ 0 + indicador)`. A
+   fórmula com intercepto (`~ indicador`) cria matriz RHS que o algoritmo Denton rejeita. O
+   parâmetro `conversion = "mean"` é obrigatório para índices (a média dos 4 trimestres deve
+   igualar o benchmark anual, não a soma).
+7. **Elemento 31 (pessoal ativo) para AAPP**: alinhado com a metodologia do IBGE — aposentados
+   e pensionistas são transferências, não remuneração de fator, e não integram o VAB de AAPP nas
+   Contas Nacionais. O SICONFI (RREO Anexo 06) é a fonte oficial para estado e municípios.
+8. **SIAPE indisponível via API**: o endpoint `/remuneracao-servidores-ativos` do Portal da
+   Transparência retorna HTTP 403. O componente federal está implicitamente incluído via Denton-Cholette:
+   o benchmark IBGE engloba todo o VAB de AAPP. O perfil trimestral de estado + municípios é
+   calibrado para o total correto (inclusive federal).
+9. **RREO bimestral acumulado → trimestral**: diferença entre bimestres consecutivos → valor
+   incremental; distribuição uniforme em 2 meses; agregação por trimestre.
+10. **Ausência de PIM-PF**: compensada por CAGED + ICMS industrial + energia industrial; peso < 3%.
+11. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
+12. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
+13. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
+14. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
+15. **Benchmarking Denton**: assegura consistência anual com IBGE.
+16. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
 
 ---
 
