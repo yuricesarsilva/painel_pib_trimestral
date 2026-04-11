@@ -250,156 +250,111 @@ message(sprintf("\nCAGED — seções carregadas para serviços privados."))
 
 # ============================================================
 # ETAPA 4.3 — ANAC: passageiros e carga — Aeroporto de Boa Vista
-# URL: Dados Abertos ANAC — VRA mensal (Viagens e Rotas Aéreas)
-# ICAO: SBBV (Aeroporto Internacional de Boa Vista)
-# Tipo: volume físico | Qualidade: forte (passageiros); aceitável (carga)
+# Fonte: Dados Estatísticos do Transporte Aéreo — CSV consolidado
+# URL: sistemas.anac.gov.br/dadosabertos/
+#        Voos e operações aéreas/
+#        Dados Estatísticos do Transporte Aéreo/
+#        Dados_Estatisticos.csv
+# (~353 MB, série completa 2000–presente, atualização mensal)
+# ICAO Boa Vista: SBBV
+# Tipo: volume físico | Qualidade: forte (pax); aceitável (carga)
 # ============================================================
 
 message("\n=== ETAPA 4.3: ANAC — passageiros e carga BVB (SBBV) ===\n")
 
-icao_bvb <- "SBBV"
+icao_bvb      <- "SBBV"
+arq_anac_raw  <- file.path(dir_anac, "Dados_Estatisticos.csv")
+url_anac_est  <- paste0(
+  "https://sistemas.anac.gov.br/dadosabertos/",
+  "Voos%20e%20opera%C3%A7%C3%B5es%20a%C3%A9reas/",
+  "Dados%20Estat%C3%ADsticos%20do%20Transporte%20A%C3%A9reo/",
+  "Dados_Estatisticos.csv"
+)
 
-#' Baixa e processa arquivo VRA mensal da ANAC
-#' URL: https://sistemas.anac.gov.br/dadosabertos/
-#'   Voos e Operações Aéreas/Todos os Aeroportos do Brasil/VRA/
-baixar_anac_mes <- function(ano, mes) {
-  ym_str <- sprintf("%d-%02d", ano, mes)
-  arq_cache <- file.path(dir_anac, sprintf("anac_bvb_%s.csv", ym_str))
-
-  if (file.exists(arq_cache)) return(read_csv(arq_cache, show_col_types = FALSE))
-
-  url_vra <- sprintf(
-    paste0("https://sistemas.anac.gov.br/dadosabertos/",
-           "Voos%%20e%%20Opera%%C3%%A7%%C3%%B5es%%20A%%C3%%A9reas/",
-           "Todos%%20os%%20Aeroportos%%20do%%20Brasil/VRA/VRA%s.zip"),
-    ym_str
-  )
-
-  tmp_zip <- file.path(dir_anac, sprintf("VRA%s.zip", ym_str))
-
-  message(sprintf("  ANAC [%s] Baixando VRA...", ym_str))
-  ret <- tryCatch(
-    request(url_vra) |>
-      req_timeout(120) |>
-      req_error(is_error = function(r) FALSE) |>
-      req_perform(),
-    error = function(e) {
-      message(sprintf("    Erro de rede: %s", e$message))
-      NULL
-    }
-  )
-
-  if (is.null(ret) || httr2::resp_status(ret) != 200) {
-    message(sprintf("  ANAC [%s] HTTP %s — pulando.",
-                    ym_str,
-                    if (is.null(ret)) "?" else httr2::resp_status(ret)))
-    return(NULL)
-  }
-
-  writeBin(httr2::resp_body_raw(ret), tmp_zip)
-  on.exit(if (file.exists(tmp_zip)) unlink(tmp_zip), add = TRUE)
-
-  # Extrair primeiro arquivo do ZIP
-  arqs_zip <- tryCatch(unzip(tmp_zip, list = TRUE)$Name, error = function(e) character(0))
-  if (length(arqs_zip) == 0) {
-    message(sprintf("  ANAC [%s] ZIP vazio ou inválido.", ym_str))
-    return(NULL)
-  }
-  tmp_txt <- unzip(tmp_zip, files = arqs_zip[1], exdir = dir_anac)
-  on.exit(if (file.exists(tmp_txt)) unlink(tmp_txt), add = TRUE)
-
-  # Ler com fread (robusto a variações de codificação)
-  vra_raw <- tryCatch(
-    fread(tmp_txt, sep = ";", encoding = "Latin-1",
-          data.table = FALSE, stringsAsFactors = FALSE, fill = TRUE),
-    error = function(e) {
-      message(sprintf("  ANAC [%s] Erro leitura: %s", ym_str, e$message))
-      NULL
-    }
-  )
-  if (is.null(vra_raw) || nrow(vra_raw) == 0) return(NULL)
-
-  # Detectar colunas (nomes variaram ao longo do tempo na ANAC)
-  nomes <- toupper(gsub("[^A-Z0-9]", "_", names(vra_raw)))
-  names(vra_raw) <- nomes
-
-  # Colunas de aeroporto
-  col_origem  <- grep("ORIGEM|AERODROMO_ORIGEM|ICAO_ORIGEM", nomes, value = TRUE)[1]
-  col_destino <- grep("DESTINO|AERODROMO_DESTINO|ICAO_DESTINO", nomes, value = TRUE)[1]
-  col_pax     <- grep("PASSAG.*PAG|PAX_PAG|PASS.*PAG", nomes, value = TRUE)[1]
-  col_gratis  <- grep("PASSAG.*GRAT|PAX_GRAT|PASS.*GRAT", nomes, value = TRUE)[1]
-  col_carga_p <- grep("CARGA.*PAG|CARGA_PAG", nomes, value = TRUE)[1]
-  col_carga_g <- grep("CARGA.*GRAT|CARGA_GRAT", nomes, value = TRUE)[1]
-
-  if (is.na(col_origem) || is.na(col_destino)) {
-    message(sprintf("  ANAC [%s] Colunas de aeroporto não encontradas. Colunas: %s",
-                    ym_str, paste(head(nomes, 15), collapse = ", ")))
-    return(NULL)
-  }
-
-  # Filtrar voos de/para SBBV
-  bvb <- vra_raw |>
-    filter(
-      toupper(trimws(.data[[col_origem]]))  == icao_bvb |
-      toupper(trimws(.data[[col_destino]])) == icao_bvb
-    )
-
-  if (nrow(bvb) == 0) {
-    message(sprintf("  ANAC [%s] Nenhum voo SBBV encontrado.", ym_str))
-    # Salvar linha zerada para marcar o mês como processado
-    df_zero <- data.frame(ano = ano, mes = mes, pax_total = 0L, carga_kg = 0L)
-    write_csv(df_zero, arq_cache)
-    return(df_zero)
-  }
-
-  # Agregar
-  soma_segura <- function(x) sum(suppressWarnings(as.numeric(gsub(",", ".", x))),
-                                 na.rm = TRUE)
-
-  pax   <- if (!is.na(col_pax))    soma_segura(bvb[[col_pax]])   else 0
-  pax   <- pax + if (!is.na(col_gratis)) soma_segura(bvb[[col_gratis]]) else 0
-  carga <- if (!is.na(col_carga_p)) soma_segura(bvb[[col_carga_p]]) else 0
-  carga <- carga + if (!is.na(col_carga_g)) soma_segura(bvb[[col_carga_g]]) else 0
-
-  df <- data.frame(ano = ano, mes = mes,
-                   pax_total = round(pax),
-                   carga_kg  = round(carga))
-
-  write_csv(df, arq_cache)
-  message(sprintf("  ANAC [%s] OK — %d pax, %.0f kg carga",
-                  ym_str, df$pax_total, df$carga_kg))
-  return(df)
-}
-
-# Baixar todos os meses
-lista_anac <- list()
-for (ano in ano_inicio:ano_atual) {
-  for (mes in 1:12) {
-    if (ano == ano_atual && mes > as.integer(format(Sys.Date(), "%m"))) next
-    res <- tryCatch(
-      baixar_anac_mes(ano, mes),
+if (file.exists(arq_anac_out)) {
+  message("ANAC: cache agregado encontrado — carregando.")
+  anac_mensal <- read_csv(arq_anac_out, show_col_types = FALSE)
+} else {
+  # Download do CSV consolidado (único arquivo, ~353 MB)
+  if (!file.exists(arq_anac_raw)) {
+    message("ANAC: baixando Dados_Estatisticos.csv (~353 MB)...")
+    ret_anac <- tryCatch(
+      request(url_anac_est) |>
+        req_timeout(600) |>
+        req_error(is_error = function(r) FALSE) |>
+        req_perform(),
       error = function(e) {
-        message(sprintf("  ANAC [%d-%02d] ERRO: %s", ano, mes, e$message))
+        message(sprintf("  Erro de rede ANAC: %s", e$message))
         NULL
       }
     )
-    if (!is.null(res)) lista_anac <- c(lista_anac, list(res))
-    Sys.sleep(1)  # pausa de cortesia
+    if (!is.null(ret_anac) && httr2::resp_status(ret_anac) == 200) {
+      writeBin(httr2::resp_body_raw(ret_anac), arq_anac_raw)
+      message(sprintf("  ANAC: arquivo salvo (%.1f MB).",
+                      file.size(arq_anac_raw) / 1e6))
+    } else {
+      message(sprintf("  ANAC: HTTP %s — sem dados.",
+                      if (is.null(ret_anac)) "?" else httr2::resp_status(ret_anac)))
+    }
+  } else {
+    message("ANAC: arquivo bruto em cache — processando.")
   }
-}
 
-if (length(lista_anac) == 0) {
-  warning("ANAC: nenhum dado coletado. Transportes usará apenas ANP diesel.")
   anac_mensal <- data.frame(ano = integer(), mes = integer(),
                              pax_total = integer(), carga_kg = integer())
-} else {
-  anac_mensal <- bind_rows(lista_anac) |>
-    arrange(ano, mes)
-  write_csv(anac_mensal, arq_anac_out)
-  message(sprintf("\nANAC — total: %d meses, %d pax, %.0f t carga",
-                  nrow(anac_mensal),
-                  sum(anac_mensal$pax_total, na.rm = TRUE),
-                  sum(anac_mensal$carga_kg, na.rm = TRUE) / 1000))
+
+  if (file.exists(arq_anac_raw)) {
+    message("ANAC: lendo e filtrando SBBV...")
+    # O arquivo tem 1 linha de metadados antes do cabeçalho real
+    anac_raw <- tryCatch(
+      fread(arq_anac_raw, sep = ";", skip = 1L,
+            select = c("ANO", "MES",
+                       "AEROPORTO_DE_ORIGEM_SIGLA",
+                       "AEROPORTO_DE_DESTINO_SIGLA",
+                       "PASSAGEIROS_PAGOS", "PASSAGEIROS_GRATIS",
+                       "CARGA_PAGA_KG", "CARGA_GRATIS_KG"),
+            encoding = "UTF-8",
+            data.table = TRUE),
+      error = function(e) {
+        message(sprintf("  fread ANAC falhou: %s", e$message))
+        NULL
+      }
+    )
+
+    if (!is.null(anac_raw) && nrow(anac_raw) > 0) {
+      # Filtrar: voos de/para SBBV, ano >= 2020
+      anac_bvb <- anac_raw[
+        (AEROPORTO_DE_ORIGEM_SIGLA == icao_bvb |
+         AEROPORTO_DE_DESTINO_SIGLA == icao_bvb) &
+        as.integer(ANO) >= ano_inicio
+      ]
+
+      if (nrow(anac_bvb) > 0) {
+        anac_mensal <- anac_bvb[,
+          .(
+            pax_total = sum(as.integer(PASSAGEIROS_PAGOS)  +
+                            as.integer(PASSAGEIROS_GRATIS), na.rm = TRUE),
+            carga_kg  = sum(as.numeric(CARGA_PAGA_KG) +
+                            as.numeric(CARGA_GRATIS_KG), na.rm = TRUE)
+          ),
+          by = .(ano = as.integer(ANO), mes = as.integer(MES))
+        ] |>
+          as.data.frame() |>
+          arrange(ano, mes)
+
+        write_csv(anac_mensal, arq_anac_out)
+        message(sprintf("ANAC — %d meses SBBV (%d–%d), %s pax totais",
+                        nrow(anac_mensal),
+                        min(anac_mensal$ano), max(anac_mensal$ano),
+                        format(sum(anac_mensal$pax_total), big.mark = ".")))
+      } else {
+        message("ANAC: nenhum voo SBBV encontrado no arquivo.")
+      }
+    }
+    # Apagar bruto após processamento (libera ~353 MB)
+    unlink(arq_anac_raw)
+    message("ANAC: arquivo bruto removido após processamento.")
+  }
 }
 
 
@@ -552,7 +507,7 @@ if (!is.null(ipca_raw) && nrow(ipca_raw) > 0) {
 
   parse_periodo_ipca <- function(cod, txt) {
     # Tenta código numérico AAAAMM
-    if (!is.na(cod) && grepl("^[0-9]{6}$", trimws(cod[1]))) {
+    if (length(cod) > 0 && !is.na(cod[1]) && grepl("^[0-9]{6}$", trimws(cod[1]))) {
       return(list(
         ano = as.integer(substr(trimws(cod), 1, 4)),
         mes = as.integer(substr(trimws(cod), 5, 6))
@@ -792,7 +747,7 @@ if (file.exists(arq_concessoes_out)) {
     }
   } else {
     message("Concessões BCB: dados não obtidos via OData.")
-    message("  Fallback: Financeiro usará apenas depósitos BCB Estban.")
+    message("  Alternativa: Financeiro usará apenas depósitos BCB Estban.")
     concessoes_mensal <- data.frame(ano = integer(), mes = integer(), concessoes = numeric())
   }
 }
@@ -887,7 +842,7 @@ ind_com_para_denton <- comercio_trim |>
 
 indice_comercio_denton <- tryCatch(
   denton(ind_com_para_denton, bench_comercio,
-         ano_inicio = min(anos_cr)),
+         ano_inicio = min(anos_cr), metodo = "denton-cholette"),
   error = function(e) {
     message(sprintf("  Denton Comércio falhou: %s — usando índice raw.", e$message))
     ind_com_para_denton
@@ -1025,7 +980,7 @@ if (!tem_anac && !tem_anp) {
     pull(indice_transp_raw)
 
   indice_transp_denton <- tryCatch(
-    denton(ind_tr_para_denton, bench_transp, ano_inicio = min(anos_cr)),
+    denton(ind_tr_para_denton, bench_transp, ano_inicio = min(anos_cr), metodo = "denton-cholette"),
     error = function(e) {
       message(sprintf("  Denton Transportes falhou: %s", e$message))
       ind_tr_para_denton
@@ -1173,7 +1128,7 @@ if (!tem_concessoes && !tem_depositos) {
     pull(indice_financeiro_raw)
 
   indice_financ_denton <- tryCatch(
-    denton(ind_fin_para_denton, bench_financ, ano_inicio = min(anos_cr)),
+    denton(ind_fin_para_denton, bench_financ, ano_inicio = min(anos_cr), metodo = "denton-cholette"),
     error = function(e) {
       message(sprintf("  Denton Financeiro falhou: %s", e$message))
       ind_fin_para_denton
@@ -1232,13 +1187,15 @@ for (i in seq_along(anos_completos)) {
 ind_plano <- rep(1, length(anos_completos) * 4)
 bench_imob_completo <- vab_imob_serie
 
-modelo_imob <- tempdisagg::td(
-  ts(bench_imob_completo, start = ano_inicio, frequency = 1) ~
-    0 + ts(ind_plano, start = c(ano_inicio, 1), frequency = 4),
-  method     = "denton-cholette",
-  conversion = "mean"
+imob_trim_vals <- tryCatch(
+  denton(ind_plano, bench_imob_completo,
+         ano_inicio = ano_inicio, metodo = "denton-cholette"),
+  error = function(e) {
+    message(sprintf("  Denton Imobiliário falhou: %s — usando tendência linear.", e$message))
+    # Fallback: repetir cada valor anual 4 vezes e normalizar
+    rep(bench_imob_completo, each = 4)
+  }
 )
-imob_trim_vals <- as.numeric(predict(modelo_imob))
 
 # Criar data.frame estruturado
 trimestres_grid <- expand_grid(ano = anos_completos, trimestre = 1:4) |>
@@ -1346,7 +1303,7 @@ if (!disponivel_i && !disponivel_mn && !disponivel_pq) {
     pull(indice_outros_raw)
 
   indice_os_denton <- tryCatch(
-    denton(ind_os_para_denton, bench_outros, ano_inicio = min(anos_cr)),
+    denton(ind_os_para_denton, bench_outros, ano_inicio = min(anos_cr), metodo = "denton-cholette"),
     error = function(e) {
       message(sprintf("  Denton Outros Serviços falhou: %s", e$message))
       ind_os_para_denton
@@ -1390,7 +1347,7 @@ if (is.null(caged_j) || nrow(caged_j) == 0) {
     pull(indice)
 
   indice_j_denton <- tryCatch(
-    denton(ind_j_para_denton, bench_info, ano_inicio = min(anos_cr)),
+    denton(ind_j_para_denton, bench_info, ano_inicio = min(anos_cr), metodo = "denton-cholette"),
     error = function(e) {
       message(sprintf("  Denton Info/Com falhou: %s", e$message))
       ind_j_para_denton
@@ -1424,7 +1381,8 @@ bench_extr <- cr_all |>
   pull(vab_mi)
 
 n_extr <- length(bench_extr)
-slope_extr <- if (n_extr >= 2) (bench_extr[n_extr] - bench_extr[n_extr - 1]) else 0
+# Para setores voláteis/pequenos, não extrapolar tendência negativa — usar último benchmark
+slope_extr <- if (n_extr >= 2) max(0, bench_extr[n_extr] - bench_extr[n_extr - 1]) else 0
 
 vab_extr_serie <- numeric(length(anos_completos))
 for (i in seq_along(anos_completos)) {
@@ -1433,17 +1391,20 @@ for (i in seq_along(anos_completos)) {
     vab_extr_serie[i] <- bench_extr[which(anos_cr == ano_i)]
   } else {
     anos_extra <- ano_i - max(anos_cr)
-    vab_extr_serie[i] <- bench_extr[n_extr] + slope_extr * anos_extra
+    vab_extr_serie[i] <- max(bench_extr[n_extr] + slope_extr * anos_extra,
+                             bench_extr[n_extr] * 0.5)  # piso: 50% do último benchmark
   }
 }
 
 ind_plano_extr <- rep(1, length(anos_completos) * 4)
-modelo_extr <- tempdisagg::td(
-  ts(vab_extr_serie, start = ano_inicio, frequency = 1) ~
-    0 + ts(ind_plano_extr, start = c(ano_inicio, 1), frequency = 4),
-  method = "denton-cholette", conversion = "mean"
+extr_trim_vals <- tryCatch(
+  denton(ind_plano_extr, vab_extr_serie,
+         ano_inicio = ano_inicio, metodo = "denton-cholette"),
+  error = function(e) {
+    message(sprintf("  Denton Extrativas falhou: %s — usando tendência linear.", e$message))
+    rep(vab_extr_serie, each = 4)
+  }
 )
-extr_trim_vals <- as.numeric(predict(modelo_extr))
 
 extrativas_trim_completo <- trimestres_grid |>
   mutate(valor_extr = extr_trim_vals) |>
@@ -1525,7 +1486,11 @@ indice_wide <- indice_wide |>
       )
       pesos <- pesos_setoriais  # c(comercio, transportes, financeiro, imobiliario, outros_serv, info_com, extrativas)
       ok    <- !is.na(vals)
-      if (any(ok)) sum(vals[ok] * pesos[ok] / sum(pesos[ok])) else NA_real_
+      # Exigir que pelo menos um setor de proxy ativa (Comércio, Outros ou InfoCom)
+      # tenha dado real — evitar composite baseado só em tendência extrapolada
+      proxies_ativas <- c(indice_comercio, indice_outros, indice_infocom)
+      tem_dado_ativo <- any(!is.na(proxies_ativas))
+      if (any(ok) && tem_dado_ativo) sum(vals[ok] * pesos[ok] / sum(pesos[ok])) else NA_real_
     }
   ) |>
   ungroup()

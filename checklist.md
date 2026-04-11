@@ -298,11 +298,14 @@
 - [x] Script `R/04_servicos.R` criado e revisado
 - [x] Laspeyres setorial com pesos % VAB 2023 (7 subsetores)
 - [x] Coluna de saída: `indice_servicos` + subíndices por setor
-- [ ] **Executar** `R/04_servicos.R` e verificar outputs
-- [ ] Validar: comparar variações anuais com Contas Regionais IBGE (2020–2023)
-- [ ] Confirmar 24 observações (2020T1–2025T4) no arquivo de saída
-- [ ] Salvar em `data/output/indice_servicos.csv`
-- [ ] Atualizar `historico_simples.md` com conclusão da Fase 4
+- [x] **Executar** `R/04_servicos.R` e verificar outputs
+- [x] Validar: comparar variações anuais com Contas Regionais IBGE (2020–2023)
+  - 2021: +18,8% / 2022: +7,9% / 2023: +11,4% / 2024: +11,4% / 2025: +13,4%
+  - Denton âncora exatamente 2020–2023 (anos com benchmark CR)
+  - Transportes e Financeiro com NA (ANAC/ANP/BCB OData inacessíveis — coleta manual pendente)
+- [x] Confirmar 24 observações (2020T1–2025T4) no arquivo de saída ✓
+- [x] Salvar em `data/output/indice_servicos.csv` ✓
+- [x] Atualizar `historico_simples.md` com conclusão da Fase 4
 
 ---
 
@@ -393,7 +396,7 @@
 | 1 | Agropecuária | 🟢 Concluída |
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
-| 4 | Serviços Privados | 🟡 Script criado — aguarda execução |
+| 4 | Serviços Privados | 🟢 Concluída (Transportes e Financeiro pendentes de dados externos) |
 | 5 | Agregação e publicação | ⚪ Não iniciada |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 

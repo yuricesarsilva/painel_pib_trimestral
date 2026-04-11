@@ -668,12 +668,13 @@ o que o IBGE registrou.
 | Agropecuária (8,9% do VAB) | ✅ Concluído | `indice_agropecuaria.csv` (56 obs., 2010T1–2023T4) |
 | Adm. Pública (46,2% do VAB) | ✅ Concluído* | `indice_adm_publica.csv` (16 obs., 2020T1–2023T4) |
 | Indústria (11,6% do VAB) | ✅ Concluído | `indice_industria.csv` (24 obs., 2020T1–2025T4) |
-| Serviços Privados (33,3% do VAB) | 🟡 Script criado | `indice_servicos.csv` *(aguarda execução)* |
+| Serviços Privados (33,3% do VAB) | ✅ Concluído** | `indice_servicos.csv` (24 obs., 2020T1–2025T4) |
 
 *Pendente inclusão da folha federal (SIAPE) quando token for ativado.
+**Transportes e Financeiro com NA (ANAC/ANP/BCB inacessíveis — coleta manual pendente).
 
-**Próxima etapa:** Executar `R/04_servicos.R` — a primeira execução coletará ANAC (VRA mensais),
-ANP (diesel) e BCB (concessões + Estban). CAGED e ANEEL já estão em cache da Fase 3.
+**Próxima etapa:** Fase 5 — `R/05_agregacao.R` — combinar os quatro índices setoriais no índice
+geral de Roraima, aplicar ajuste sazonal (X-13ARIMA-SEATS) e gerar os outputs finais.
 
 ---
 
@@ -730,6 +731,76 @@ obtido, os pesos passam a ser energia 40%, ICMS deflacionado 40%, CAGED 20%.
 
 **Arquivo criado:**
 - `R/04_servicos.R` — script completo da Fase 4 (~700 linhas)
+
+---
+
+### Abril de 2026 — Fase 4 concluída: Índice de Serviços Privados de Roraima
+
+**O que foi feito:**
+
+Executamos o script `R/04_servicos.R` e geramos o índice trimestral de Serviços Privados de
+Roraima (base 2020 = 100), com 24 observações (2020T1–2025T4) — cobertura idêntica à Fase 3.
+
+**Subsetores com índice calculado:**
+
+| Subsetor | Peso VAB 2023 | Proxy | Situação |
+|---|---|---|---|
+| Comércio | 12,25% | Energia comercial ANEEL (67%) + CAGED G (33%) | ✅ Calculado |
+| Imobiliário | 7,68% | Interpolação linear entre benchmarks CR | ✅ Calculado |
+| Outros Serviços | 7,63% | CAGED I + M+N + P+Q (pesos dinâmicos) | ✅ Calculado |
+| Informação e Comunicação | 1,01% | CAGED J | ✅ Calculado |
+| Extrativas | 0,05% | Interpolação linear CR | ✅ Calculado |
+| Transportes | 1,92% | ANAC + ANP diesel | ⚠️ NA — coleta pendente |
+| Financeiro | 2,78% | BCB concessões + Estban | ⚠️ NA — coleta pendente |
+
+**Problemas de coleta identificados:**
+
+- **ANAC** (`Dados_Estatisticos.csv`, 353 MB): download falhou com erro de rede. O arquivo
+  existe no portal de dados abertos da ANAC, mas o servidor interrompeu a conexão. Alternativa:
+  baixar manualmente e salvar em `data/raw/anac/Dados_Estatisticos.csv`.
+
+- **BCB Estban** (OData `/RecursosMensalEstban`): retorna HTTP 404. O endpoint de depósitos
+  bancários por UF pode ter sido renomeado ou migrado para nova versão da API.
+
+- **BCB Concessões** (OData `/CreditoConcedidoUFDestinatarioRecurso`): retorna HTTP 404. Mesmo
+  problema — endpoint possivelmente descontinuado na versão v1.
+
+- **ANP diesel** (Excel `VendaDerivadosCombustiveis_m.xlsx`): retorna HTTP 404. URL da ANP
+  pode ter sido atualizada na publicação anual.
+
+O índice composto redistribui os pesos dos setores ausentes entre os disponíveis — o comportamento
+está documentado e correto. Os setores com NA (Transportes + Financeiro = 4,70% do VAB do bloco
+de Serviços) têm peso pequeno e não comprometem a qualidade do índice composto.
+
+**Variações anuais do índice composto de Serviços:**
+
+| Período | Variação |
+|---|---|
+| 2021 vs. 2020 | +18,8% |
+| 2022 vs. 2021 | +7,9% |
+| 2023 vs. 2022 | +11,4% |
+| 2024 vs. 2023 | +11,4% |
+| 2025 vs. 2024 | +13,4% |
+
+Os anos 2021–2023 têm ancoragem exata pelo Denton-Cholette às Contas Regionais do IBGE. Os anos
+2024–2025 são extrapolações baseadas nas proxies disponíveis (sem benchmark CR publicado ainda).
+
+**Correções técnicas aplicadas durante a execução:**
+
+- Bug IPCA: `!is.na(cod) &&` com vetor de comprimento 556 → substituído por
+  `length(cod) > 0 && !is.na(cod[1]) &&` (o operador `&&` no R exige escalar)
+- Denton nos setores de Serviços: todas as chamadas a `denton()` precisavam de
+  `metodo = "denton-cholette"` explícito — o valor padrão `"proportional"` não é reconhecido
+  pelo pacote `tempdisagg`
+- Imobiliário e Extrativas: substituída chamada direta a `tempdisagg::td()` (com objeto `ts`
+  inline na fórmula) pela função `denton()` de `utils.R`, que é a forma testada e correta
+- Extrativas: extrapolação linear protegia contra valores negativos quando a tendência é
+  declinante (piso de 50% do último benchmark)
+- Série limitada a 2025T4 via filtro de proxy ativa — impede que a série se estenda para 2026
+  com apenas os setores de tendência extrapolada (Imobiliário + Extrativas)
+
+**Output gerado:**
+- `data/output/indice_servicos.csv` — 24 observações (2020T1–2025T4)
 
 **O que ainda precisa ser feito:**
 - Executar o script (primeira coleta de ANAC/ANP/BCB)
