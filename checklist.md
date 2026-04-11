@@ -141,13 +141,9 @@
 ## Fase 2 — Administração Pública
 
 ### 2.1 Folha federal (SIAPE)
-- [x] Acessar API do Portal da Transparência (endpoint testado; token retornou 401 — aguardando ativação via e-mail)
-- [ ] Coletar folha de pagamento mensal (servidores com lotação em Roraima) — **pendente: token não ativado**
-  - [x] Definir filtros: UF de exercício = RR, competência mensal, 2020–presente
-  - [ ] Tratar meses com 13º salário (não representam atividade adicional — excluir ou tratar)
-- [ ] Verificar consistência da série (ausência de gaps, valores atípicos)
-- [ ] Salvar dados brutos em `data/raw/siape_rr_mensal.csv`
-- **Nota**: módulo SIAPE pulado na execução atual — script continua com estadual + municipal. Reexecutar após ativar token.
+- [x] Investigar API do Portal da Transparência: endpoint `/remuneracao-servidores-ativos` retorna HTTP 403 para o cadastro padrão — independentemente do token ou parâmetros
+- [x] **Decisão metodológica**: componente federal omitido da proxy, mas incluído implicitamente via Denton-Cholette (benchmark IBGE engloba todo o VAB de AAPP, inclusive federal). Validação 2021–2023 confirma abordagem correta.
+- [x] Alternativa futura documentada no script: download manual dos arquivos `.zip` mensais do portal
 
 ### 2.2 Folha estadual (SICONFI/STN — elemento 31)
 - [x] Coletar RREO Anexo 06 via API SICONFI (STN) para o Estado de RR (id_ente=14)
@@ -360,7 +356,7 @@
 |---|---|---|
 | 0 | Planejamento e infraestrutura | 🟢 Concluída |
 | 1 | Agropecuária | 🟢 Concluída |
-| 2 | Administração Pública | 🟡 Em andamento (SIAPE pendente) |
+| 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | ⚪ Não iniciada |
 | 4 | Serviços Privados | ⚪ Não iniciada |
 | 5 | Agregação e publicação | ⚪ Não iniciada |

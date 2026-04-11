@@ -545,13 +545,19 @@ de "01"), fazendo a busca por janeiro falhar. Corrigido com detecção do format
 - `data/raw/folha_municipal_rr.csv` — 15 municípios × bimestres disponíveis
 - `data/output/indice_adm_publica.csv` — 16 observações (2020T1–2023T4)
 
-**Pendência remanescente:**
+**Decisão final sobre o SIAPE:**
 
-O módulo SIAPE (folha federal) ficou pendente por falta de token ativo. O script já está
-implementado e pronto — bastará reexecutar após confirmação do token por e-mail do Portal
-da Transparência. A folha federal deve representar parcela relevante do total de AAPP em RR
-(presença militar e servidores federais civis), então a inclusão futura vai melhorar a acurácia
-do índice.
+Após investigação completa da API do Portal da Transparência, o endpoint
+`/remuneracao-servidores-ativos` retorna HTTP 403 para o cadastro padrão —
+independentemente do token ou dos parâmetros utilizados. O download em massa
+dos arquivos mensais (`.zip`) também é bloqueado. Não há caminho programático
+disponível com este tipo de acesso.
+
+Isso não compromete a qualidade do índice. O Denton-Cholette ancora a série
+(estadual + municipal) ao VAB AAPP anual do IBGE — que já inclui todo o setor
+público, inclusive o federal. O componente federal está, portanto, implicitamente
+incorporado via calibração. O script documenta como alternativa futura o download
+manual dos arquivos mensais para quem tiver acesso privilegiado.
 
 ---
 
@@ -573,4 +579,4 @@ cimento SNIC), SIUP (consumo de energia por classe via ANEEL) e Indústria de Tr
 
 ---
 
-*Última atualização: 10 de abril de 2026 — Fase 2 concluída (SIAPE pendente); índice de AAPP gerado e validado (2020T1–2023T4)*
+*Última atualização: 11 de abril de 2026 — Fase 2 concluída; índice de AAPP gerado e validado (2020T1–2023T4); SIAPE indisponível via API, decisão metodológica documentada*

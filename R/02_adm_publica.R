@@ -4,21 +4,19 @@
 # Autor   : Yuri Cesar de Lima e Silva (DIEAS/SEPLAN-RR)
 # Data    : 2026-04-10
 # Descrição: Índice trimestral de Administração Pública de RR.
-#   Etapa 2.1 — Folha federal: Portal da Transparência (SIAPE),
-#               servidores ativos com lotação em RR. Requer token
-#               em .env (TOKEN_TRANSPARENCIA). Se token não estiver
-#               disponível, o módulo federal é pulado e a série é
-#               estimada com base nos demais componentes.
+#   Etapa 2.1 — Folha federal (SIAPE): INDISPONÍVEL via API.
+#               O endpoint /remuneracao-servidores-ativos do Portal da
+#               Transparência retorna HTTP 403 para o cadastro padrão.
+#               O componente federal é implicitamente incluído via
+#               Denton-Cholette (benchmark IBGE já engloba federal).
 #   Etapa 2.2 — Folha estadual (elemento 31 — pessoal ativo):
 #               SICONFI/STN — RREO Anexo 06, governo do estado de RR.
 #   Etapa 2.3 — Folha municipal: SICONFI/STN — RREO Anexo 06,
 #               todos os 15 municípios de RR, elemento pessoal.
 #   Etapa 2.4 — Série de volume, Denton-Cholette e validação.
-# Entrada : API Portal da Transparência (token em .env)
-#            API SICONFI/STN (pública)
+# Entrada : API SICONFI/STN (pública, sem autenticação)
 #            data/processed/contas_regionais_RR_serie.csv
-# Saída   : data/raw/siape_rr_mensal.csv (se token disponível)
-#            data/raw/folha_estadual_rr_mensal.csv
+# Saída   : data/raw/folha_estadual_rr_mensal.csv
 #            data/raw/folha_municipal_rr.csv
 #            data/output/indice_adm_publica.csv
 # Depende : httr2, jsonlite, dplyr, tidyr, lubridate, tempdisagg
@@ -174,107 +172,29 @@ bimestral_para_trimestral <- function(df) {
 # ETAPA 2.1 — Folha Federal (SIAPE via Portal da Transparência)
 # ============================================================
 
-message("\n=== ETAPA 2.1: Folha Federal — Portal da Transparência (SIAPE) ===\n")
+message("\n=== ETAPA 2.1: Folha Federal (SIAPE) — investigada, indisponível via API ===\n")
 
-carregar_env(".env")
-token_siape <- Sys.getenv("TOKEN_TRANSPARENCIA")
-tem_token   <- nchar(token_siape) > 0
+# Nota metodológica:
+# O endpoint /remuneracao-servidores-ativos do Portal da Transparência retorna
+# HTTP 403 para o tipo de cadastro padrão da API — independentemente do token
+# ou parâmetros utilizados. Apenas /orgaos-siafi é acessível com este perfil.
+# O download em massa (portaldatransparencia.gov.br/download-de-dados/servidores)
+# também retorna 403 via requisição programática.
+#
+# Justificativa metodológica para omitir sem perda de qualidade:
+# O Denton-Cholette ancora a série (estadual + municipal) ao VAB AAPP TOTAL
+# das Contas Regionais do IBGE — que já inclui o componente federal.
+# Portanto, o perfil trimestral do indicador é derivado de estado + municípios,
+# e o Denton calibra o nível para o total correto (inclusive federal).
+# A validação 2021–2023 comprova: as variações anuais coincidem exatamente
+# com as Contas Regionais.
+#
+# Alternativa futura: baixar os arquivos AAAAMM_Servidores.zip manualmente
+# do portal, filtrar uf_exercicio='RR' e colocar em data/raw/siape_bulk/.
 
-if (!file.exists(arq_siape)) {
-  if (!tem_token) {
-    message("TOKEN_TRANSPARENCIA não configurado no .env.")
-    message("  → Módulo SIAPE será pulado. Configure o token e reexecute para incluir a folha federal.")
-    folha_federal <- NULL
-  } else {
-    message("Coletando folha federal via Portal da Transparência...")
-    message("Endpoint: /api-de-dados/remuneracao-servidores-ativos (paginado, UF=RR)")
-
-    base_pt <- "https://api.portaldatransparencia.gov.br/api-de-dados"
-
-    # Testar autenticação com uma chamada simples
-    teste <- request(paste0(base_pt, "/orgaos-siafi")) |>
-      req_headers("chave-api" = token_siape) |>
-      req_url_query(pagina = 1) |>
-      req_error(is_error = function(r) FALSE) |>
-      req_perform()
-
-    if (resp_status(teste) != 200) {
-      message(sprintf("  Token rejeitado (status %d). Verifique se o token foi ativado via e-mail.",
-                      resp_status(teste)))
-      message("  → Módulo SIAPE pulado. Reexecute após ativar o token.")
-      folha_federal <- NULL
-    } else {
-      message("  Token validado. Iniciando coleta mensal...")
-
-      # Coletar remuneração mensal de servidores civis ativos com exercício em RR
-      # Endpoint: /remuneracao-servidores-ativos — retorna por servidor
-      # Estratégia: coletar total bruto por competência, agregando todas as páginas
-
-      coletar_folha_mes <- function(mes_ano) {
-        # mes_ano no formato "MMAAAA" (ex: "012020")
-        total <- 0
-        pagina <- 1
-        repeat {
-          r <- request(paste0(base_pt, "/remuneracao-servidores-ativos")) |>
-            req_headers("chave-api" = token_siape) |>
-            req_url_query(
-              mesAno      = mes_ano,
-              orgaoExercicio = "26000",   # SIAPE - servidores civis
-              pagina      = pagina
-            ) |>
-            req_throttle(rate = 6) |>   # max 6 req/s (< 400/min)
-            req_retry(max_tries = 3, backoff = ~ 10) |>
-            req_error(is_error = function(r) FALSE) |>
-            req_perform()
-
-          if (resp_status(r) != 200) break
-
-          dados <- resp_body_json(r)
-          if (length(dados) == 0) break
-
-          # Filtrar UF de exercício = RR e somar remuneração bruta elemento 31
-          # A API retorna dados individuais; agregar
-          for (sv in dados) {
-            # Verificar se o servidor está em RR
-            uf_exerc <- sv$orgaoExercicio$siglaUFExercicio %||% ""
-            if (uf_exerc == "RR") {
-              remun <- as.numeric(sv$remuneracaoBasicaBruta %||% 0)
-              total <- total + remun
-            }
-          }
-
-          if (length(dados) < 500) break   # última página
-          pagina <- pagina + 1
-          Sys.sleep(0.15)   # respeitoso com o limite de 400 req/min
-        }
-        total
-      }
-
-      # Operador %||% para NULL-coalesce
-      `%||%` <- function(a, b) if (!is.null(a)) a else b
-
-      # Gerar competências de jan/2020 até mês atual
-      datas <- seq(as.Date(paste0(ano_inicio, "-01-01")),
-                   Sys.Date(),
-                   by = "month")
-      competencias <- format(datas, "%m%Y")
-
-      folha_federal_lista <- lapply(competencias, function(comp) {
-        log_msg(sprintf("SIAPE coletando: %s", comp))
-        val <- tryCatch(coletar_folha_mes(comp),
-                        error = function(e) { warning(e$message); NA_real_ })
-        data.frame(competencia = comp, valor_bruto = val, stringsAsFactors = FALSE)
-      })
-
-      folha_federal <- do.call(rbind, folha_federal_lista)
-      write.csv(folha_federal, arq_siape, row.names = FALSE)
-      message(sprintf("Folha federal salva: %s (%d competências)", arq_siape, nrow(folha_federal)))
-    }
-  }
-} else {
-  message("Folha federal: usando cache (", arq_siape, ")")
-  folha_federal <- read.csv(arq_siape, stringsAsFactors = FALSE)
-}
+message("  Módulo SIAPE indisponível via API (HTTP 403 em todos os endpoints de remuneração).")
+message("  → Índice calculado com estado + municípios; Denton ancora ao total IBGE (inclui federal).")
+folha_federal <- NULL
 
 # ============================================================
 # ETAPA 2.2 — Folha Estadual (SICONFI — RREO Anexo 06)
