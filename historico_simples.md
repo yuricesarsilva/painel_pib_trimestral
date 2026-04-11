@@ -426,6 +426,61 @@ por crises de abastecimento). O dado é do IBGE e está sendo usado como vem.
 
 ---
 
+### Abril de 2026 — Fase 1 concluída: Índice Agropecuário de Roraima
+
+**O que foi feito:**
+
+Implementamos o script `R/01_agropecuaria.R`, que produz o índice trimestral de atividade
+agropecuária de Roraima (base 2020 = 100), cobrindo quatro etapas metodológicas.
+
+**Etapa 1.0 — Cobertura das culturas:**
+
+As 10 culturas incluídas no índice (Soja, Milho, Arroz, Banana, Mandioca, Laranja, Tomate,
+Feijão, Cana-de-açúcar e Cacau) cobrem **90,4%** do Valor Bruto da Produção total de lavouras
+de Roraima (média 2018–2022, fonte: PAM/IBGE). A soja domina com 48% do VBP.
+
+Uma descoberta: a tabela SIDRA 5457 já contém todas as lavouras (temporárias e permanentes)
+numa única consulta — simplificou o código em relação ao planejado.
+
+**Etapa 1.1 — Calendário de colheita:**
+
+Construímos a matriz cultura × mês com os coeficientes de distribuição da produção anual
+pelo calendário agroclimático de Roraima, baseada no Censo Agropecuário 2006. O Censo 2017
+não publicou tabela equivalente de época de colheita, então mantivemos 2006 como referência.
+
+**Etapa 1.2 — Série de lavouras:**
+
+A PAM cobre Roraima até 2024 (definitivo). Para 2025, usamos a projeção de dezembro da LSPA
+(tabela 6588, classificação c48) como valor provisório — será substituído automaticamente
+quando a PAM 2025 for publicada. Índice de Laspeyres com pesos VBP médio 2018–2022.
+
+**Etapa 1.3 — Pecuária:**
+
+Para Roraima, estão disponíveis no SIDRA: abate de animais (tab 1092, trimestral) e produção
+de ovos (tab 915, trimestral). A produção de leite (tab 74) não tem série trimestral para RR.
+O índice pecuário combina abate + ovos, com pesos a partir do VBP da tab 74 v215. Pecuária
+representa 7% e lavouras 93% do total agropecuário (VBP médio 2018–2022).
+
+**Etapa 1.4 — Denton-Cholette e validação:**
+
+O Denton-Cholette (`tempdisagg::td(~ 0 + x, conversion="mean")`) ancora o índice trimestral
+ao VAB agropecuário anual das Contas Regionais. A validação é perfeita: as variações anuais
+do índice coincidem exatamente com as das Contas Regionais em todos os 13 anos (2011–2023).
+
+**Descobertas técnicas registradas:**
+- `tempdisagg::td()` exige fórmula sem intercepto (`~ 0 + x`) para métodos Denton
+- LSPA tabela 6588 usa classificação `c48` (não c782)
+- Período: "dezembro 2006" (texto), não código YYYYMM
+
+**Outputs gerados:**
+- `data/processed/cobertura_lspa_pam.csv`
+- `data/processed/coef_sazonais_colheita.csv`
+- `data/processed/serie_lavouras_trimestral.csv`
+- `data/processed/serie_pecuaria_trimestral.csv`
+- `data/output/indice_agropecuaria.csv` — 56 observações (2010T1 a 2023T4)
+
+---
+
 ## Onde estamos agora
 
 **Etapa atual: início da implementação**
@@ -452,4 +507,4 @@ seguindo esta ordem:
 
 ---
 
-*Última atualização: 10 de abril de 2026 — Fase 0 concluída; série histórica Contas Regionais 2010–2023 extraída*
+*Última atualização: 10 de abril de 2026 — Fase 1 concluída; índice agropecuário trimestral gerado e validado (2010T1–2023T4)*

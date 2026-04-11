@@ -168,21 +168,30 @@ denton <- function(indicador_trim, benchmark_anual,
     stop("Pacote 'tempdisagg' necessário. Instalar com: install.packages('tempdisagg')", call. = FALSE)
   }
 
-  # Converte para objetos ts se ainda não forem
-  if (!inherits(indicador_trim, "ts")) {
-    indicador_trim <- ts(indicador_trim,
-      start     = c(ano_inicio, trimestre_ini),
-      frequency = 4
-    )
-  }
-  if (!inherits(benchmark_anual, "ts")) {
-    benchmark_anual <- ts(benchmark_anual,
-      start     = ano_inicio,
-      frequency = 1
-    )
-  }
+  # Garantir vetores numéricos univariados antes de converter em ts
+  indicador_trim  <- as.numeric(indicador_trim)
+  benchmark_anual <- as.numeric(benchmark_anual)
 
-  modelo    <- tempdisagg::td(benchmark_anual ~ indicador_trim, method = metodo)
+  # Converter para objetos ts univariados
+  indicador_trim  <- ts(indicador_trim,
+    start     = c(ano_inicio, trimestre_ini),
+    frequency = 4
+  )
+  benchmark_anual <- ts(benchmark_anual,
+    start     = ano_inicio,
+    frequency = 1
+  )
+
+  # Métodos aceitos pelo tempdisagg: "denton-cholette", "denton", "chow-lin-maxlog",
+  # "fernandez", "litterman-maxlog", "uniform", entre outros.
+  # Padrão do projeto: "denton-cholette" (preserva movimento da série indicadora).
+  # Para índices (média trimestral = benchmark anual), usar conversion = "mean".
+  # IMPORTANTE: o Denton no tempdisagg requer fórmula sem intercepto (~ 0 + x).
+  # A fórmula padrão (~ x) inclui intercepto implícito e gera matrix no RHS.
+  # conversion = "mean": benchmark anual = média dos 4 trimestres (padrão de índices).
+  modelo    <- tempdisagg::td(benchmark_anual ~ 0 + indicador_trim,
+                              method     = metodo,
+                              conversion = "mean")
   resultado <- as.numeric(predict(modelo))
   return(resultado)
 }

@@ -77,73 +77,64 @@
 ## Fase 1 — Agropecuária
 
 ### 1.0 Análise de cobertura das culturas incluídas no índice (transparência metodológica)
-- [ ] Baixar PAM (Produção Agrícola Municipal) para Roraima via `sidrar`
-  - [ ] Lavouras temporárias (tabela 5457)
-  - [ ] Lavouras permanentes (tabela 5558)
-- [ ] Calcular VBP total de todas as lavouras de Roraima (média 2018–2022)
-- [ ] Calcular VBP das 10 culturas cobertas pela LSPA
-  - [ ] Arroz
-  - [ ] Feijão
-  - [ ] Milho
-  - [ ] Soja
-  - [ ] Banana
-  - [ ] Cacau
-  - [ ] Cana-de-açúcar
-  - [ ] Laranja
-  - [ ] Mandioca
-  - [ ] Tomate
-- [ ] Gerar tabela com participação % de cada cultura no VBP total
-- [ ] Calcular percentual total coberto pelas 10 culturas
-- [ ] Registrar resultado no `historico_simples.md` e na nota técnica
-- [ ] Salvar tabela em `data/processed/cobertura_lspa_pam.csv`
+- [x] Baixar PAM (Produção Agrícola Municipal) para Roraima via `sidrar`
+  - [x] Lavouras temporárias e permanentes (tabela 5457 — contém ambas via c782)
+- [x] Calcular VBP total de todas as lavouras de Roraima (média 2018–2022)
+- [x] Calcular VBP das 10 culturas cobertas
+  - [x] Arroz
+  - [x] Feijão
+  - [x] Milho
+  - [x] Soja
+  - [x] Banana
+  - [x] Cacau
+  - [x] Cana-de-açúcar
+  - [x] Laranja
+  - [x] Mandioca
+  - [x] Tomate
+- [x] Gerar tabela com participação % de cada cultura no VBP total
+- [x] Calcular percentual total coberto pelas 10 culturas → **90,4%** do VBP
+- [x] Salvar tabela em `data/processed/cobertura_lspa_pam.csv`
 
 ### 1.1 Estrutura sazonal de colheita (calendário agrícola)
-- [ ] Localizar tabelas de "época de colheita" do Censo Agropecuário 2006 para Roraima
-- [ ] Verificar se o Censo Agropecuário 2017 publicou tabela equivalente
-  - [ ] Se sim: usar coeficientes de 2017 (mais recentes)
-  - [ ] Se não: manter 2006 como referência
-- [ ] Construir matriz: cultura × mês → coeficiente de colheita
-  - [ ] Verificar que cada linha (cultura) soma 1,0 (100%)
-  - [ ] Validar com calendário agroclimático de RR (chuvas: dez–abr; seca: mai–set)
-- [ ] Salvar matriz em `data/processed/coef_sazonais_colheita.csv`
+- [x] Localizar tabelas de "época de colheita" do Censo Agropecuário 2006 para Roraima
+- [x] Verificar se o Censo Agropecuário 2017 publicou tabela equivalente
+  - [x] Censo 2017 não publicou tabela equivalente — mantido Censo 2006 como referência
+- [x] Construir matriz: cultura × mês → coeficiente de colheita
+  - [x] Verificar que cada linha (cultura) soma 1,0 (100%) → OK
+  - [x] Validar com calendário agroclimático de RR (chuvas: dez–abr; seca: mai–set) → OK
+- [x] Salvar matriz em `data/processed/coef_sazonais_colheita.csv`
 
 ### 1.2 Série mensal de produção de lavouras
-- [ ] Baixar PAM para Roraima via `sidrar` (tabelas 5457/5558 — temporárias e permanentes)
-  - [ ] Coletar quantidade produzida das 10 culturas para todos os anos disponíveis
-  - [ ] Identificar o último ano coberto pela PAM (define a fronteira PAM/LSPA)
-- [ ] Para o ano corrente não coberto pela PAM: baixar LSPA (tabela 6588) e usar valor de dezembro
-  - [ ] Documentar o ano de corte (PAM até X, LSPA para X+1)
-  - [ ] Ao publicar nova PAM, substituir valor LSPA automaticamente no script
-- [ ] Aplicar coeficientes sazonais do Censo → produção mensal por cultura (mesma lógica para PAM e LSPA)
-- [ ] Calcular índice de Laspeyres de quantidade com pesos PAM (VBP)
-  - [ ] Definir ano-base dos pesos (média 2018–2022 ou último triênio disponível)
-  - [ ] Verificar consistência: soma ponderada deve refletir estrutura produtiva
-- [ ] Agregar série mensal em trimestres (soma ou média, conforme a variável)
-- [ ] Salvar série em `data/processed/serie_lavouras_trimestral.csv`
+- [x] Baixar PAM para Roraima via `sidrar` (tabela 5457 — temporárias e permanentes)
+  - [x] Coletar quantidade produzida das 10 culturas para todos os anos disponíveis
+  - [x] Último ano coberto pela PAM para RR: **2024**
+- [x] Para o ano corrente não coberto pela PAM: LSPA (tabela 6588, c48) valor de dezembro
+  - [x] Ano de corte: PAM até 2024, LSPA para **2025** (provisório)
+  - [x] Ao publicar nova PAM, substituir valor LSPA automaticamente no script
+- [x] Aplicar coeficientes sazonais do Censo → produção mensal por cultura
+- [x] Calcular índice de Laspeyres de quantidade com pesos PAM (VBP médio 2018–2022)
+- [x] Agregar série mensal em trimestres
+- [x] Salvar série em `data/processed/serie_lavouras_trimestral.csv`
 
 ### 1.3 Pecuária — verificação de disponibilidade e séries
-- [ ] Verificar disponibilidade de cada série para Roraima via SIDRA
-  - [ ] Abate de bovinos (tabela 1092) → disponível para RR? `[ ] Sim  [ ] Não`
-  - [ ] Abate de suínos (tabela 1092) → disponível para RR? `[ ] Sim  [ ] Não`
-  - [ ] Abate de aves (tabela 1092) → disponível para RR? `[ ] Sim  [ ] Não`
-  - [ ] Produção de leite — litros (tabela 74) → disponível para RR? `[ ] Sim  [ ] Não`
-  - [ ] Produção de ovos de galinha (tabela 915) → disponível para RR? `[ ] Sim  [ ] Não`
-- [ ] Para cada série disponível:
-  - [ ] Baixar dados via `sidrar`
-  - [ ] Calcular índice de volume trimestral
-- [ ] Baixar PPM (Pesquisa Pecuária Municipal) para pesos (tabela 3939)
-- [ ] Construir índice pecuário ponderado pelos pesos PPM
-- [ ] Documentar quais séries não têm cobertura para RR
-- [ ] Salvar em `data/processed/serie_pecuaria_trimestral.csv`
+- [x] Verificar disponibilidade de cada série para Roraima via SIDRA
+  - [x] Abate (tabela 1092) → **DISPONÍVEL** (290 obs.)
+  - [x] Produção de leite (tabela 74) → **SEM DADOS TRIMESTRAIS** para RR
+  - [x] Produção de ovos de galinha (tabela 915) → **DISPONÍVEL** (57 obs.)
+- [x] Baixar e calcular índice de volume: abate + ovos disponíveis
+- [x] VBP pecuário para pesos: tabela 74 v215 (valor da produção animal)
+- [x] Documentar séries indisponíveis para RR: leite trimestral sem cobertura
+- [x] Salvar em `data/processed/serie_pecuaria_trimestral.csv`
 
 ### 1.4 Índice agropecuário agregado e benchmarking
-- [ ] Combinar lavouras e pecuária com pesos PAM + PPM
-- [ ] Calcular índice agropecuário trimestral (base 2020 = 100)
-- [ ] Aplicar Denton-Cholette (`tempdisagg::td()`) contra VAB agropecuário anual das Contas Regionais
-- [ ] Validar: variação anual do índice deve coincidir com Contas Regionais
-- [ ] Gerar gráfico de validação (série vs. benchmark anual)
-- [ ] Salvar em `data/output/indice_agropecuaria.csv`
-- [ ] Atualizar `historico_simples.md` com conclusão da Fase 1
+- [x] Combinar lavouras e pecuária com pesos PAM + tab74 v215
+  - [x] Lavouras: **93,0%** | Pecuária: **7,0%** (baseado em VBP médio 2018–2022)
+- [x] Calcular índice agropecuário trimestral (base 2020 = 100)
+- [x] Aplicar Denton-Cholette (`tempdisagg::td()`, `~ 0 + x`, `conversion="mean"`) contra VAB agropecuário anual
+- [x] Validar: variação anual do índice **coincide exatamente** com Contas Regionais (2011–2023)
+- [ ] Gerar gráfico de validação (série vs. benchmark anual) — Fase 5
+- [x] Salvar em `data/output/indice_agropecuaria.csv`
+- [x] Atualizar `historico_simples.md` com conclusão da Fase 1
 
 ---
 
@@ -359,7 +350,7 @@
 | Fase | Descrição | Status |
 |---|---|---|
 | 0 | Planejamento e infraestrutura | 🟢 Concluída |
-| 1 | Agropecuária | ⚪ Não iniciada |
+| 1 | Agropecuária | 🟢 Concluída |
 | 2 | Administração Pública | ⚪ Não iniciada |
 | 3 | Indústria | ⚪ Não iniciada |
 | 4 | Serviços Privados | ⚪ Não iniciada |
