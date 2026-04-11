@@ -29,10 +29,10 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 | Atividades imobiliárias | 7,68% | 1.767 | Estoque de domicílios (tendência suavizada) | IBGE Censo / PNAD |
 | Outros serviços | 7,63% | 1.756 | Emprego formal em serviços | CAGED |
 | Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | 1.243 | Consumo de energia elétrica | ANEEL / EPE |
-| Construção | 4,89% | 1.125 | Emprego na construção + ICMS | CAGED / SEFAZ-RR |
-| Atividades financeiras, de seguros e serviços relacionados | 2,78% | 639 | Depósitos e operações de crédito | BCB Estban |
+| Construção | 4,89% | 1.125 | Estoque acumulado de emprego (CAGED F) + cimento SNIC (condicional) | CAGED / SNIC |
+| Atividades financeiras, de seguros e serviços relacionados | 2,78% | 639 | Concessões de crédito (primária) + depósitos bancários (secundária) | BCB Nota de Crédito / Estban |
 | Transporte, armazenagem e correio | 1,92% | 441 | Passageiros aéreos + vendas de diesel | ANAC / ANP |
-| Indústrias de transformação | 1,31% | 301 | Emprego industrial + ICMS industrial | CAGED / SEFAZ-RR |
+| Indústrias de transformação | 1,31% | 301 | Energia industrial ANEEL (70%) + emprego CAGED C (30%) | ANEEL / CAGED |
 | Informação e comunicação | 1,01% | 233 | Emprego em TI e telecom | CAGED |
 | Indústrias extrativas | 0,05% | 12 | Peso negligenciável — absorvida em "Outros" | — |
 
@@ -96,7 +96,8 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 | SEFAZ-RR | ICMS por atividade econômica | Interno |
 | STN / SICONFI | Folha municipal estimada | Portal SOF |
 | BCB Estban | Crédito e depósitos por UF | BCB open data |
-| ANEEL / EPE | Consumo de energia elétrica por UF | Portal ANEEL / BEN |
+| ANEEL (SAMP) | Consumo de energia elétrica por classe de consumidor (RR) | API CKAN dadosabertos.aneel.gov.br |
+| MTE / CAGED | Microdados de emprego formal por seção CNAE (UF=14) | FTP ftp.mtps.gov.br |
 | ANAC | Passageiros e carga — aeroporto de Boa Vista | Portal ANAC |
 | ANP | Vendas de diesel por UF | Portal ANP |
 

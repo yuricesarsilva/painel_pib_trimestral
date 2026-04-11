@@ -231,10 +231,11 @@
 - [x] Salvar em `data/output/indice_industria.csv`
 - [x] **Executar** `R/03_industria.R` e verificar outputs
 - [x] Validação manual: comparar variações anuais com Contas Regionais IBGE
-  - Variações anuais do índice composto: 2021 −6,3% / 2022 +5,2% / 2023 +61,7%
-  - O ajuste Denton garante exatidão vs. IBGE nos anos com benchmark (2020–2023)
-  - Variação de 2023 elevada reflete anomalia real do VAB SIUP no IBGE (R$369M em 2022 → R$1.243M em 2023, conexão RR ao SIN)
-  - ⚠️ Pendência conhecida: 2025T3 ausente do índice composto (investigar join SIUP × Construção)
+  - Variações anuais: 2021 −6,3% / 2022 +5,2% / 2023 +61,7% / 2024 −22,8% / 2025 +10,5%
+  - Denton garante exatidão vs. IBGE nos anos com benchmark (2020–2023)
+  - Variação 2023 elevada reflete instabilidade real do VAB SIUP nas CR (R$369M→R$1.243M)
+  - 2025T3 inicialmente ausente: bug corrigido (grid de meses com saldo=0 para meses sem movimentação CAGED)
+  - Índice final: 24 observações (2020T1–2025T4) ✓
 - [x] Atualizar `historico_simples.md` com conclusão confirmada da Fase 3
 
 ---
@@ -375,7 +376,7 @@
 | 0 | Planejamento e infraestrutura | 🟢 Concluída |
 | 1 | Agropecuária | 🟢 Concluída |
 | 2 | Administração Pública | 🟢 Concluída |
-| 3 | Indústria | 🟢 Concluída* |
+| 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | ⚪ Não iniciada |
 | 5 | Agregação e publicação | ⚪ Não iniciada |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |

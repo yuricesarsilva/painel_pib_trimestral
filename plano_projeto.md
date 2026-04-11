@@ -488,6 +488,29 @@ Transf. 1,31). Pesos relativos internos calculados no script a partir do VAB 202
 **Coleta CAGED reutilizável:** o script baixa e agrega TODAS as seções CNAE para RR
 — economiza ~2,5 GB de re-download na Fase 4 (Comércio, Transportes, Outros Serviços).
 
+**Tratamento de meses sem movimentação CAGED:** seções com zero admissões e zero demissões
+em determinado mês não geram linha no microdado. O script completa o grid mensal com saldo=0
+antes de calcular o estoque acumulado, evitando que trimestres com mês "vazio" sejam
+descartados pelo filtro de trimestres completos.
+
+**Resultado:**
+- `data/output/indice_industria.csv` — 24 trimestres (2020T1–2025T4, base 2020=100)
+- Variações anuais do índice composto:
+
+| Ano | Variação |
+|---|---|
+| 2021 | −6,3% |
+| 2022 | +5,2% |
+| 2023 | +61,7% |
+| 2024 | −22,8% |
+| 2025 | +10,5% |
+
+**Nota sobre SIUP:** o VAB do setor nas Contas Regionais é extremamente volátil em RR
+(R$799M em 2020 → R$369M em 2022 → R$1.243M em 2023), reflexo das mudanças estruturais
+na geração e distribuição de energia do estado (conexão ao SIN, revisão tarifária). A
+volatilidade do índice composto em 2023 é fiel ao dado do IBGE — não é artefato do script.
+Para 2024–2025 (sem benchmark), o script usa o indicador bruto.
+
 ### Fase 4 — Serviços privados (Comércio + Transportes + Outros)
 - Comércio: energia comercial (da coleta SIUP) + ICMS deflacionado + CAGED (índice composto)
 - Transportes: ANAC passageiros + ANAC carga + ANP diesel (composto ponderado, diesel com peso menor)

@@ -656,12 +656,8 @@ das mudanças estruturais na geração e distribuição de energia do estado (co
 tarifária, encerramento de contratos de termelétricas). O dado é genuíno; o script apenas obedece
 o que o IBGE registrou.
 
-**Pendência conhecida:** 2025T3 aparece ausente no índice composto (23 observações em vez de 24).
-O SIUP tem 24 observações, mas Construção tem 23 — o join descarta o trimestre com NA. A ser
-investigada e corrigida no início da Fase 4.
-
 **Outputs gerados:**
-- `data/output/indice_industria.csv` — 23 observações (2020T1–2025T4, exceto 2025T3)
+- `data/output/indice_industria.csv` — 24 observações (2020T1–2025T4)
 
 ---
 
@@ -671,15 +667,46 @@ investigada e corrigida no início da Fase 4.
 |---|---|---|
 | Agropecuária (8,9% do VAB) | ✅ Concluído | `indice_agropecuaria.csv` (56 obs., 2010T1–2023T4) |
 | Adm. Pública (46,2% do VAB) | ✅ Concluído* | `indice_adm_publica.csv` (16 obs., 2020T1–2023T4) |
-| Indústria (11,6% do VAB) | ✅ Concluído** | `indice_industria.csv` (23 obs., 2020T1–2025T4) |
+| Indústria (11,6% do VAB) | ✅ Concluído | `indice_industria.csv` (24 obs., 2020T1–2025T4) |
 | Serviços Privados (33,3% do VAB) | ⏳ Pendente | — |
 
 *Pendente inclusão da folha federal (SIAPE) quando token for ativado.
-**Pendência menor: 2025T3 ausente por bug no join (a corrigir no início da Fase 4).
 
 **Próxima etapa:** Fase 4 — Serviços Privados (Comércio, Transportes, Financeiro, Outros).
 Os dados CAGED e ANEEL já estão coletados — a Fase 4 reaproveitará essas bases sem re-download.
 
 ---
 
-*Última atualização: 11 de abril de 2026 — Fase 3 executada e concluída; índice industrial gerado; CAGED 72 meses baixados via curl; pendência 2025T3 registrada*
+### Abril de 2026 — Correção do índice industrial: 2025T3 recuperado
+
+**O que foi feito:**
+
+Identificamos e corrigimos um bug no script `R/03_industria.R` que fazia o trimestre
+2025T3 (julho–setembro de 2025) ser descartado do índice industrial.
+
+**Causa do problema:**
+
+Em setembro de 2025, não houve nenhuma admissão nem demissão de trabalhadores formais no
+setor de construção civil (CNAE F) em Roraima. Com zero movimentações, o CAGED não gera
+nenhuma linha para esse mês — e o script interpretava o trimestre como "incompleto"
+(apenas 2 meses com dados, em vez de 3), descartando 2025T3 do índice.
+
+**A correção:**
+
+O script agora completa o grid de meses com saldo zero para os meses sem movimentação,
+antes de calcular o estoque acumulado de vínculos. Semanticamente correto: se não houve
+contratações nem demissões, o estoque de trabalhadores permanece igual ao mês anterior.
+A mesma lógica foi aplicada à seção C (Indústria de Transformação) para prevenir o mesmo
+problema no futuro.
+
+**Resultado corrigido:**
+
+- `data/output/indice_industria.csv` — **24 observações** (2020T1–2025T4, todos os trimestres)
+- 2025T3 = 128,2 (composto industrial, base 2020=100)
+
+**Arquivos modificados:**
+- `R/03_industria.R` — correção do grid mensal nas seções F e C do CAGED
+
+---
+
+*Última atualização: 11 de abril de 2026 — Fase 3 concluída (24 obs., 2020T1–2025T4); bug 2025T3 corrigido*

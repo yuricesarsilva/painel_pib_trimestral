@@ -43,6 +43,7 @@ source("R/utils.R")
 library(httr2)
 library(jsonlite)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(data.table)
 library(readr)
@@ -379,6 +380,25 @@ if (nrow(caged_f_mensal) == 0) {
   stop("CAGED: nenhum registro para seção F (Construção). Verificar dados.")
 }
 
+# Completar grid de meses: meses sem movimentação em RR têm saldo=0
+# (estoque permanece inalterado). Evita que trimestres com mês "vazio"
+# sejam descartados pelo filter(n_meses == 3) posterior.
+{
+  ano_min <- min(caged_f_mensal$ano); mes_min <- min(caged_f_mensal$mes[caged_f_mensal$ano == ano_min])
+  ano_max <- max(caged_rr$ano);      mes_max <- max(caged_rr$mes[caged_rr$ano == ano_max])
+  grid_f <- expand_grid(ano = ano_min:ano_max, mes = 1:12) |>
+    filter((ano > ano_min | mes >= mes_min) & (ano < ano_max | mes <= mes_max))
+  n_antes <- nrow(caged_f_mensal)
+  caged_f_mensal <- grid_f |>
+    left_join(select(caged_f_mensal, ano, mes, saldo), by = c("ano", "mes")) |>
+    mutate(saldo = replace_na(saldo, 0L)) |>
+    arrange(ano, mes)
+  n_depois <- nrow(caged_f_mensal)
+  if (n_depois > n_antes)
+    message(sprintf("CAGED F: %d meses completados com saldo=0 (sem movimentação).",
+                    n_depois - n_antes))
+}
+
 # Calcular estoque acumulado (base 1000 + saldos mensais)
 # O nível inicial (1000) é arbitrário; o Denton calibra o nível correto.
 caged_f_mensal <- caged_f_mensal |>
@@ -525,6 +545,22 @@ if (nrow(caged_c_mensal) == 0) {
   peso_energia_transf_efetivo <- 1.0
   peso_emprego_transf_efetivo <- 0.0
 } else {
+  # Completar grid de meses para seção C (mesma lógica da seção F)
+  {
+    ano_min_c <- min(caged_c_mensal$ano); mes_min_c <- min(caged_c_mensal$mes[caged_c_mensal$ano == ano_min_c])
+    ano_max_c <- max(caged_rr$ano);       mes_max_c <- max(caged_rr$mes[caged_rr$ano == ano_max_c])
+    grid_c <- expand_grid(ano = ano_min_c:ano_max_c, mes = 1:12) |>
+      filter((ano > ano_min_c | mes >= mes_min_c) & (ano < ano_max_c | mes <= mes_max_c))
+    n_antes_c <- nrow(caged_c_mensal)
+    caged_c_mensal <- grid_c |>
+      left_join(select(caged_c_mensal, ano, mes, saldo), by = c("ano", "mes")) |>
+      mutate(saldo = replace_na(saldo, 0L)) |>
+      arrange(ano, mes)
+    if (nrow(caged_c_mensal) > n_antes_c)
+      message(sprintf("CAGED C: %d meses completados com saldo=0.",
+                      nrow(caged_c_mensal) - n_antes_c))
+  }
+
   caged_c_mensal <- caged_c_mensal |>
     mutate(estoque_c = 1000 + cumsum(saldo))
 
