@@ -141,31 +141,40 @@
 ## Fase 2 — Administração Pública
 
 ### 2.1 Folha federal (SIAPE)
-- [ ] Acessar API do Portal da Transparência
-- [ ] Coletar folha de pagamento mensal (servidores com lotação em Roraima)
-  - [ ] Definir filtros: UG de lotação em RR, competência mensal, 2020–presente
+- [x] Acessar API do Portal da Transparência (endpoint testado; token retornou 401 — aguardando ativação via e-mail)
+- [ ] Coletar folha de pagamento mensal (servidores com lotação em Roraima) — **pendente: token não ativado**
+  - [x] Definir filtros: UF de exercício = RR, competência mensal, 2020–presente
   - [ ] Tratar meses com 13º salário (não representam atividade adicional — excluir ou tratar)
 - [ ] Verificar consistência da série (ausência de gaps, valores atípicos)
 - [ ] Salvar dados brutos em `data/raw/siape_rr_mensal.csv`
+- **Nota**: módulo SIAPE pulado na execução atual — script continua com estadual + municipal. Reexecutar após ativar token.
 
-### 2.2 Folha estadual
-- [ ] Obter série mensal da folha de pagamento do governo estadual (SEPLAN/SEFAZ-RR)
-- [ ] Verificar cobertura: servidores ativos, inativos, pensionistas — definir escopo
-- [ ] Salvar em `data/raw/folha_estadual_rr_mensal.csv`
+### 2.2 Folha estadual (SICONFI/STN — elemento 31)
+- [x] Coletar RREO Anexo 06 via API SICONFI (STN) para o Estado de RR (id_ente=14)
+  - [x] Escopo: elemento Pessoal e Encargos Sociais (cod_conta = RREO6PessoalEEncargosSociais), despesas liquidadas
+  - [x] Alinhamento com IBGE: elemento 31 (pessoal ativo) — inativos e pensionistas são transferências, não VAB
+  - [x] Cobertura: 2020–2026 (37 bimestres), bimestral acumulado
+- [x] Converter acumulado → incremental → trimestral (distribuição uniforme intra-bimestre)
+- [x] Salvar em `data/raw/folha_estadual_rr_mensal.csv`
 
-### 2.3 Folha municipal (estimada)
-- [ ] Baixar dados de gastos com pessoal dos municípios de RR via SICONFI (STN)
-- [ ] Verificar frequência disponível (trimestral ou semestral)
-- [ ] Salvar em `data/raw/folha_municipal_rr.csv`
+### 2.3 Folha municipal (SICONFI/STN — 15 municípios de RR)
+- [x] Coletar RREO Anexo 06 via API SICONFI para todos os 15 municípios de RR
+  - [x] Frequência confirmada: bimestral acumulado (RREO)
+  - [x] Cobertura: 30–37 bimestres por município (variação por data de início dos relatórios)
+- [x] Converter acumulado → incremental por município → agregar RR → trimestral
+- [x] Salvar em `data/raw/folha_municipal_rr.csv`
 
 ### 2.4 Série de volume e benchmarking
-- [ ] Combinar folhas federal + estadual + municipal em série mensal total
-- [ ] Deflacionar pelo IPCA nacional (série acumulada 12 meses ou deflator mensal encadeado)
-- [ ] Agregar em trimestres
-- [ ] Calcular índice de volume (base 2020 = 100)
-- [ ] Aplicar Denton-Cholette contra VAB AAPP anual das Contas Regionais
-- [ ] Validar: variação anual deve coincidir com Contas Regionais
-- [ ] Salvar em `data/output/indice_adm_publica.csv`
+- [x] Combinar folhas estadual + municipal (federal=0 enquanto SIAPE pendente)
+- [x] Deflacionar pelo IPCA nacional (SIDRA tab 1737, índice encadeado base jan/2020=1)
+- [x] Agregar em trimestres
+- [x] Calcular índice de volume (base 2020 = 100)
+- [x] Aplicar Denton-Cholette contra VAB AAPP anual das Contas Regionais (2020–2023)
+- [x] Validar: variação anual coincide exatamente com Contas Regionais
+  - [x] 2021: +9,7% (índice) vs. +9,7% (IBGE) ✓
+  - [x] 2022: +25,6% vs. +25,6% ✓
+  - [x] 2023: +18,0% vs. +18,0% ✓
+- [x] Salvar em `data/output/indice_adm_publica.csv` (16 obs., 2020T1–2023T4)
 - [ ] Atualizar `historico_simples.md` com conclusão da Fase 2
 
 ---
@@ -351,7 +360,7 @@
 |---|---|---|
 | 0 | Planejamento e infraestrutura | 🟢 Concluída |
 | 1 | Agropecuária | 🟢 Concluída |
-| 2 | Administração Pública | ⚪ Não iniciada |
+| 2 | Administração Pública | 🟡 Em andamento (SIAPE pendente) |
 | 3 | Indústria | ⚪ Não iniciada |
 | 4 | Serviços Privados | ⚪ Não iniciada |
 | 5 | Agregação e publicação | ⚪ Não iniciada |

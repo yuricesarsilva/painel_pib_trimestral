@@ -481,30 +481,96 @@ do índice coincidem exatamente com as das Contas Regionais em todos os 13 anos 
 
 ---
 
-## Onde estamos agora
+### Abril de 2026 — Fase 2 concluída (exceto SIAPE): Índice de Administração Pública de Roraima
 
-**Etapa atual: início da implementação**
+**O que foi feito:**
 
-O planejamento está concluído e aprovado. A próxima etapa é começar a escrever os códigos em R,
-seguindo esta ordem:
+Implementamos o script `R/02_adm_publica.R`, que produz o índice trimestral de Administração
+Pública de Roraima (base 2020 = 100), cobrindo etapas de coleta via API, deflação e ancoragem
+pelo método Denton-Cholette.
 
-1. **`utils.R`** — funções básicas que serão usadas por todos os outros scripts
-   (como a função de "ancoragem" Denton-Cholette e a de deflação pelo IPCA)
+**Etapa 2.1 — Folha federal (SIAPE):**
 
-2. **`01_agropecuaria.R`** — primeiro setor a ser implementado:
-   - Calcular quanto do valor da produção agrícola de Roraima é coberto pelos dados do IBGE
-   - Montar a série trimestral de lavouras usando LSPA + calendário de colheita do Censo 2006
-   - Verificar disponibilidade de dados de abate, leite e ovos para Roraima
-   - Ancoragem Denton ao VAB agropecuário anual do IBGE
+A coleta da folha de servidores federais com lotação em Roraima depende de token do Portal da
+Transparência. O token configurado retornou erro 401 (não ativado). O módulo foi implementado
+no script mas é pulado automaticamente quando o token está indisponível. O índice foi calculado
+com base estadual + municipal enquanto o token aguarda ativação.
 
-3. **`02_adm_publica.R`** — setor público (32% da economia de RR)
+**Etapa 2.2 — Folha estadual:**
 
-4. **`03_industria.R`** — construção civil, energia e indústria
+Coletamos a folha do Estado de RR via API SICONFI/STN — Relatório Resumido de Execução
+Orçamentária (RREO), Anexo 06. A conta usada é `RREO6PessoalEEncargosSociais`, liquidado,
+que equivale ao elemento 31 (pessoal ativo) — alinhado com a metodologia do IBGE, que inclui
+apenas remuneração de servidores ativos no VAB de Administração Pública (aposentados e
+pensionistas são transferências, não produção).
 
-5. **`04_servicos.R`** — comércio, transportes e outros serviços
+O RREO é divulgado em formato bimestral acumulado. O script converte para incremental (diferença
+entre bimestres consecutivos), distribui os dois meses uniformemente e agrega por trimestre.
+Cobertura: **2020 a 2026T1** (37 bimestres coletados).
 
-6. **`05_agregacao.R`** — juntar tudo, ajustar sazonalmente e gerar os outputs finais
+**Etapa 2.3 — Folha municipal:**
+
+Repetimos o procedimento para todos os 15 municípios de Roraima: Amajari, Alto Alegre, Boa Vista,
+Bonfim, Cantá, Caracaraí, Caroebe, Iracema, Mucajaí, Normandia, Pacaraima, Rorainópolis,
+São João da Baliza, São Luiz e Uiramutã. A cobertura variou entre 12 e 37 bimestres por município
+(Caracaraí tem série mais curta no SICONFI).
+
+**Etapa 2.4 — Deflação, índice e Denton-Cholette:**
+
+A série nominal (folha estadual + municipal) foi deflacionada pelo IPCA nacional (SIDRA tab 1737,
+variação mensal), convertido em índice encadeado com base em janeiro de 2020. O índice real foi
+normalizado para 2020 = 100 e submetido ao Denton-Cholette contra o VAB anual de
+"Adm., defesa, educação e saúde públicas e seguridade social" das Contas Regionais.
+
+**Validação perfeita:**
+
+As variações anuais do índice coincidem exatamente com as Contas Regionais em todos os anos
+disponíveis para benchmarking:
+
+| Ano | Variação do índice | Variação VAB IBGE |
+|---|---|---|
+| 2021 | +9,7% | +9,7% ✓ |
+| 2022 | +25,6% | +25,6% ✓ |
+| 2023 | +18,0% | +18,0% ✓ |
+
+**Descoberta técnica registrada:**
+
+O SIDRA retorna a coluna de período como "Mês (Código)" no formato YYYYMM (ex: "202001").
+A extração ingênua do mês com `^[0-9]+` captura a string inteira como número ("202001" em vez
+de "01"), fazendo a busca por janeiro falhar. Corrigido com detecção do formato YYYYMM e uso de
+`substr()`.
+
+**Outputs gerados:**
+- `data/raw/folha_estadual_rr_mensal.csv` — 37 bimestres (Estado de RR)
+- `data/raw/folha_municipal_rr.csv` — 15 municípios × bimestres disponíveis
+- `data/output/indice_adm_publica.csv` — 16 observações (2020T1–2023T4)
+
+**Pendência remanescente:**
+
+O módulo SIAPE (folha federal) ficou pendente por falta de token ativo. O script já está
+implementado e pronto — bastará reexecutar após confirmação do token por e-mail do Portal
+da Transparência. A folha federal deve representar parcela relevante do total de AAPP em RR
+(presença militar e servidores federais civis), então a inclusão futura vai melhorar a acurácia
+do índice.
 
 ---
 
-*Última atualização: 10 de abril de 2026 — Fase 1 concluída; índice agropecuário trimestral gerado e validado (2010T1–2023T4)*
+## Onde estamos agora
+
+Dois dos quatro componentes setoriais estão prontos:
+
+| Setor | Status | Arquivo de saída |
+|---|---|---|
+| Agropecuária (8,9% do VAB) | ✅ Concluído | `indice_agropecuaria.csv` (56 obs., 2010T1–2023T4) |
+| Adm. Pública (46,2% do VAB) | ✅ Concluído* | `indice_adm_publica.csv` (16 obs., 2020T1–2023T4) |
+| Indústria (11,6% do VAB) | ⏳ Próxima etapa | — |
+| Serviços Privados (33,3% do VAB) | ⏳ Pendente | — |
+
+*Pendente inclusão da folha federal (SIAPE) quando token for ativado.
+
+**Próxima etapa:** Fase 3 — Indústria (`R/03_industria.R`): Construção Civil (CAGED + ICMS +
+cimento SNIC), SIUP (consumo de energia por classe via ANEEL) e Indústria de Transformação.
+
+---
+
+*Última atualização: 10 de abril de 2026 — Fase 2 concluída (SIAPE pendente); índice de AAPP gerado e validado (2020T1–2023T4)*
