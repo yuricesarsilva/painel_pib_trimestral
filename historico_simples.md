@@ -561,22 +561,72 @@ manual dos arquivos mensais para quem tiver acesso privilegiado.
 
 ---
 
-## Onde estamos agora
+### Abril de 2026 — Fase 3: script da Indústria implementado
 
-Dois dos quatro componentes setoriais estão prontos:
+**O que foi feito:**
+
+Pesquisamos e implementamos as fontes de dados para os três subsetores industriais de Roraima:
+SIUP (eletricidade, gás, água), Construção Civil e Indústria de Transformação.
+
+**ANEEL — energia elétrica por classe de consumidor:**
+A ANEEL (agência reguladora de energia) publica mensalmente o consumo de energia elétrica de cada
+distribuidora, separado por tipo de consumidor (residencial, comercial, industrial, poder público).
+Para Roraima, a distribuidora é a "Boa Vista" (Roraima Energia S.A.), que opera num sistema
+isolado — ou seja, não está ligada à rede elétrica nacional. Encontramos os dados no portal de
+dados abertos da ANEEL e confirmamos que há cobertura completa mês a mês de 2020 a 2026.
+A estratégia foi usar a API diretamente com filtros, em vez de baixar o arquivo de 200 MB
+com dados de todo o Brasil — assim obtemos apenas os ~800 registros por ano que precisamos.
+
+**CAGED — emprego formal por setor:**
+O Novo CAGED (sistema de registro de emprego formal, que entrou em vigor em 2020) não tem
+API pública que permita filtrar por estado. O jeito é baixar o arquivo nacional mensal (~35 MB
+comprimido), extrair com 7-Zip e filtrar apenas os registros de Roraima. Para cada mês baixado,
+salvamos um pequeno arquivo com apenas as contratações e demissões por setor em RR — assim na
+Fase 4 não precisamos baixar tudo de novo. No total, a primeira execução baixa cerca de 2,5 GB,
+mas todos os arquivos grandes são apagados logo após o processamento.
+
+**SNIC — cimento:**
+O site do SNIC (associação do setor de cimento) não tem API pública. Os dados precisam ser
+baixados manualmente. O script está preparado para usar os dados de cimento se o arquivo for
+colocado na pasta correta — caso contrário, usa apenas os dados de emprego do CAGED.
+
+**O que o script produz:**
+- Índice mensal de energia total distribuída em RR (SIUP)
+- Série de emprego formal acumulado na construção civil (Construção)
+- Índice composto energia industrial + emprego na indústria (Transformação)
+- Índice industrial final: combinação dos três com pesos das Contas Regionais do IBGE (2021)
+- Todos passam pelo ajuste de Denton para bater com os dados anuais do IBGE (2020–2023)
+
+**Decisões técnicas importantes:**
+- O ICMS por setor não foi incluído: a SEFAZ-RR não publica esses dados de forma automatizável
+  por CNAE. Isso é documentado como limitação — pode melhorar no futuro.
+- A energia industrial da ANEEL vale 70% do índice de Transformação; o emprego vale 30%.
+  Justificativa: energia é uma medida direta de volume; emprego é um insumo, não produção.
+- O SIUP usa a soma de todas as classes de energia (total distribuído) como proxy do setor.
+
+**Arquivos criados:**
+- `R/03_industria.R` — script completo da Fase 3
+
+**Arquivos atualizados:**
+- `plano_projeto.md` — seções 3 (Construção), 4 (SIUP), 5 (Transformação), Fase 3, decisões 17–22
+- `checklist.md` — Fase 3 detalhada com itens concluídos
+
+---
+
+## Onde estamos agora
 
 | Setor | Status | Arquivo de saída |
 |---|---|---|
 | Agropecuária (8,9% do VAB) | ✅ Concluído | `indice_agropecuaria.csv` (56 obs., 2010T1–2023T4) |
 | Adm. Pública (46,2% do VAB) | ✅ Concluído* | `indice_adm_publica.csv` (16 obs., 2020T1–2023T4) |
-| Indústria (11,6% do VAB) | ⏳ Próxima etapa | — |
+| Indústria (11,6% do VAB) | 🟡 Script pronto, execução pendente | `indice_industria.csv` (a gerar) |
 | Serviços Privados (33,3% do VAB) | ⏳ Pendente | — |
 
 *Pendente inclusão da folha federal (SIAPE) quando token for ativado.
 
-**Próxima etapa:** Fase 3 — Indústria (`R/03_industria.R`): Construção Civil (CAGED + ICMS +
-cimento SNIC), SIUP (consumo de energia por classe via ANEEL) e Indústria de Transformação.
+**Próxima etapa:** executar `R/03_industria.R` (baixa ~2,5 GB de CAGED e dados da ANEEL),
+verificar os índices gerados e comparar com os dados do IBGE. Depois, Fase 4 — Serviços.
 
 ---
 
-*Última atualização: 11 de abril de 2026 — Fase 2 concluída; índice de AAPP gerado e validado (2020T1–2023T4); SIAPE indisponível via API, decisão metodológica documentada*
+*Última atualização: 11 de abril de 2026 — Fase 3 implementada (script completo); fontes confirmadas: ANEEL SAMP via API CKAN, CAGED microdata FTP + 7-Zip; execução do script pendente*

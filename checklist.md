@@ -177,47 +177,61 @@
 
 ## Fase 3 — Indústria
 
-### 3.1 Construção Civil
-- [ ] Baixar vínculos ativos na construção (CNAE F) do CAGED para RR (2020–presente)
-- [ ] Baixar ICMS sobre materiais de construção da SEFAZ-RR por atividade econômica
-  - [ ] Deflacionar ICMS pelo IPCA nacional
-  - [ ] Registrar datas de quebras tributárias (mudanças de alíquota/regime) → dummy no script
-- [ ] Baixar vendas de cimento em RR via SNIC (mensal)
-- [ ] Construir índice composto (CAGED + ICMS + cimento) com pesos explícitos
-  - [ ] Documentar pesos escolhidos e justificativa
-- [ ] Agregar em trimestres
-- [ ] Salvar em `data/processed/serie_construcao_trimestral.csv`
+### 3.1 Coleta ANEEL SAMP — energia por classe (SIUP + compartilhada com Fase 4)
+- [x] Confirmar distribuidor RR: "BOA VISTA" (Roraima Energia S.A.), sistema isolado
+- [x] Identificar dataset ANEEL SAMP: `3e153db4-a503-4093-88be-75d31b002dcf`
+- [x] Confirmar filtros: NomTipoMercado = "Sistema Isolado - Regular", DscDetalheMercado = "Energia TE (kWh)"
+- [x] Confirmar resource IDs por ano (2020–2026): `29f9fec9`, `84906f77`, `7e097631`, `b9ad890b`, `ff80dd21`, `6fac5605`, `56f1c242`
+- [x] Confirmar cobertura: 12 meses/ano completos para todos os anos testados (2020, 2023)
+- [x] Optar por API CKAN com filtros (não CSV 201 MB) — ~800 registros/ano para RR
+- [x] Implementar coleta com paginação (limite 500 registros/chamada)
+- [x] Salvar em `data/raw/aneel/aneel_energia_rr_{ano}.csv` (cache por ano, idempotente)
+- [x] Consolidar em `data/raw/aneel/aneel_energia_rr.csv`
+- [x] Classes disponíveis: Residencial, Comercial, Industrial, Poder público, Rural, Serv. público
 
-### 3.2 SIUP — Serviços de Utilidade Pública
-- [ ] Baixar consumo mensal de energia elétrica de Roraima desagregado por classe (ANEEL)
-  - [ ] Residencial
-  - [ ] Comercial (salvar separado — será reaproveitado em Comércio)
-  - [ ] Industrial (salvar separado — será reaproveitado em Indústria de Transformação)
-  - [ ] Poder público
-- [ ] Construir índice composto ponderado por classe para o SIUP
-  - [ ] Documentar pesos escolhidos (residencial recebe peso menor)
-- [ ] Calcular índice de volume trimestral
-- [ ] Salvar série SIUP em `data/processed/serie_siup_trimestral.csv`
-- [ ] Salvar série energia comercial em `data/processed/energia_comercial_rr.csv`
-- [ ] Salvar série energia industrial em `data/processed/energia_industrial_rr.csv`
+### 3.2 Coleta CAGED Microdata — emprego por seção CNAE (Fase 3 + reutilizada na Fase 4)
+- [x] Confirmar ausência de API filtrada por UF para Novo CAGED (2020+)
+- [x] Confirmar FTP MTE: `ftp.mtps.gov.br/pdet/microdados/NOVO%20CAGED/{ano}/{yearmonth}/CAGEDMOV{yearmonth}.7z`
+- [x] Confirmar 7-Zip disponível em `C:/Program Files/7-Zip/7z.exe`
+- [x] Confirmar estrutura do arquivo: campos uf (col 3), seção CNAE (col 5), saldo (col 7)
+- [x] Implementar extração com `data.table::fread` (filtro por UF=14, agregação por seção)
+- [x] Salvar por mês em `data/raw/caged/caged_rr_{yearmonth}.csv` (idempotente)
+- [x] Consolidar em `data/raw/caged/caged_rr_mensal.csv` com todas as seções CNAE
+- [x] Script baixa TODAS as seções — Fase 4 reutiliza sem re-download (~2,5 GB one-time)
 
-### 3.3 Indústria de Transformação
-- [ ] Usar série de energia industrial coletada no SIUP (3.2) — sem coleta adicional
-- [ ] Baixar vínculos ativos na indústria de transformação (CNAE C) do CAGED para RR
-- [ ] Baixar ICMS sobre bens industriais da SEFAZ-RR
-  - [ ] Deflacionar pelo IPCA nacional
-  - [ ] Registrar datas de quebras tributárias → dummy no script
-- [ ] Construir índice composto (energia industrial + CAGED + ICMS) com pesos explícitos
-  - [ ] Energia industrial com peso prioritário (único componente de volume físico)
-- [ ] Salvar em `data/processed/serie_transformacao_trimestral.csv`
+### 3.3 SIUP — índice de energia distribuída
+- [x] Proxy: soma mensal de energia TE de todas as classes (kWh total)
+- [x] Agregação trimestral: soma dos 3 meses (variável de fluxo)
+- [x] Normalização: base 2020 = 100
+- [x] Denton-Cholette contra VAB SIUP das Contas Regionais (Tab. 5.5)
+- [x] Salvar como componente em `data/output/indice_industria.csv`
 
-### 3.4 Índice industrial agregado e benchmarking
-- [ ] Combinar construção + SIUP + transformação com pesos das Contas Regionais
-- [ ] Calcular índice industrial trimestral (base 2020 = 100)
-- [ ] Aplicar Denton-Cholette contra VAB industrial anual das Contas Regionais
-- [ ] Validar resultado
-- [ ] Salvar em `data/output/indice_industria.csv`
-- [ ] Atualizar `historico_simples.md` com conclusão da Fase 3
+### 3.4 Construção — índice de emprego formal CNAE F
+- [x] Proxy primária: estoque acumulado CAGED F (base 1000 + saldos mensais)
+- [x] SNIC cimento: indisponível via API; script aceita CSV de download manual (condicional)
+  - Se SNIC presente: CAGED F 60% + SNIC 40%
+  - Se ausente: CAGED F 100%
+- [x] ICMS materiais construção: excluído (SEFAZ-RR sem desagregação automatizável por CNAE)
+- [x] Agregação trimestral: média dos 3 meses (variável de nível)
+- [x] Denton-Cholette contra VAB Construção (Tab. 5.6)
+- [x] Salvar como componente em `data/output/indice_industria.csv`
+
+### 3.5 Indústria de Transformação — índice composto
+- [x] Proxy: energia industrial ANEEL 70% + CAGED C acumulado 30%
+- [x] Energia industrial = classe "Industrial" do ANEEL (reaproveitada da coleta 3.1)
+- [x] ICMS industrial: excluído (SEFAZ-RR sem desagregação automatizável por CNAE)
+- [x] Agregação trimestral: média dos 3 meses
+- [x] Denton-Cholette contra VAB Ind. Transformação (Tab. 5.4)
+- [x] Salvar como componente em `data/output/indice_industria.csv`
+
+### 3.6 Índice industrial agregado e validação
+- [x] Pesos internos derivados das Contas Regionais 2021 (SIUP 5,40 / Const. 4,89 / Transf. 1,31)
+- [x] Cálculo do índice composto com pesos normalizados dentro do bloco
+- [x] Validação com `validar_serie()` em cada componente e no composto
+- [x] Salvar em `data/output/indice_industria.csv`
+- [ ] **Executar** `R/03_industria.R` e verificar outputs (a fazer na próxima sessão)
+- [ ] Validação manual: comparar variações anuais com Contas Regionais IBGE
+- [ ] Atualizar `historico_simples.md` com conclusão confirmada da Fase 3
 
 ---
 
@@ -357,7 +371,7 @@
 | 0 | Planejamento e infraestrutura | 🟢 Concluída |
 | 1 | Agropecuária | 🟢 Concluída |
 | 2 | Administração Pública | 🟢 Concluída |
-| 3 | Indústria | ⚪ Não iniciada |
+| 3 | Indústria | 🟡 Em andamento (script implementado; execução pendente) |
 | 4 | Serviços Privados | ⚪ Não iniciada |
 | 5 | Agregação e publicação | ⚪ Não iniciada |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |

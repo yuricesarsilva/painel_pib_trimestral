@@ -177,18 +177,39 @@ Série de saída: `data/output/indice_adm_publica.csv`, 16 observações (2020T1
 
 ---
 
-### 3. Construção Civil (~8% do VAB)
+### 3. Construção Civil (4,89% do VAB)
 
-| Proxy | Fonte | Frequência | Tipo de medida |
-|---|---|---|---|
-| Vínculos ativos na construção (CNAE F) | CAGED novo (a partir de 2020) | Mensal | Insumo (emprego) |
-| ICMS sobre materiais de construção | SEFAZ-RR (por atividade econômica) | Mensal | Valor nominal |
-| Vendas de cimento (RR) | SNIC — Sindicato Nacional da Indústria do Cimento | Mensal | Volume físico |
+| Proxy | Fonte | Frequência | Tipo de medida | Qualidade |
+|---|---|---|---|---|
+| Estoque acumulado CAGED F (construção) | FTP MTE — CAGEDMOV {yearmonth}.7z | Mensal | Insumo (emprego) | Média-alta |
+| Vendas de cimento (RR) | SNIC — download manual, snic.org.br | Mensal | Volume físico | Forte (se disponível) |
 
-**Nota sobre cimento**: O SNIC publica vendas de cimento por estado em frequência mensal — proxy
-física direta de atividade construtiva, usada em diversas metodologias estaduais de PIB trimestral
-(inclusive como referência do IBCR). É o único insumo com dado físico de alta frequência disponível
-para RR. Deflação não necessária (já é volume). Classificação de qualidade: **forte**.
+**Fonte CAGED — detalhamento técnico:**
+O Novo CAGED (2020+) não está disponível em SIDRA nem via API com filtros por UF. O script
+baixa o arquivo nacional `CAGEDMOV{yearmonth}.7z` do FTP `ftp.mtps.gov.br/pdet/microdados/NOVO
+CAGED/{ano}/{yearmonth}/`, extrai com 7-Zip, filtra `uf == 14` (Roraima) e agrega o saldo
+(`saldomovimentação`) por seção CNAE. O arquivo grande é apagado após processamento; o
+agregado RR (<1 KB/mês) é mantido em `data/raw/caged/caged_rr_{yearmonth}.csv`. A coleta
+cobre todas as seções CNAE — útil também para Fase 4 (Comércio, Transportes, Outros Serviços)
+sem novo download. 1ª execução: ~2,5 GB de download total (72 meses × 35 MB); idempotente.
+
+**CAGED como estoque acumulado:**
+O CAGED publica fluxo mensal (admissões − desligamentos = saldo). Para construir uma série
+de nível usável como indicador Denton, acumula-se o saldo a partir de base 1000 (Jan 2020).
+O nível inicial é arbitrário — o Denton-Cholette calibra o nível correto ao benchmark anual
+do IBGE. A série resultante capta a trajetória relativa do emprego formal na construção.
+
+**SNIC cimento — indisponível via API:**
+O snic.org.br não responde a requisições automatizadas (timeout). O dado requer download manual
+da planilha mensal e salvamento em `data/raw/snic_cimento_rr.csv` (colunas: ano, mes, vendas_ton).
+Se o arquivo estiver presente, o índice de Construção usa composição CAGED F 60% + SNIC 40%.
+Sem o arquivo, Construção usa apenas CAGED F (metodologicamente válido).
+
+**ICMS de materiais de construção:** excluído — SEFAZ-RR não publica ICMS desagregado por seção
+CNAE de forma automatizável. Mantido como opção futura caso a SEFAZ-RR disponibilize dados.
+
+**Agregação trimestral:** média do estoque mensal (variável de nível, não fluxo).
+**Benchmark:** VAB Construção das Contas Regionais IBGE (Tab. 5.6).
 
 ---
 
@@ -196,33 +217,65 @@ para RR. Deflação não necessária (já é volume). Classificação de qualida
 
 | Proxy | Fonte | Frequência | Tipo de medida |
 |---|---|---|---|
-| Consumo de energia elétrica — residencial (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
-| Consumo de energia elétrica — comercial (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
-| Consumo de energia elétrica — industrial (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
-| Consumo de energia elétrica — poder público (RR) | ANEEL (por classe de consumo) | Mensal | Volume |
+| Consumo de energia elétrica — todas as classes (RR) | ANEEL SAMP via API CKAN | Mensal | Volume (kWh) |
 
-**Nota sobre desagregação**: a ANEEL disponibiliza consumo por classe de consumidor e por UF na
-mesma consulta, sem custo adicional de coleta. Coletar desagregado desde o início permite: (a)
-construir um índice composto ponderado para o SIUP; (b) reaproveitar a série de **energia
-comercial** no setor de Comércio e a série de **energia industrial** na Indústria de Transformação,
-sem necessidade de coleta adicional. O consumo residencial é mais influenciado por fatores
-populacionais e climáticos do que pela atividade econômica — recebe peso menor no índice do SIUP.
-Classificação de qualidade do bloco: **forte**.
+**Fonte ANEEL SAMP — detalhamento técnico:**
+O SAMP (Sistema de Acompanhamento do Mercado de Energia Elétrica) é publicado pela ANEEL no
+portal de dados abertos. O CSV anual tem ~200 MB (todo o Brasil). A estratégia adotada é a
+**API CKAN com filtros pré-aplicados** — retorna apenas ~800 registros/ano para RR, sem download
+do arquivo completo.
+
+- Dataset ID: `3e153db4-a503-4093-88be-75d31b002dcf`
+- Endpoint: `dadosabertos.aneel.gov.br/api/3/action/datastore_search`
+- Filtros aplicados na API: `SigAgenteDistribuidora = "BOA VISTA"`,
+  `NomTipoMercado = "Sistema Isolado - Regular"`,
+  `DscDetalheMercado = "Energia TE (kWh)"`
+- Campos coletados: `DatCompetencia` (formato YYYY-MM-01), `DscClasseConsumoMercado`, `VlrMercado`
+- Separador CSV original: `;` — decimal: `,` (formato brasileiro)
+- Roraima opera em **sistema isolado** — separado do SIN (Sistema Interligado Nacional)
+- Distribuidor de RR: **"BOA VISTA"** (Roraima Energia S.A.)
+- Resource IDs por ano: 2020=`29f9fec9`, 2021=`84906f77`, 2022=`7e097631`, 2023=`b9ad890b`,
+  2024=`ff80dd21`, 2025=`6fac5605`, 2026=`56f1c242`
+
+**Classes disponíveis para RR:** Residencial, Comercial, Industrial, Poder público, Rural,
+Serviço público, Iluminação pública, Consumo próprio. Cada classe pode ter múltiplas
+sub-tarifas por mês (ex: Branca, Convencional, Verde) — o script soma todas por mês e classe.
+
+**Proxy do SIUP:** soma mensal de energia TE de todas as classes (kWh total distribuído).
+Justificativa: o VAB do SIUP nas Contas Nacionais mede o valor adicionado pelos distribuidores,
+proporcional ao volume distribuído. Total kWh é o proxy de volume natural.
+
+**Reaproveitamento na Fase 4:**
+- Classe `"Comercial"` → proxy de Comércio (seção 6)
+- Classe `"Industrial"` → proxy de Ind. de Transformação (seção 5)
+
+**Agregação trimestral:** soma dos três meses (fluxo).
+**Benchmark:** VAB SIUP das Contas Regionais IBGE (Tab. 5.5).
+Classificação de qualidade: **forte**.
 
 ---
 
 ### 5. Indústria de Transformação (1,31% do VAB)
 
-| Proxy | Fonte | Frequência | Tipo de medida |
-|---|---|---|---|
-| Consumo de energia industrial (RR) | ANEEL (classe industrial — coletado no SIUP) | Mensal | Volume |
-| Vínculos na indústria de transformação (CNAE C) | CAGED | Mensal | Insumo (emprego) |
-| ICMS sobre bens industriais | SEFAZ-RR (por atividade econômica) | Mensal | Valor nominal |
+| Proxy | Fonte | Frequência | Tipo de medida | Peso no índice | Qualidade |
+|---|---|---|---|---|---|
+| Energia industrial (kWh) | ANEEL SAMP — classe "Industrial" | Mensal | Volume físico | 70% | Forte |
+| Estoque acumulado CAGED C | FTP MTE — CAGEDMOV | Mensal | Insumo (emprego) | 30% | Aceitável |
 
-**Nota**: Sem PIM-PF para RR. Peso de 1,31% minimiza o impacto de proxies menos precisas. A
-energia industrial é o componente mais próximo de volume físico e recebe peso prioritário no índice
-composto. ICMS requer deflação e atenção a quebras tributárias. A série de energia industrial é
-obtida sem coleta adicional, como subproduto da coleta do SIUP.
+**Sem PIM-PF para RR.** O IBGE publica a PIM-PF apenas para estados com ≥ 0,5% da produção
+industrial nacional. RR não está incluído. As proxies disponíveis são limitadas, mas o peso de
+1,31% no VAB total minimiza o impacto na precisão do índice agregado.
+
+**Proxy composta:** energia industrial ANEEL (70%) + emprego CAGED C (30%).
+- Energia industrial = classe `"Industrial"` do ANEEL SAMP (coletada gratuitamente no SIUP)
+- Emprego CAGED C = estoque acumulado de saldos mensais (mesma metodologia do CAGED F)
+- Ambas normalizadas para base 2020 = 100 antes da combinação por pesos
+
+**ICMS industrial:** excluído — SEFAZ-RR não publica ICMS desagregado por CNAE
+de forma automatizável. A disponibilidade futura pode melhorar esta proxy.
+
+**Agregação trimestral:** média dos três meses (proxy de nível).
+**Benchmark:** VAB Ind. de Transformação das Contas Regionais IBGE (Tab. 5.4).
 
 ---
 
@@ -332,11 +385,11 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 | Agropecuária | 8,87% | 2.040 | Alta (PAM/LSPA + Censo 2006 + abate + ovos) | **1ª fase** ✅ |
 | Atividades imobiliárias | 7,68% | 1.767 | Baixa (tendência suavizada) | 4ª fase |
 | Outros serviços | 7,63% | 1.756 | Média (CAGED por subgrupo CNAE) | 4ª fase |
-| SIUP | 5,40% | 1.243 | Alta (ANEEL por classe de consumo) | 3ª fase |
-| Construção | 4,89% | 1.125 | Média-alta (CAGED + ICMS + cimento SNIC) | 3ª fase |
+| SIUP | 5,40% | 1.243 | Alta (ANEEL SAMP por classe — energia TE, kWh) | 3ª fase ✅ |
+| Construção | 4,89% | 1.125 | Média-alta (CAGED F acumulado + SNIC condicional) | 3ª fase ✅ |
 | Atividades financeiras e seguros | 2,78% | 639 | Média (BCB concessões + depósitos) | 4ª fase |
 | Transporte, armazenagem e correio | 1,92% | 441 | Média (ANAC passag./carga + diesel ponderado) | 4ª fase |
-| Indústrias de transformação | 1,31% | 301 | Média (energia industrial + CAGED + ICMS) | 3ª fase |
+| Indústrias de transformação | 1,31% | 301 | Média (energia industrial 70% + CAGED C 30%) | 3ª fase ✅ |
 | Informação e comunicação | 1,01% | 233 | Fraca mas necessária (CAGED TI/telecom) | 4ª fase |
 | Indústrias extrativas | 0,05% | 12 | — (negligenciável) | Absorvida |
 
@@ -410,10 +463,30 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Denton-Cholette: 2020–2023 (4 anos, 16 trimestres)
 - Validação perfeita: 2021 +9,7% / 2022 +25,6% / 2023 +18,0%
 
-### Fase 3 — Indústria composta (Construção + SIUP + Transformação)
-- Construção: CAGED + ICMS materiais + cimento SNIC (índice composto com pesos explícitos)
-- SIUP: ANEEL desagregado por classe de consumo (residencial, comercial, industrial, público)
-- Transformação: energia industrial (da coleta SIUP) + CAGED + ICMS industrial
+### Fase 3 — Indústria composta (SIUP + Construção + Transformação) ✅
+
+**SIUP:**
+- Fonte: API CKAN ANEEL SAMP, filtros pré-aplicados (BOA VISTA + Sistema Isolado + Energia TE)
+- Proxy: soma mensal de energia TE de todas as classes (kWh total distribuído em RR)
+- Arquivo: `data/raw/aneel/aneel_energia_rr.csv`
+
+**Construção:**
+- Fonte: CAGED microdata FTP MTE (`CAGEDMOV{yearmonth}.7z`), seção F, UF=14
+- Proxy: estoque acumulado (base 1000 + saldos mensais CAGED F)
+- SNIC cimento: condicional (download manual — instrução no script)
+- Composição se SNIC disponível: CAGED F 60% + SNIC 40%
+- Arquivo mensal RR: `data/raw/caged/caged_rr_{yearmonth}.csv`
+
+**Transformação:**
+- Fonte: ANEEL SAMP (classe Industrial, reaproveitada do SIUP) + CAGED C FTP MTE
+- Proxy: energia industrial 70% + CAGED C 30%
+- ICMS industrial: indisponível de forma automatizável
+
+**Índice composto industrial:** pesos das Contas Regionais 2021 (SIUP 5,40 / Const. 4,89 /
+Transf. 1,31). Pesos relativos internos calculados no script a partir do VAB 2021.
+
+**Coleta CAGED reutilizável:** o script baixa e agrega TODAS as seções CNAE para RR
+— economiza ~2,5 GB de re-download na Fase 4 (Comércio, Transportes, Outros Serviços).
 
 ### Fase 4 — Serviços privados (Comércio + Transportes + Outros)
 - Comércio: energia comercial (da coleta SIUP) + ICMS deflacionado + CAGED (índice composto)
@@ -546,13 +619,33 @@ Na Fase 5 (agregação), gerar duas versões do índice:
    calibrado para o total correto (inclusive federal).
 9. **RREO bimestral acumulado → trimestral**: diferença entre bimestres consecutivos → valor
    incremental; distribuição uniforme em 2 meses; agregação por trimestre.
-10. **Ausência de PIM-PF**: compensada por CAGED + ICMS industrial + energia industrial; peso < 3%.
+10. **Ausência de PIM-PF**: compensada por CAGED C + energia industrial ANEEL; peso < 2% no total.
 11. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
 12. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
 13. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
 14. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
 15. **Benchmarking Denton**: assegura consistência anual com IBGE.
 16. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
+17. **ANEEL SAMP via API CKAN (não CSV completo)**: arquivo CSV anual tem 201 MB (todo o Brasil).
+    A API CKAN do portal de dados abertos aceita filtros em `datastore_search` — retorna apenas
+    os ~800 registros/ano de BOA VISTA (RR), evitando download pesado. Paginação a cada 500 registros.
+18. **CAGED via FTP MTE (microdata nacional)**: Novo CAGED (2020+) não está em SIDRA nem tem API
+    com filtro por UF. Script baixa CAGEDMOV {yearmonth}.7z, extrai com 7-Zip local
+    (`C:/Program Files/7-Zip/7z.exe`), filtra `uf == 14` com `data.table::fread`, agrega por
+    seção CNAE e apaga os arquivos grandes. Todas as seções CNAE são salvas (não só F e C)
+    para reaproveitamento na Fase 4 sem re-download.
+19. **CAGED como estoque acumulado**: o saldo mensal (admissões − desligamentos) é um fluxo.
+    Para uso como indicador Denton (que requer série de nível), acumula-se o saldo a partir de
+    base 1000 em Jan 2020. O Denton calibra o nível absoluto; apenas o perfil temporal importa.
+20. **SNIC cimento indisponível via API**: snic.org.br não responde a requisições automáticas.
+    O script aceita `data/raw/snic_cimento_rr.csv` como insumo de download manual. Se presente:
+    Construção = CAGED F 60% + SNIC 40%. Se ausente: Construção = CAGED F 100%.
+21. **ICMS excluído do bloco industrial (Fase 3)**: SEFAZ-RR não publica ICMS por seção CNAE
+    de forma automatizável. Construção e Transformação usam apenas CAGED + energia. ICMS
+    incorporado na Fase 4 (Comércio) onde o total de ICMS (sem disagregação) já é a proxy padrão.
+22. **Pesos internos do bloco industrial**: calculados a partir do VAB 2021 das Contas Regionais
+    (SIUP 5,40 + Construção 4,89 + Transformação 1,31 = 11,60% do VAB total). Normalizados
+    para soma 100% dentro do bloco. O bloco total recebe peso 11,60% no índice agregado (Fase 5).
 
 ---
 
