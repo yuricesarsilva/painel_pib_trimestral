@@ -23,10 +23,39 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
 - Manter a seção de estrutura do repositório sempre refletindo o estado atual dos arquivos
 - Não é necessário atualizar a cada pequena mudança — apenas quando algo relevante para quem visita o repositório mudar
 
-### 4. Atualizar `plano_projeto.md` (se necessário)
-- Atualizar se houver mudanças metodológicas, novas decisões de design, correções de proxies ou fontes
-- Manter as decisões metodológicas sempre refletindo o estado atual do projeto
-- Não é necessário atualizar a cada pequena mudança — apenas quando algo alterar a estratégia ou metodologia
+### 4. Atualizar `plano_projeto.md` — obrigatório sempre que ocorrer qualquer um dos gatilhos abaixo
+
+O `plano_projeto.md` é o **documento técnico de referência do projeto**. Ele deve refletir
+fielmente o que está implementado — não o que foi planejado inicialmente. Toda decisão tomada
+durante a coleta ou implementação que diverge do plano original ou que acrescenta detalhes
+técnicos relevantes deve ser registrada aqui **imediatamente**, no mesmo commit em que a
+mudança ocorreu.
+
+#### Gatilhos obrigatórios de atualização
+
+| Situação | O que registrar no plano |
+|---|---|
+| Uma fonte de dados não está disponível para RR | Documentar a indisponibilidade, a fonte alternativa usada e a justificativa metodológica |
+| Uma tabela ou endpoint SIDRA/API tem estrutura diferente do esperado | Corrigir a referência (tabela, classificação, variável, formato do período) |
+| Uma proxy é substituída por outra mais adequada | Substituir a descrição da proxy, atualizar a tabela de fontes e o tipo de medida |
+| Uma série é excluída do índice (ex: indisponível para RR) | Documentar a exclusão e como o peso foi redistribuído ou absorvido |
+| Uma conversão ou tratamento não trivial é aplicado (ex: bimestral acumulado → trimestral) | Descrever o procedimento na seção do setor correspondente |
+| Um resultado de validação muda a interpretação do índice | Registrar o resultado real (ex: variações anuais vs. IBGE) |
+| Um peso ou coeficiente é calculado e passa a ser valor definitivo (ex: lavouras 93%, pecuária 7%) | Substituir "a verificar" pelo valor real |
+| Uma decisão metodológica nova é tomada (ex: usar fluxo em vez de estoque para financeiro) | Adicionar à seção "Decisões metodológicas a documentar na nota técnica" |
+
+#### O que NÃO precisa atualizar o plano
+
+- Correções de bugs em scripts (não mudam a metodologia)
+- Ajustes de formatação ou log output
+- Atualizações do checklist, histórico ou README que não envolvam decisão metodológica
+
+#### Padrão de escrita
+
+Escrever no **tempo presente e no estado atual** — não como histórico ("foi descoberto que..."),
+mas como especificação viva ("a Tab. 6588 usa classificação c48; o período vem no formato
+'dezembro AAAA'"). O plano deve ser legível por alguém que entra no projeto agora, não por
+quem acompanhou o processo.
 
 ### 5. Atualizar `checklist.md`
 - Marcar com `[x]` todos os itens concluídos na sessão
@@ -57,11 +86,11 @@ Nenhuma sessão de trabalho deve ser encerrada sem que todos os itens abaixo ten
         ↓
 2. .gitignore  (se necessário)
         ↓
-3. historico_simples.md
+3. plano_projeto.md  ← atualizar imediatamente se houver gatilho metodológico
+        ↓              (ver lista de gatilhos na seção 4)
+4. historico_simples.md
         ↓
-4. README.md  (se necessário)
-        ↓
-5. plano_projeto.md  (se necessário)
+5. README.md  (se necessário)
         ↓
 6. checklist.md
         ↓
