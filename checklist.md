@@ -242,49 +242,65 @@
 
 ## Fase 4 — Serviços Privados
 
+### 4.0 Decisão metodológica — Comércio sem ICMS (Opção A)
+- [x] ICMS por atividade (SEFAZ-RR) não disponível para coleta automatizada nesta versão
+- [x] **Decisão**: implementar Comércio com 2 componentes (energia comercial + CAGED G); integrar ICMS quando dado for obtido
+- [x] Pesos temporários Comércio: energia comercial 67%, CAGED G 33%
+- [x] Documentar no script instrução de revisão ao obter ICMS (pesos → 40%/40%/20%)
+
 ### 4.1 Comércio
-- [ ] Usar série de energia comercial coletada no SIUP (3.2) — sem coleta adicional
-- [ ] Obter ICMS por atividade econômica da SEFAZ-RR — segmento comércio
+- [x] Reutilizar energia comercial ANEEL da coleta 3.1 (sem coleta adicional)
+- [ ] Obter ICMS por atividade econômica da SEFAZ-RR — segmento comércio *(pendente dado externo)*
   - [ ] Deflacionar pelo IPCA nacional
   - [ ] Registrar datas de quebras tributárias (mudanças de alíquota/regime) → dummy no script
-- [ ] Baixar vínculos ativos no comércio (CNAE G) do CAGED para RR
-- [ ] Construir índice composto (energia comercial + ICMS + CAGED) com pesos explícitos
-  - [ ] Energia comercial como componente prioritário (volume físico independente de preço)
-  - [ ] Documentar pesos escolhidos e justificativa
-- [ ] Salvar em `data/processed/serie_comercio_trimestral.csv`
+- [x] Reutilizar vínculos no comércio (CNAE G) do CAGED — cache da Fase 3
+- [x] Construir índice composto (energia comercial 67% + CAGED G 33%) com pesos explícitos
+  - [x] Energia comercial como componente prioritário (volume físico independente de preço)
+  - [x] Denton-Cholette contra VAB Comércio das Contas Regionais (2020–2023)
 
 ### 4.2 Transportes
-- [ ] Baixar dados do aeroporto de Boa Vista via ANAC
-  - [ ] Passageiros embarcados e desembarcados (mensal)
-  - [ ] Carga aérea (mensal)
-- [ ] Baixar vendas de óleo diesel em Roraima via ANP (mensal)
-- [ ] Construir índice composto com pesos explícitos (diesel com peso menor)
-  - [ ] Sugestão inicial: passageiros ANAC 40%, carga ANAC 30%, diesel 30%
-  - [ ] Documentar sobreposição do diesel com agropecuária e construção na nota técnica
-- [ ] Agregar em trimestres
-- [ ] Salvar em `data/processed/serie_transportes_trimestral.csv`
+- [x] Implementar coleta de dados do aeroporto de Boa Vista via ANAC
+  - [x] Passageiros embarcados e desembarcados (VRA mensal — ICAO SBBV)
+  - [x] Carga aérea (VRA mensal — ICAO SBBV)
+- [x] Implementar coleta de vendas de óleo diesel em RR via ANP (Excel dados abertos)
+- [x] Construir índice composto com pesos explícitos
+  - [x] Pesos: passageiros ANAC 40%, carga ANAC 30%, diesel ANP 30%
+  - [x] Documentar sobreposição do diesel na nota técnica (proxy contaminada)
+- [x] Denton-Cholette contra VAB Transporte das Contas Regionais (2020–2023)
+- [ ] Executar e validar dados ANAC/ANP após primeira coleta
 
 ### 4.3 Atividades financeiras
-- [ ] Baixar concessões de crédito por UF para RR via BCB (Nota de Crédito)
-  - [ ] Deflacionar pelo IPCA nacional
-  - [ ] Aplicar suavização (média móvel 3 meses) antes de calcular o índice
-- [ ] Baixar saldo de depósitos bancários em RR via BCB Estban (componente secundário)
-  - [ ] Deflacionar pelo IPCA nacional
-- [ ] Construir índice composto (concessões como proxy principal, depósitos como secundário)
-- [ ] Salvar em `data/processed/serie_financeiro_trimestral.csv`
+- [x] Implementar coleta de concessões de crédito por UF via BCB OData (NotaCredito)
+  - [x] Deflacionar pelo IPCA nacional
+  - [x] Aplicar suavização (média móvel 3 meses)
+- [x] Implementar coleta de depósitos bancários em RR via BCB Estban OData (verbete 160)
+  - [x] Deflacionar pelo IPCA nacional
+- [x] Índice composto: concessões 70% + depósitos 30% (com fallback se API indisponível)
+- [x] Denton-Cholette contra VAB Financeiro das Contas Regionais (2020–2023)
+- [ ] Executar e validar dados BCB após primeira coleta
 
-### 4.4 Outros serviços
-- [ ] Baixar vínculos em saúde e educação privadas (CNAE P+Q) do CAGED para RR
-- [ ] Baixar vínculos em alojamento e alimentação (CNAE I) do CAGED para RR
-- [ ] Baixar vínculos em atividades profissionais e administrativas (CNAE M+N) do CAGED para RR
-- [ ] Construir índice composto por subgrupo com pesos explícitos (participação no VAB de outros serviços)
-- [ ] Salvar em `data/processed/serie_outros_servicos_trimestral.csv`
+### 4.4 Imobiliário
+- [x] Interpolação linear entre benchmarks anuais das Contas Regionais (sem proxy de mercado)
+- [x] Extrapolação linear com tendência dos últimos 2 anos CR para 2024–2025
 
-### 4.5 Índice de serviços privados e benchmarking
-- [ ] Combinar comércio + transportes + financeiro + outros com pesos das Contas Regionais
-- [ ] Calcular índice de serviços privados trimestral (base 2020 = 100)
-- [ ] Aplicar Denton-Cholette contra VAB serviços privados anual das Contas Regionais
-- [ ] Validar resultado
+### 4.5 Outros serviços
+- [x] Reutilizar CAGED I (alojamento/alimentação) — cache da Fase 3
+- [x] Reutilizar CAGED M+N (prof./admin.) — cache da Fase 3
+- [x] Reutilizar CAGED P+Q (educ./saúde privada) — cache da Fase 3
+- [x] Pesos intra-bloco: proporcionais ao estoque médio de emprego de 2020 (dinâmicos)
+- [x] Denton-Cholette contra VAB Outros Serviços das Contas Regionais (2020–2023)
+
+### 4.6 Informação e comunicação / Extrativas
+- [x] Info e Com: CAGED J (cache Fase 3) — Denton contra CR
+- [x] Extrativas (0,05%): interpolação linear CR (mesma lógica do Imobiliário)
+
+### 4.7 Índice composto de serviços privados
+- [x] Script `R/04_servicos.R` criado e revisado
+- [x] Laspeyres setorial com pesos % VAB 2023 (7 subsetores)
+- [x] Coluna de saída: `indice_servicos` + subíndices por setor
+- [ ] **Executar** `R/04_servicos.R` e verificar outputs
+- [ ] Validar: comparar variações anuais com Contas Regionais IBGE (2020–2023)
+- [ ] Confirmar 24 observações (2020T1–2025T4) no arquivo de saída
 - [ ] Salvar em `data/output/indice_servicos.csv`
 - [ ] Atualizar `historico_simples.md` com conclusão da Fase 4
 
@@ -377,7 +393,7 @@
 | 1 | Agropecuária | 🟢 Concluída |
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
-| 4 | Serviços Privados | ⚪ Não iniciada |
+| 4 | Serviços Privados | 🟡 Script criado — aguarda execução |
 | 5 | Agregação e publicação | ⚪ Não iniciada |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 

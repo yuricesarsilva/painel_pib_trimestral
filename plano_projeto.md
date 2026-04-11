@@ -511,11 +511,25 @@ na geração e distribuição de energia do estado (conexão ao SIN, revisão ta
 volatilidade do índice composto em 2023 é fiel ao dado do IBGE — não é artefato do script.
 Para 2024–2025 (sem benchmark), o script usa o indicador bruto.
 
-### Fase 4 — Serviços privados (Comércio + Transportes + Outros)
-- Comércio: energia comercial (da coleta SIUP) + ICMS deflacionado + CAGED (índice composto)
-- Transportes: ANAC passageiros + ANAC carga + ANP diesel (composto ponderado, diesel com peso menor)
-- Outros serviços: CAGED por subgrupo CNAE (I, M+N, P+Q) com pesos explícitos
-- Financeiro: concessões de crédito BCB + depósitos BCB Estban
+### Fase 4 — Serviços privados (Comércio + Transportes + Outros) 🟡 Script criado
+
+**Script**: `R/04_servicos.R`
+**Saída prevista**: `data/output/indice_servicos.csv` (24 obs., 2020T1–2025T4)
+
+**Decisão de implementação (Opção A — sem ICMS):**
+ICMS por atividade econômica (SEFAZ-RR) não disponível nesta versão. Comércio calculado
+com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 40%, ICMS 40%, CAGED 20%.
+
+**Componentes implementados:**
+- Comércio: energia comercial ANEEL (67%) + CAGED G (33%) — Denton vs. CR Comércio
+- Transportes: ANAC VRA mensal (SBBV) pax 40% + carga 30% + ANP diesel 30% — Denton vs. CR
+- Financeiro: BCB concessões de crédito OData (70%) + BCB Estban depósitos (30%), ambos
+  deflacionados e suavizados — Denton vs. CR Financeiro
+- Imobiliário: interpolação linear entre benchmarks CR anuais + extrapolação tendência 2024–2025
+- Outros serviços: CAGED I + M+N + P+Q, pesos dinâmicos por estoque de emprego 2020 — Denton
+- Informação e comunicação: CAGED J — Denton vs. CR Info/Com
+- Extrativas (0,05%): interpolação linear CR (sem proxy específico)
+- Composto final: Laspeyres com pesos % VAB 2023 (CR IBGE)
 
 ### Fase 5 — Agregação, ajuste sazonal e publicação
 - Laspeyres encadeado com pesos das Contas Regionais

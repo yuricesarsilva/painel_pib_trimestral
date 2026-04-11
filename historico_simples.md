@@ -668,12 +668,73 @@ o que o IBGE registrou.
 | Agropecuária (8,9% do VAB) | ✅ Concluído | `indice_agropecuaria.csv` (56 obs., 2010T1–2023T4) |
 | Adm. Pública (46,2% do VAB) | ✅ Concluído* | `indice_adm_publica.csv` (16 obs., 2020T1–2023T4) |
 | Indústria (11,6% do VAB) | ✅ Concluído | `indice_industria.csv` (24 obs., 2020T1–2025T4) |
-| Serviços Privados (33,3% do VAB) | ⏳ Pendente | — |
+| Serviços Privados (33,3% do VAB) | 🟡 Script criado | `indice_servicos.csv` *(aguarda execução)* |
 
 *Pendente inclusão da folha federal (SIAPE) quando token for ativado.
 
-**Próxima etapa:** Fase 4 — Serviços Privados (Comércio, Transportes, Financeiro, Outros).
-Os dados CAGED e ANEEL já estão coletados — a Fase 4 reaproveitará essas bases sem re-download.
+**Próxima etapa:** Executar `R/04_servicos.R` — a primeira execução coletará ANAC (VRA mensais),
+ANP (diesel) e BCB (concessões + Estban). CAGED e ANEEL já estão em cache da Fase 3.
+
+---
+
+### Abril de 2026 — Fase 4: script de Serviços Privados implementado
+
+**O que foi feito:**
+
+Criamos o script `R/04_servicos.R`, que implementa o índice trimestral de Serviços Privados de
+Roraima, cobrindo sete subsetores: Comércio, Transportes, Financeiro, Imobiliário, Outros
+Serviços, Informação e Comunicação, e Indústrias Extrativas.
+
+**Decisão sobre o ICMS do Comércio (Opção A):**
+
+A SEFAZ-RR não disponibilizou o ICMS por atividade econômica em formato automatizável para esta
+versão. Em vez de bloquear toda a Fase 4, optamos por implementar o índice de Comércio com dois
+componentes disponíveis: energia elétrica comercial (ANEEL, 67%) e emprego formal no comércio
+(CAGED seção G, 33%). O script está documentado com instrução de revisão: quando o ICMS for
+obtido, os pesos passam a ser energia 40%, ICMS deflacionado 40%, CAGED 20%.
+
+**Fontes e estratégia de coleta por subsetor:**
+
+| Subsetor | Fonte | Estratégia |
+|---|---|---|
+| Comércio | ANEEL (comercial) + CAGED G | Cache da Fase 3 — sem coleta nova |
+| Transportes | ANAC (VRA mensal) + ANP diesel | Download automatizado no script |
+| Financeiro | BCB Estban + BCB Nota de Crédito | API OData BCB (com fallback se indisponível) |
+| Imobiliário | Contas Regionais IBGE | Interpolação linear entre benchmarks anuais |
+| Outros Serviços | CAGED I + M+N + P+Q | Cache da Fase 3 — sem coleta nova |
+| Info. e Comunicação | CAGED J | Cache da Fase 3 — sem coleta nova |
+| Extrativas | Contas Regionais IBGE | Interpolação linear (peso 0,05%, negligenciável) |
+
+**Decisões metodológicas implementadas:**
+
+- **Transportes**: ANAC baixa arquivos VRA mensais (~2–4 MB cada, ICAO SBBV para Boa Vista),
+  filtra e agrega passageiros + carga por mês, cacheia por arquivo individual. ANP: Excel com
+  série histórica completa de vendas de diesel por UF.
+
+- **Financeiro**: concessões de crédito (BCB OData, fluxo mensal de novos créditos) são
+  o componente principal (70%), deflacionadas pelo IPCA e suavizadas com média móvel de 3 meses.
+  Depósitos Estban (estoque, 30%) são o componente secundário. Se a API de concessões falhar,
+  o índice usa apenas depósitos com aviso registrado.
+
+- **Imobiliário e Extrativas**: interpolação linear com Denton-Cholette e indicador constante
+  (distribuição uniforme) — mesma técnica recomendada no plano, sem proxy de mercado. Para
+  2024–2025 (além dos benchmarks CR), extrapola a tendência linear dos últimos 2 anos do IBGE.
+
+- **Outros Serviços**: pesos dos três subgrupos CAGED (I, M+N, P+Q) são calculados
+  dinamicamente, proporcionais ao estoque médio de emprego em 2020 — consistente com o fato
+  de o próprio emprego ser a proxy de volume.
+
+- **Denton-Cholette**: aplicado individualmente a cada subsetor contra o respectivo VAB anual
+  das Contas Regionais (2020–2023), exatamente como nas Fases 1–3. O índice composto final é
+  uma média ponderada pelos pesos % VAB 2023 (Laspeyres).
+
+**Arquivo criado:**
+- `R/04_servicos.R` — script completo da Fase 4 (~700 linhas)
+
+**O que ainda precisa ser feito:**
+- Executar o script (primeira coleta de ANAC/ANP/BCB)
+- Validar os dados obtidos (especialmente ANAC VRA e BCB concessões)
+- Confirmar 24 observações em `data/output/indice_servicos.csv`
 
 ---
 
@@ -709,4 +770,4 @@ problema no futuro.
 
 ---
 
-*Última atualização: 11 de abril de 2026 — Fase 3 concluída (24 obs., 2020T1–2025T4); bug 2025T3 corrigido*
+*Última atualização: 11 de abril de 2026 — Fase 4: script R/04_servicos.R criado; aguarda primeira execução*
