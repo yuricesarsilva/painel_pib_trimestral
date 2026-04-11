@@ -171,7 +171,7 @@
   - [x] 2022: +25,6% vs. +25,6% ✓
   - [x] 2023: +18,0% vs. +18,0% ✓
 - [x] Salvar em `data/output/indice_adm_publica.csv` (16 obs., 2020T1–2023T4)
-- [ ] Atualizar `historico_simples.md` com conclusão da Fase 2
+- [x] Atualizar `historico_simples.md` com conclusão da Fase 2
 
 ---
 
