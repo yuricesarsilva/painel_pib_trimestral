@@ -239,7 +239,17 @@ baixar_caged_mes <- function(ano, mes) {
 
   tryCatch({
     message(sprintf("  [%s] Baixando (~35 MB)...", yearmonth))
-    download.file(url_ftp, tmp_7z, mode = "wb", quiet = TRUE)
+    # Usar curl via sistema — mais confiável para FTP no Windows que download.file()
+    ret_dl <- system(
+      sprintf('curl -s --ftp-pasv --retry 3 --retry-delay 5 -o "%s" "%s"',
+              normalizePath(tmp_7z, winslash = "/", mustWork = FALSE),
+              url_ftp),
+      wait = TRUE, intern = FALSE
+    )
+    if (ret_dl != 0 || !file.exists(tmp_7z) || file.size(tmp_7z) < 1000) {
+      stop("curl falhou no download (código ", ret_dl, ")")
+    }
+    Sys.sleep(3)  # pausa para não sobrecarregar o servidor FTP
 
     message(sprintf("  [%s] Extraindo...", yearmonth))
     ret <- system(

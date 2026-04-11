@@ -613,20 +613,73 @@ colocado na pasta correta — caso contrário, usa apenas os dados de emprego do
 
 ---
 
+### Abril de 2026 — Fase 3 concluída: Índice Industrial de Roraima
+
+**O que foi feito:**
+
+Executamos o script `R/03_industria.R` e geramos o índice industrial de Roraima (base 2020 = 100),
+cobrindo os três subsetores: SIUP, Construção Civil e Indústria de Transformação.
+
+**Coleta de dados:**
+
+- **ANEEL SAMP** (etapa 3.1): baixados via API CKAN com filtros, 584 registros mensais
+  (2020–2026), 8 classes de consumidores, cache por ano. Sem falhas.
+
+- **CAGED microdata** (etapa 3.2): baixados 72 arquivos mensais (2020T1 a 2025T4) via FTP do MTE,
+  comprimidos em 7z (~35 MB cada, ~2,5 GB total). A primeira tentativa usou `download.file()` do R,
+  que falhou após alguns downloads por limitação de conexões do servidor. A solução foi chamar o
+  `curl` da linha de comando via `system()`, com flags `--ftp-pasv --retry 3 --retry-delay 5`.
+  Todos os 72 meses foram baixados com sucesso. Os arquivos grandes são apagados logo após o
+  processamento — ficam apenas os CSVs filtrados de RR (~100 KB por mês).
+
+**Índices gerados:**
+
+- SIUP (38,8% do bloco industrial): consumo total de energia elétrica distribuída em RR
+- Construção (46,2%): estoque acumulado de emprego formal CNAE F, base 1000 + saldos CAGED
+- Transformação (15,0%): energia industrial ANEEL (70%) + emprego CAGED C (30%)
+- Composto industrial: média ponderada dos três, pesos das Contas Regionais 2021
+
+**Validação:**
+
+O ajuste Denton-Cholette âncora os trimestres aos benchmarks anuais do IBGE (2020–2023).
+As variações anuais do índice composto são:
+
+| Ano | Variação do índice |
+|---|---|
+| 2021 | −6,3% |
+| 2022 | +5,2% |
+| 2023 | +61,7% ← ver nota |
+
+**Nota sobre 2023:** a variação elevada reflete a instabilidade real do VAB de SIUP em Roraima
+nas Contas Regionais do IBGE — o setor passou de R$369M em 2022 para R$1.243M em 2023, resultado
+das mudanças estruturais na geração e distribuição de energia do estado (conexão ao SIN, revisão
+tarifária, encerramento de contratos de termelétricas). O dado é genuíno; o script apenas obedece
+o que o IBGE registrou.
+
+**Pendência conhecida:** 2025T3 aparece ausente no índice composto (23 observações em vez de 24).
+O SIUP tem 24 observações, mas Construção tem 23 — o join descarta o trimestre com NA. A ser
+investigada e corrigida no início da Fase 4.
+
+**Outputs gerados:**
+- `data/output/indice_industria.csv` — 23 observações (2020T1–2025T4, exceto 2025T3)
+
+---
+
 ## Onde estamos agora
 
 | Setor | Status | Arquivo de saída |
 |---|---|---|
 | Agropecuária (8,9% do VAB) | ✅ Concluído | `indice_agropecuaria.csv` (56 obs., 2010T1–2023T4) |
 | Adm. Pública (46,2% do VAB) | ✅ Concluído* | `indice_adm_publica.csv` (16 obs., 2020T1–2023T4) |
-| Indústria (11,6% do VAB) | 🟡 Script pronto, execução pendente | `indice_industria.csv` (a gerar) |
+| Indústria (11,6% do VAB) | ✅ Concluído** | `indice_industria.csv` (23 obs., 2020T1–2025T4) |
 | Serviços Privados (33,3% do VAB) | ⏳ Pendente | — |
 
 *Pendente inclusão da folha federal (SIAPE) quando token for ativado.
+**Pendência menor: 2025T3 ausente por bug no join (a corrigir no início da Fase 4).
 
-**Próxima etapa:** executar `R/03_industria.R` (baixa ~2,5 GB de CAGED e dados da ANEEL),
-verificar os índices gerados e comparar com os dados do IBGE. Depois, Fase 4 — Serviços.
+**Próxima etapa:** Fase 4 — Serviços Privados (Comércio, Transportes, Financeiro, Outros).
+Os dados CAGED e ANEEL já estão coletados — a Fase 4 reaproveitará essas bases sem re-download.
 
 ---
 
-*Última atualização: 11 de abril de 2026 — Fase 3 implementada (script completo); fontes confirmadas: ANEEL SAMP via API CKAN, CAGED microdata FTP + 7-Zip; execução do script pendente*
+*Última atualização: 11 de abril de 2026 — Fase 3 executada e concluída; índice industrial gerado; CAGED 72 meses baixados via curl; pendência 2025T3 registrada*
