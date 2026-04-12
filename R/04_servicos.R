@@ -88,6 +88,12 @@ arq_ipca           <- file.path(dir_raw,   "ipca_mensal.csv")
 arq_cr_serie       <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 arq_indice         <- file.path(dir_output, "indice_servicos.csv")
 
+# Pastas de dados baixados manualmente
+dir_anac_bulk   <- file.path("bases_baixadas_manualmente",
+                              "microdados_anac_mensal_2020.1_2026.2_basico")
+dir_estban_bulk <- file.path("bases_baixadas_manualmente", "dados_estban_bcb")
+dir_scr_bulk    <- file.path("bases_baixadas_manualmente", "dados_bcb_src_2020_2025")
+
 # --- Parâmetros ---------------------------------------------
 
 ano_inicio <- 2020L
@@ -250,145 +256,189 @@ message(sprintf("\nCAGED — seções carregadas para serviços privados."))
 
 # ============================================================
 # ETAPA 4.3 — ANAC: passageiros e carga — Aeroporto de Boa Vista
-# Fonte: Dados Estatísticos do Transporte Aéreo — CSV consolidado
-# URL: sistemas.anac.gov.br/dadosabertos/
-#        Voos e operações aéreas/
-#        Dados Estatísticos do Transporte Aéreo/
-#        Dados_Estatisticos.csv
-# (~353 MB, série completa 2000–presente, atualização mensal)
+# Fonte primária: microdados mensais (basica AAAA-MM.zip), baixados
+#   manualmente de: https://www.anac.gov.br/assuntos/dados-e-estatisticas/
+#   dados-estatisticos/arquivos/microdados-estatisticos-do-transporte-aereo
+#   Pasta local: bases_baixadas_manualmente/microdados_anac_mensal_.../
+# Fonte alternativa (fallback): Dados_Estatisticos.csv consolidado (~353 MB)
+#   — servidor ANAC trunca o download; usar apenas se microdados indisponíveis.
 # ICAO Boa Vista: SBBV
 # Tipo: volume físico | Qualidade: forte (pax); aceitável (carga)
 # ============================================================
 
 message("\n=== ETAPA 4.3: ANAC — passageiros e carga BVB (SBBV) ===\n")
 
-icao_bvb      <- "SBBV"
-arq_anac_raw  <- file.path(dir_anac, "Dados_Estatisticos.csv")
-url_anac_est  <- paste0(
-  "https://sistemas.anac.gov.br/dadosabertos/",
-  "Voos%20e%20opera%C3%A7%C3%B5es%20a%C3%A9reas/",
-  "Dados%20Estat%C3%ADsticos%20do%20Transporte%20A%C3%A9reo/",
-  "Dados_Estatisticos.csv"
-)
+icao_bvb <- "SBBV"
 
 if (file.exists(arq_anac_out)) {
+
   message("ANAC: cache agregado encontrado — carregando.")
   anac_mensal <- read_csv(arq_anac_out, show_col_types = FALSE)
-} else {
-  # Download do CSV consolidado (único arquivo, ~353 MB)
-  # Usa PowerShell Invoke-WebRequest (melhor suporte a arquivos grandes no Windows)
-  # Fallback: download.file com libcurl
-  tamanho_esperado_anac <- 340e6  # ~340 MB mínimo esperado
+  message(sprintf("ANAC — %d meses SBBV (%d–%d), %s pax totais",
+                  nrow(anac_mensal),
+                  min(anac_mensal$ano), max(anac_mensal$ano),
+                  format(sum(anac_mensal$pax_total), big.mark = ".")))
 
-  anac_arquivo_ok <- function(f) {
-    file.exists(f) && file.size(f) >= tamanho_esperado_anac
+} else if (dir.exists(dir_anac_bulk)) {
+
+  # --- Microdados mensais locais (basica AAAA-MM.zip) --------
+  zips_anac <- sort(list.files(dir_anac_bulk,
+                                pattern = "^basica[0-9]{4}-[0-9]{2}\\.zip$",
+                                full.names = TRUE, ignore.case = TRUE))
+  message(sprintf("ANAC microdados: processando %d ZIPs de %s ...",
+                  length(zips_anac), dir_anac_bulk))
+
+  tmp_dir_anac <- tempdir()
+  res_anac     <- vector("list", length(zips_anac))
+  idx_anac     <- 0L
+
+  for (zip_a in zips_anac) {
+    nm  <- basename(zip_a)              # basica2020-01.zip
+    m   <- regmatches(nm, regexpr("[0-9]{4}-[0-9]{2}", nm))
+    if (length(m) == 0) next
+    ano_a <- as.integer(substr(m, 1, 4))
+    mes_a <- as.integer(substr(m, 6, 7))
+    if (ano_a < ano_inicio) next
+
+    arqs_a  <- tryCatch(unzip(zip_a, list = TRUE)$Name, error = function(e) character(0))
+    arq_txt <- arqs_a[grepl("\\.txt$", arqs_a, ignore.case = TRUE)][1]
+    if (is.na(arq_txt)) next
+
+    tryCatch(unzip(zip_a, files = arq_txt, exdir = tmp_dir_anac, overwrite = TRUE),
+             error = function(e) NULL)
+    txt_path <- file.path(tmp_dir_anac, arq_txt)
+    if (!file.exists(txt_path)) next
+
+    dt <- tryCatch(
+      fread(txt_path, sep = ";", encoding = "Latin-1",
+            select = c("sg_icao_origem", "sg_icao_destino",
+                       "nr_passag_pagos", "nr_passag_gratis",
+                       "kg_carga_paga",  "kg_carga_gratis"),
+            showProgress = FALSE, data.table = TRUE),
+      error = function(e) {
+        message(sprintf("  Erro %s: %s", nm, e$message)); NULL
+      }
+    )
+    unlink(txt_path)
+    if (is.null(dt) || nrow(dt) == 0) next
+
+    sbbv <- dt[sg_icao_origem == icao_bvb | sg_icao_destino == icao_bvb]
+    if (nrow(sbbv) == 0) next
+
+    pax  <- sum(suppressWarnings(as.integer(sbbv$nr_passag_pagos)) +
+                suppressWarnings(as.integer(sbbv$nr_passag_gratis)), na.rm = TRUE)
+    carg <- sum(suppressWarnings(as.numeric(sbbv$kg_carga_paga)) +
+                suppressWarnings(as.numeric(sbbv$kg_carga_gratis)), na.rm = TRUE)
+
+    idx_anac <- idx_anac + 1L
+    res_anac[[idx_anac]] <- data.frame(ano = ano_a, mes = mes_a,
+                                        pax_total = pax, carga_kg = carg)
+    message(sprintf("  %04d-%02d: %d voos SBBV | %s pax | %.0f kg carga",
+                    ano_a, mes_a, nrow(sbbv),
+                    format(pax, big.mark = "."), carg))
   }
+
+  if (idx_anac > 0) {
+    anac_mensal <- do.call(rbind, res_anac[seq_len(idx_anac)]) |> arrange(ano, mes)
+    write_csv(anac_mensal, arq_anac_out)
+    message(sprintf("\nANAC — %d meses SBBV (%d–%d), %s pax totais",
+                    nrow(anac_mensal),
+                    min(anac_mensal$ano), max(anac_mensal$ano),
+                    format(sum(anac_mensal$pax_total), big.mark = ".")))
+  } else {
+    message("ANAC microdados: nenhum voo SBBV encontrado.")
+    anac_mensal <- data.frame(ano = integer(), mes = integer(),
+                               pax_total = integer(), carga_kg = numeric())
+  }
+
+} else {
+
+  # --- Fallback: download do CSV consolidado (~353 MB) -------
+  # Nota: servidor ANAC trunca o download antes de concluir.
+  # Solução preferencial: baixar microdados mensais manualmente (ver acima).
+  arq_anac_raw <- file.path(dir_anac, "Dados_Estatisticos.csv")
+  url_anac_est <- paste0(
+    "https://sistemas.anac.gov.br/dadosabertos/",
+    "Voos%20e%20opera%C3%A7%C3%B5es%20a%C3%A9reas/",
+    "Dados%20Estat%C3%ADsticos%20do%20Transporte%20A%C3%A9reo/",
+    "Dados_Estatisticos.csv"
+  )
+  tamanho_esperado_anac <- 340e6
+  anac_arquivo_ok <- function(f) file.exists(f) && file.size(f) >= tamanho_esperado_anac
+
+  anac_mensal <- data.frame(ano = integer(), mes = integer(),
+                             pax_total = integer(), carga_kg = numeric())
 
   if (!anac_arquivo_ok(arq_anac_raw)) {
     if (file.exists(arq_anac_raw)) {
-      message(sprintf("ANAC: arquivo parcial (%.1f MB) — re-baixando.",
+      message(sprintf("ANAC: arquivo parcial (%.1f MB de ~353 MB) — tentando re-baixar.",
                       file.size(arq_anac_raw) / 1e6))
       unlink(arq_anac_raw)
     }
     message("ANAC: baixando Dados_Estatisticos.csv (~353 MB)...")
 
-    # Método 1: PowerShell (sem limite de memória, streaming nativo no Windows)
     ps_cmd <- sprintf(
       'Invoke-WebRequest -Uri "%s" -OutFile "%s" -TimeoutSec 900',
-      url_anac_est,
-      normalizePath(arq_anac_raw, mustWork = FALSE)
+      url_anac_est, normalizePath(arq_anac_raw, mustWork = FALSE)
     )
     anac_dl_ok <- tryCatch({
-      ret <- system2("powershell", args = c("-NoProfile", "-Command", ps_cmd),
-                     stdout = TRUE, stderr = TRUE)
+      system2("powershell", args = c("-NoProfile", "-Command", ps_cmd),
+              stdout = TRUE, stderr = TRUE)
       anac_arquivo_ok(arq_anac_raw)
     }, error = function(e) FALSE)
 
-    # Método 2: download.file libcurl com verificação de tamanho
     if (!anac_dl_ok) {
       message("  PowerShell falhou, tentando libcurl...")
       options(timeout = 900)
-      tryCatch({
-        suppressWarnings(
-          download.file(url_anac_est, destfile = arq_anac_raw,
-                        method = "libcurl", mode = "wb", quiet = FALSE)
-        )
-        anac_dl_ok <- anac_arquivo_ok(arq_anac_raw)
-      }, error = function(e) {
-        message(sprintf("  libcurl falhou: %s", e$message))
-      })
+      tryCatch(
+        suppressWarnings(download.file(url_anac_est, destfile = arq_anac_raw,
+                                       method = "libcurl", mode = "wb", quiet = FALSE)),
+        error = function(e) message(sprintf("  libcurl falhou: %s", e$message))
+      )
+      anac_dl_ok <- anac_arquivo_ok(arq_anac_raw)
     }
 
-    if (anac_dl_ok) {
-      message(sprintf("  ANAC: arquivo completo (%.1f MB).",
-                      file.size(arq_anac_raw) / 1e6))
-    } else {
+    if (!anac_dl_ok) {
       sz <- if (file.exists(arq_anac_raw)) file.size(arq_anac_raw) / 1e6 else 0
       message(sprintf("  ANAC: download incompleto (%.1f MB de ~353 MB esperados).", sz))
-      message("  AÇÃO MANUAL: baixar o arquivo em:")
-      message("  ", url_anac_est)
-      message("  e salvar em: ", arq_anac_raw)
+      message("  SOLUÇÃO RECOMENDADA: baixar microdados mensais (basica AAAA-MM.zip) em:")
+      message("  https://www.anac.gov.br/assuntos/dados-e-estatisticas/dados-estatisticos/")
+      message("  arquivos/microdados-estatisticos-do-transporte-aereo")
+      message("  e salvar em: ", dir_anac_bulk)
       if (file.exists(arq_anac_raw)) unlink(arq_anac_raw)
     }
-  } else {
-    message(sprintf("ANAC: arquivo bruto em cache (%.1f MB) — processando.",
-                    file.size(arq_anac_raw) / 1e6))
   }
 
-  anac_mensal <- data.frame(ano = integer(), mes = integer(),
-                             pax_total = integer(), carga_kg = integer())
-
   if (file.exists(arq_anac_raw)) {
-    message("ANAC: lendo e filtrando SBBV...")
-    # O arquivo tem 1 linha de metadados antes do cabeçalho real
+    message("ANAC: lendo e filtrando SBBV (arquivo consolidado)...")
     anac_raw <- tryCatch(
       fread(arq_anac_raw, sep = ";", skip = 1L,
-            select = c("ANO", "MES",
-                       "AEROPORTO_DE_ORIGEM_SIGLA",
-                       "AEROPORTO_DE_DESTINO_SIGLA",
-                       "PASSAGEIROS_PAGOS", "PASSAGEIROS_GRATIS",
-                       "CARGA_PAGA_KG", "CARGA_GRATIS_KG"),
-            encoding = "UTF-8",
-            data.table = TRUE),
-      error = function(e) {
-        message(sprintf("  fread ANAC falhou: %s", e$message))
-        NULL
-      }
+            select = c("ANO", "MES", "AEROPORTO_DE_ORIGEM_SIGLA",
+                       "AEROPORTO_DE_DESTINO_SIGLA", "PASSAGEIROS_PAGOS",
+                       "PASSAGEIROS_GRATIS", "CARGA_PAGA_KG", "CARGA_GRATIS_KG"),
+            encoding = "UTF-8", data.table = TRUE),
+      error = function(e) { message(sprintf("  fread falhou: %s", e$message)); NULL }
     )
-
     if (!is.null(anac_raw) && nrow(anac_raw) > 0) {
-      # Filtrar: voos de/para SBBV, ano >= 2020
       anac_bvb <- anac_raw[
-        (AEROPORTO_DE_ORIGEM_SIGLA == icao_bvb |
-         AEROPORTO_DE_DESTINO_SIGLA == icao_bvb) &
+        (AEROPORTO_DE_ORIGEM_SIGLA == icao_bvb | AEROPORTO_DE_DESTINO_SIGLA == icao_bvb) &
         as.integer(ANO) >= ano_inicio
       ]
-
       if (nrow(anac_bvb) > 0) {
         anac_mensal <- anac_bvb[,
-          .(
-            pax_total = sum(as.integer(PASSAGEIROS_PAGOS)  +
+          .(pax_total = sum(as.integer(PASSAGEIROS_PAGOS) +
                             as.integer(PASSAGEIROS_GRATIS), na.rm = TRUE),
             carga_kg  = sum(as.numeric(CARGA_PAGA_KG) +
-                            as.numeric(CARGA_GRATIS_KG), na.rm = TRUE)
-          ),
+                            as.numeric(CARGA_GRATIS_KG), na.rm = TRUE)),
           by = .(ano = as.integer(ANO), mes = as.integer(MES))
-        ] |>
-          as.data.frame() |>
-          arrange(ano, mes)
-
+        ] |> as.data.frame() |> arrange(ano, mes)
         write_csv(anac_mensal, arq_anac_out)
         message(sprintf("ANAC — %d meses SBBV (%d–%d), %s pax totais",
-                        nrow(anac_mensal),
-                        min(anac_mensal$ano), max(anac_mensal$ano),
+                        nrow(anac_mensal), min(anac_mensal$ano), max(anac_mensal$ano),
                         format(sum(anac_mensal$pax_total), big.mark = ".")))
-      } else {
-        message("ANAC: nenhum voo SBBV encontrado no arquivo.")
       }
     }
-    # Apagar bruto após processamento (libera ~353 MB)
     unlink(arq_anac_raw)
-    message("ANAC: arquivo bruto removido após processamento.")
   }
 }
 
@@ -625,52 +675,209 @@ if (!is.null(ipca_raw) && nrow(ipca_raw) > 0) {
 
 # ============================================================
 # ETAPA 4.6 — BCB Estban: depósitos totais em RR
-# NOTA: endpoints OData BCB (Estban v1/v2/v3) retornam HTTP 404
-# desde 2025. Setor Financeiro permanece NA nesta versão.
-# Para reativar: colocar arquivo com colunas ano,mes,depositos em:
-#   data/raw/bcb/bcb_estban_rr_mensal.csv
+# Fonte: arquivos AAAAMM_ESTBAN.ZIP baixados manualmente do BCB
+#   (https://www4.bcb.gov.br/fis/cosif/estban.asp)
+#   Pasta: bases_baixadas_manualmente/dados_estban_bcb/
+# Verbetes usados:
+#   VERBETE_420_DEPOSITOS_DE_POUPANCA  (poupança)
+#   VERBETE_432_DEPOSITOS_A_PRAZO      (CDB/RDB)
+# Nota: VERBETE_160 = operações de crédito (NÃO é depósito).
+# Valores no arquivo: R$ mil → convertidos para R$.
 # ============================================================
 
 message("\n=== ETAPA 4.6: BCB Estban — depósitos RR ===\n")
 
 if (file.exists(arq_estban_out)) {
+
   message("Estban: cache local encontrado.")
   estban_mensal <- read_csv(arq_estban_out, show_col_types = FALSE)
   message(sprintf("Estban — %d obs. (%.0f–%.0f)",
                   nrow(estban_mensal),
                   min(estban_mensal$ano), max(estban_mensal$ano)))
+
+} else if (dir.exists(dir_estban_bulk)) {
+
+  # Dois padrões de nome: AAAAMM_ESTBAN.ZIP (2020-2022) e AAAAMM_ESTBAN.csv.zip (2023+)
+  zips_estban <- sort(list.files(dir_estban_bulk,
+                                  pattern = "^[0-9]{6}_ESTBAN",
+                                  full.names = TRUE, ignore.case = TRUE))
+  zips_estban <- zips_estban[grepl("\\.zip$", zips_estban, ignore.case = TRUE)]
+  message(sprintf("Estban: processando %d ZIPs de %s ...", length(zips_estban), dir_estban_bulk))
+
+  tmp_dir_est <- tempdir()
+  res_est     <- vector("list", length(zips_estban))
+  idx_est     <- 0L
+
+  for (zip_e in zips_estban) {
+    nm_e   <- basename(zip_e)
+    aaaamm <- regmatches(nm_e, regexpr("^[0-9]{6}", nm_e))
+    if (length(aaaamm) == 0) next
+    ano_e <- as.integer(substr(aaaamm, 1, 4))
+    mes_e <- as.integer(substr(aaaamm, 5, 6))
+    if (ano_e < ano_inicio) next
+
+    arqs_e  <- tryCatch(unzip(zip_e, list = TRUE)$Name, error = function(e) character(0))
+    arq_csv <- arqs_e[grepl("\\.CSV$", arqs_e, ignore.case = TRUE)][1]
+    if (is.na(arq_csv)) next
+
+    tryCatch(unzip(zip_e, files = arq_csv, exdir = tmp_dir_est, overwrite = TRUE),
+             error = function(e) NULL)
+    csv_path <- file.path(tmp_dir_est, arq_csv)
+    if (!file.exists(csv_path)) next
+
+    # Selecionar apenas colunas necessárias (arquivo tem ~100 colunas)
+    # Ler cabeçalho primeiro para localizar verbetes corretos
+    header <- tryCatch(
+      names(fread(csv_path, sep = ";", nrows = 0, encoding = "Latin-1", data.table = FALSE)),
+      error = function(e) character(0)
+    )
+    col_uf  <- header[grepl("^UF$", header, ignore.case = TRUE)][1]
+    col_420 <- header[grepl("VERBETE_420", header, ignore.case = TRUE)][1]
+    col_432 <- header[grepl("VERBETE_432", header, ignore.case = TRUE)][1]
+    col_dt  <- header[grepl("DATA_BASE|#DATA", header, ignore.case = TRUE)][1]
+
+    cols_sel <- na.omit(c(col_dt, col_uf, col_420, col_432))
+
+    dt_e <- tryCatch(
+      fread(csv_path, sep = ";", encoding = "Latin-1",
+            select = cols_sel, showProgress = FALSE, data.table = TRUE),
+      error = function(e) {
+        message(sprintf("  Erro Estban %s: %s", nm_e, e$message)); NULL
+      }
+    )
+    unlink(csv_path)
+    if (is.null(dt_e) || nrow(dt_e) == 0) next
+
+    # Filtrar Roraima (UF == "RR")
+    dt_rr <- dt_e[get(col_uf) == "RR"]
+    if (nrow(dt_rr) == 0) {
+      message(sprintf("  AVISO %s: nenhuma linha com UF=='RR'.", nm_e)); next
+    }
+
+    dep_420 <- if (!is.na(col_420)) suppressWarnings(as.numeric(dt_rr[[col_420]])) else 0
+    dep_432 <- if (!is.na(col_432)) suppressWarnings(as.numeric(dt_rr[[col_432]])) else 0
+
+    # Valores em R$ mil → converter para R$
+    depositos_rr <- (sum(dep_420, na.rm = TRUE) + sum(dep_432, na.rm = TRUE)) * 1000
+
+    idx_est <- idx_est + 1L
+    res_est[[idx_est]] <- data.frame(ano = ano_e, mes = mes_e,
+                                      depositos = depositos_rr)
+    message(sprintf("  %s: %d instituições RR | depósitos R$ %.0f mi",
+                    aaaamm, nrow(dt_rr), depositos_rr / 1e6))
+  }
+
+  if (idx_est > 0) {
+    estban_mensal <- do.call(rbind, res_est[seq_len(idx_est)]) |> arrange(ano, mes)
+    write_csv(estban_mensal, arq_estban_out)
+    message(sprintf("\nEstban — %d meses RR processados — cache salvo em %s",
+                    nrow(estban_mensal), arq_estban_out))
+  } else {
+    message("Estban: nenhum resultado para RR. Financeiro parcialmente sem depósitos.")
+    estban_mensal <- data.frame(ano = integer(), mes = integer(), depositos = numeric())
+  }
+
 } else {
-  message("Estban: sem cache. API OData BCB indisponível (HTTP 404 em todas as versões).")
-  message("  Setor Financeiro será excluído do índice composto nesta versão.")
-  message("  Para incluir: salvar manualmente em ", arq_estban_out,
-          " (colunas: ano, mes, depositos).")
+  message("Estban: sem cache e pasta de ZIPs não encontrada.")
+  message("  API OData BCB indisponível (HTTP 404 em todas as versões).")
   estban_mensal <- data.frame(ano = integer(), mes = integer(), depositos = numeric())
 }
 
 
 # ============================================================
-# ETAPA 4.7 — BCB: concessões de crédito por UF (Roraima)
-# NOTA: endpoint OData NotaCredito retorna HTTP 404.
-# Para reativar: salvar arquivo com colunas ano,mes,concessoes em:
-#   data/raw/bcb/bcb_concessoes_rr_mensal.csv
+# ETAPA 4.7 — BCB SCR: carteira de crédito ativa em RR
+# Fonte: SCR (Sistema de Crédito do BCB) — arquivos scrdata_AAAA.zip
+#   baixados manualmente de: https://dadosabertos.bcb.gov.br/dataset/
+#   scr-dados-abertos-agregados-operacoes-de-credito
+#   Pasta: bases_baixadas_manualmente/dados_bcb_src_2020_2025/
+# Coluna usada: carteira_ativa (estoque de crédito total, R$ mil)
+# Nota metodológica: usamos o estoque (carteira_ativa) como proxy
+#   de atividade do setor financeiro — equivalente ao uso de depósitos
+#   em Estban. Concessões (fluxo) não estão disponíveis neste dataset.
 # ============================================================
 
-message("\n=== ETAPA 4.7: BCB — concessões de crédito (RR) ===\n")
+message("\n=== ETAPA 4.7: BCB — carteira de crédito ativa (RR) ===\n")
 
 bcb_concessoes_ok <- FALSE
 
 if (file.exists(arq_concessoes_out)) {
-  message("Concessões BCB: cache local encontrado.")
+  message("Crédito BCB SCR: cache local encontrado.")
   concessoes_mensal <- read_csv(arq_concessoes_out, show_col_types = FALSE)
   bcb_concessoes_ok <- nrow(concessoes_mensal) > 0
   if (bcb_concessoes_ok)
-    message(sprintf("Concessões BCB — %d obs. (%.0f–%.0f)",
+    message(sprintf("Crédito BCB SCR — %d obs. (%.0f–%.0f)",
                     nrow(concessoes_mensal),
                     min(concessoes_mensal$ano), max(concessoes_mensal$ano)))
+
+} else if (dir.exists(dir_scr_bulk)) {
+
+  # 7 ZIPs anuais (scrdata_AAAA.zip), cada um com 12 CSVs mensais (scrdata_AAAAMM.csv)
+  zips_scr <- sort(list.files(dir_scr_bulk, pattern = "^scrdata_[0-9]{4}\\.zip$",
+                               full.names = TRUE, ignore.case = TRUE))
+  message(sprintf("BCB SCR: processando %d ZIPs de %s ...", length(zips_scr), dir_scr_bulk))
+
+  tmp_dir_scr <- tempdir()
+  res_scr     <- list()
+
+  for (zip_s in zips_scr) {
+    arqs_s <- tryCatch(unzip(zip_s, list = TRUE)$Name, error = function(e) character(0))
+    csvs_s <- arqs_s[grepl("^scrdata_[0-9]{6}\\.csv$", arqs_s, ignore.case = TRUE)]
+
+    for (csv_s in csvs_s) {
+      aaaamm_s <- regmatches(csv_s, regexpr("[0-9]{6}", csv_s))
+      if (length(aaaamm_s) == 0) next
+      ano_s <- as.integer(substr(aaaamm_s, 1, 4))
+      mes_s <- as.integer(substr(aaaamm_s, 5, 6))
+      if (ano_s < ano_inicio) next
+
+      tryCatch(unzip(zip_s, files = csv_s, exdir = tmp_dir_scr, overwrite = TRUE),
+               error = function(e) NULL)
+      csv_path_s <- file.path(tmp_dir_scr, csv_s)
+      if (!file.exists(csv_path_s)) next
+
+      dt_s <- tryCatch(
+        fread(csv_path_s, sep = ";", encoding = "Latin-1",
+              select = c("uf", "carteira_ativa"),
+              showProgress = FALSE, data.table = TRUE),
+        error = function(e) {
+          message(sprintf("  Erro SCR %s: %s", csv_s, e$message)); NULL
+        }
+      )
+      unlink(csv_path_s)
+      if (is.null(dt_s) || nrow(dt_s) == 0) next
+
+      dt_rr_s <- dt_s[trimws(toupper(uf)) == "RR"]
+      if (nrow(dt_rr_s) == 0) next
+
+      # carteira_ativa: formato BR ("1.234.567,89") → R$ mil → R$
+      vals_s <- suppressWarnings(
+        as.numeric(gsub(",", ".", gsub("\\.", "", as.character(dt_rr_s$carteira_ativa))))
+      )
+      carteira_rr <- sum(vals_s, na.rm = TRUE) * 1000  # R$ mil → R$
+
+      res_scr[[length(res_scr) + 1]] <- data.frame(
+        ano       = ano_s,
+        mes       = mes_s,
+        concessoes = carteira_rr   # nome mantido para compatibilidade com etapa 4.10
+      )
+      message(sprintf("  %s: carteira ativa RR R$ %.0f mi", aaaamm_s, carteira_rr / 1e6))
+    }
+  }
+
+  if (length(res_scr) > 0) {
+    concessoes_mensal <- do.call(rbind, res_scr) |> arrange(ano, mes)
+    bcb_concessoes_ok <- TRUE
+    write_csv(concessoes_mensal, arq_concessoes_out)
+    message(sprintf("\nBCB SCR — %d meses RR processados — cache salvo em %s",
+                    nrow(concessoes_mensal), arq_concessoes_out))
+  } else {
+    message("BCB SCR: nenhum resultado para RR.")
+    concessoes_mensal <- data.frame(ano = integer(), mes = integer(), concessoes = numeric())
+  }
+
 } else {
-  message("Concessões BCB: sem cache. API OData BCB indisponível.")
-  message("  Para incluir: salvar manualmente em ", arq_concessoes_out,
-          " (colunas: ano, mes, concessoes).")
+  message("BCB SCR: sem cache e pasta de ZIPs não encontrada.")
+  message("  API OData BCB indisponível. Setor Financeiro usará apenas Estban (se disponível).")
   concessoes_mensal <- data.frame(ano = integer(), mes = integer(), concessoes = numeric())
 }
 

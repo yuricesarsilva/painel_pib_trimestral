@@ -35,6 +35,7 @@ library(jsonlite)
 library(dplyr)
 library(tidyr)
 library(lubridate)
+library(data.table)
 
 # --- Caminhos -----------------------------------------------
 
@@ -169,32 +170,158 @@ bimestral_para_trimestral <- function(df) {
 }
 
 # ============================================================
-# ETAPA 2.1 — Folha Federal (SIAPE via Portal da Transparência)
+# ETAPA 2.1 — Folha Federal (SIAPE — arquivos manuais do Portal da Transparência)
+# ============================================================
+#
+# Estratégia de identificação de UF:
+#   UF_EXERCICIO = -1 em 100% dos registros — campo inutilizável.
+#   Alternativa: grepl("RORAIMA", ORG_LOTACAO | UORG_LOTACAO) após
+#   normalização de acentos (iconv Latin-1 → ASCII//TRANSLIT).
+#   Cobre UFRR, IFRR, órgãos federais em RR e Ex-Território Federal.
+#
+# Resultado: ~6.100 servidores/mês identificados em RR (jan/2020).
+# "Governo do Ex-Território Federal de Roraima" (≈3.400 obs.) = ATIVO PERMANENTE.
+#
+# Colunas do cache salvo (arq_siape):
+#   ano, mes, n_servidores, folha_bruta  (folha_bruta em R$)
 # ============================================================
 
-message("\n=== ETAPA 2.1: Folha Federal (SIAPE) — investigada, indisponível via API ===\n")
+message("\n=== ETAPA 2.1: Folha Federal (SIAPE) — arquivos manuais ===\n")
 
-# Nota metodológica:
-# O endpoint /remuneracao-servidores-ativos do Portal da Transparência retorna
-# HTTP 403 para o tipo de cadastro padrão da API — independentemente do token
-# ou parâmetros utilizados. Apenas /orgaos-siafi é acessível com este perfil.
-# O download em massa (portaldatransparencia.gov.br/download-de-dados/servidores)
-# também retorna 403 via requisição programática.
-#
-# Justificativa metodológica para omitir sem perda de qualidade:
-# O Denton-Cholette ancora a série (estadual + municipal) ao VAB AAPP TOTAL
-# das Contas Regionais do IBGE — que já inclui o componente federal.
-# Portanto, o perfil trimestral do indicador é derivado de estado + municípios,
-# e o Denton calibra o nível para o total correto (inclusive federal).
-# A validação 2021–2023 comprova: as variações anuais coincidem exatamente
-# com as Contas Regionais.
-#
-# Alternativa futura: baixar os arquivos AAAAMM_Servidores.zip manualmente
-# do portal, filtrar uf_exercicio='RR' e colocar em data/raw/siape_bulk/.
+dir_siape_bulk <- file.path("bases_baixadas_manualmente",
+                            "dados_siape_portal_transparencia")
 
-message("  Módulo SIAPE indisponível via API (HTTP 403 em todos os endpoints de remuneração).")
-message("  → Índice calculado com estado + municípios; Denton ancora ao total IBGE (inclui federal).")
-folha_federal <- NULL
+if (file.exists(arq_siape)) {
+  message("SIAPE: cache encontrado — reutilizando (", arq_siape, ").")
+  folha_federal <- read.csv(arq_siape, stringsAsFactors = FALSE)
+  message(sprintf("  %d meses carregados (%dM01–%dM%02d)",
+                  nrow(folha_federal),
+                  min(folha_federal$ano), max(folha_federal$ano),
+                  max(folha_federal$mes[folha_federal$ano == max(folha_federal$ano)])))
+
+} else if (dir.exists(dir_siape_bulk)) {
+
+  zips <- sort(list.files(dir_siape_bulk, pattern = "\\.zip$",
+                           full.names = TRUE, ignore.case = TRUE))
+  message(sprintf("SIAPE: processando %d ZIPs de %s ...", length(zips), dir_siape_bulk))
+  message("  UF_EXERCICIO=-1 em 100% dos registros — identificando RR via ORG/UORG_LOTACAO.")
+
+  tmp_dir   <- tempdir()
+  norm_col  <- function(x) toupper(iconv(x, from = "latin1", to = "ASCII//TRANSLIT"))
+  resultados <- vector("list", length(zips))
+  idx_res   <- 0L
+
+  for (zip_path in zips) {
+    zip_nome <- basename(zip_path)
+    aaaamm   <- regmatches(zip_nome, regexpr("^[0-9]{6}", zip_nome))
+    if (length(aaaamm) == 0) next
+
+    ano_zip <- as.integer(substr(aaaamm, 1, 4))
+    mes_zip  <- as.integer(substr(aaaamm, 5, 6))
+    if (ano_zip < ano_inicio) next
+
+    # Listar arquivos internos
+    arqs_zip <- tryCatch(unzip(zip_path, list = TRUE)$Name, error = function(e) character(0))
+    if (length(arqs_zip) == 0) {
+      message(sprintf("  %s: ZIP vazio ou corrompido — ignorado.", zip_nome)); next
+    }
+    arq_cad <- arqs_zip[grepl("Cadastro", arqs_zip, ignore.case = TRUE)][1]
+    arq_rem <- arqs_zip[grepl("Remuner",  arqs_zip, ignore.case = TRUE)][1]
+    if (is.na(arq_cad) || is.na(arq_rem)) {
+      message(sprintf("  %s: Cadastro ou Remuneracao ausente — ignorado.", zip_nome)); next
+    }
+
+    # --- Cadastro: filtrar servidores em RR -----------------
+    tryCatch(unzip(zip_path, files = arq_cad, exdir = tmp_dir, overwrite = TRUE),
+             error = function(e) NULL)
+    cad_path <- file.path(tmp_dir, arq_cad)
+
+    cad <- tryCatch(
+      data.table::fread(cad_path, sep = ";", encoding = "Latin-1",
+                        select = c("Id_SERVIDOR_PORTAL", "ORG_LOTACAO", "UORG_LOTACAO"),
+                        showProgress = FALSE, data.table = TRUE),
+      error = function(e) {
+        message(sprintf("  %s: erro no Cadastro — %s", zip_nome, e$message)); NULL
+      }
+    )
+    unlink(cad_path)
+    if (is.null(cad) || nrow(cad) == 0) next
+
+    cad[, `:=`(org_norm  = norm_col(ORG_LOTACAO),
+               uorg_norm = norm_col(UORG_LOTACAO))]
+    cad_rr <- cad[grepl("RORAIMA", org_norm, fixed = TRUE) |
+                  grepl("RORAIMA", uorg_norm, fixed = TRUE)]
+
+    if (nrow(cad_rr) < 50)
+      message(sprintf("  AVISO %s: apenas %d servidores com RORAIMA em ORG/UORG_LOTACAO",
+                      zip_nome, nrow(cad_rr)))
+
+    ids_rr <- unique(cad_rr$Id_SERVIDOR_PORTAL)
+
+    # --- Remuneracao: somar folha bruta ----------------------
+    tryCatch(unzip(zip_path, files = arq_rem, exdir = tmp_dir, overwrite = TRUE),
+             error = function(e) NULL)
+    rem_path <- file.path(tmp_dir, arq_rem)
+
+    rem <- tryCatch(
+      data.table::fread(rem_path, sep = ";", encoding = "Latin-1",
+                        showProgress = FALSE, data.table = TRUE),
+      error = function(e) {
+        message(sprintf("  %s: erro na Remuneracao — %s", zip_nome, e$message)); NULL
+      }
+    )
+    unlink(rem_path)
+    if (is.null(rem) || nrow(rem) == 0) next
+
+    rem_rr <- rem[Id_SERVIDOR_PORTAL %in% ids_rr]
+    if (nrow(rem_rr) == 0) {
+      message(sprintf("  %s: 0 servidores RR na Remuneracao.", zip_nome)); next
+    }
+
+    # Localizar coluna REMUNERAÇÃO BÁSICA BRUTA (R$) — nome pode ter acentos
+    nomes_norm <- toupper(iconv(names(rem_rr), from = "latin1", to = "ASCII//TRANSLIT"))
+    col_bruta  <- names(rem_rr)[
+      grepl("REMUNER.*BASICA.*BRUTA", nomes_norm) & !grepl("U\\$", nomes_norm)
+    ][1]
+
+    if (is.na(col_bruta)) {
+      message(sprintf("  %s: coluna de remuneração bruta não localizada.", zip_nome)); next
+    }
+
+    # Converter formato BR ("14.249,03") → numérico R$
+    vals <- suppressWarnings(
+      as.numeric(gsub(",", ".", gsub("\\.", "", as.character(rem_rr[[col_bruta]]))))
+    )
+    folha_rr <- sum(vals, na.rm = TRUE)
+
+    idx_res <- idx_res + 1L
+    resultados[[idx_res]] <- data.frame(
+      ano          = ano_zip,
+      mes          = mes_zip,
+      n_servidores = nrow(rem_rr),
+      folha_bruta  = folha_rr,
+      stringsAsFactors = FALSE
+    )
+    message(sprintf("  %s: %d servidores RR — R$ %.1f mi",
+                    aaaamm, nrow(rem_rr), folha_rr / 1e6))
+  }
+
+  if (idx_res > 0) {
+    folha_federal <- do.call(rbind, resultados[seq_len(idx_res)]) |>
+      dplyr::arrange(ano, mes)
+    write.csv(folha_federal, arq_siape, row.names = FALSE)
+    message(sprintf("\nSIAPE: %d meses processados — cache salvo em %s",
+                    nrow(folha_federal), arq_siape))
+  } else {
+    message("SIAPE: nenhum resultado. Folha federal = NULL.")
+    folha_federal <- NULL
+  }
+
+} else {
+  message(sprintf("SIAPE: pasta %s não encontrada.", dir_siape_bulk))
+  message("  Índice calculado com estado + municípios; Denton ancora ao total IBGE (inclui federal).")
+  folha_federal <- NULL
+}
 
 # ============================================================
 # ETAPA 2.2 — Folha Estadual (SICONFI — RREO Anexo 06)
@@ -351,16 +478,14 @@ if (!is.null(folha_mun_bim) && nrow(folha_mun_bim) > 0) {
 }
 
 # Componente federal: mensal → trimestral (se disponível)
+# folha_federal: colunas ano, mes, n_servidores, folha_bruta (R$)
 if (!is.null(folha_federal) && nrow(folha_federal) > 0) {
   folha_fed_trim <- folha_federal |>
-    mutate(
-      ano       = as.integer(substr(competencia, 3, 6)),
-      mes       = as.integer(substr(competencia, 1, 2)),
-      trimestre = ceiling(mes / 3L)
-    ) |>
-    filter(!is.na(valor_bruto)) |>
+    filter(!is.na(folha_bruta)) |>
+    mutate(trimestre = ceiling(mes / 3L)) |>
     group_by(ano, trimestre) |>
-    summarise(federal = sum(valor_bruto, na.rm = TRUE), .groups = "drop")
+    summarise(federal = sum(folha_bruta, na.rm = TRUE), .groups = "drop")
+  message(sprintf("Componente federal (SIAPE): %d trimestres disponíveis.", nrow(folha_fed_trim)))
 } else {
   message("Componente federal (SIAPE) indisponível — índice baseado em estadual + municipal.")
   folha_fed_trim <- data.frame(ano = integer(), trimestre = integer(), federal = numeric())
