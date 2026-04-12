@@ -671,7 +671,7 @@ o que o IBGE registrou.
 | Serviços Privados (33,3% do VAB) | ✅ Concluído** | `indice_servicos.csv` (24 obs., 2020T1–2025T4) |
 
 *Pendente inclusão da folha federal (SIAPE) quando token for ativado.
-**Transportes e Financeiro com NA (ANAC/ANP/BCB inacessíveis — coleta manual pendente).
+**Transportes usa apenas diesel ANP (ANAC indisponível — servidor trunca download). Financeiro com NA (BCB OData 404 em todas as versões).
 
 **Próxima etapa:** Fase 5 — `R/05_agregacao.R` — combinar os quatro índices setoriais no índice
 geral de Roraima, aplicar ajuste sazonal (X-13ARIMA-SEATS) e gerar os outputs finais.
@@ -841,4 +841,59 @@ problema no futuro.
 
 ---
 
-*Última atualização: 11 de abril de 2026 — Fase 4: script R/04_servicos.R criado; aguarda primeira execução*
+---
+
+### Abril de 2026 — Fase 4: pendências resolvidas — ANP diesel e Transportes
+
+**O que foi feito:**
+
+Tentamos resolver as três pendências de dados da Fase 4 (ANAC, ANP, BCB).
+Dois avanços reais; um abandonado.
+
+**ANP diesel — RESOLVIDO:**
+
+A URL original do Excel da ANP estava fora do ar. Localizamos a nova URL com o arquivo
+CSV no portal gov.br (`vendas-combustiveis-m3-1990-2025.csv`, 5,8 MB, delimitado por
+ponto e vírgula, mês em texto português — JAN, FEV, etc.). Após correção do tratamento
+de encoding (UTF-8) e da detecção dos nomes de colunas com acento, o script baixou e
+processou **74 meses de diesel RR** (janeiro de 2020 a fevereiro de 2026) com sucesso.
+
+Com isso, **Transportes passou de NA para série completa de 24 trimestres** (2020T1–2025T4),
+usando diesel ANP como proxy única com peso 100% (já que ANAC está indisponível).
+
+**ANAC — NÃO RESOLVIDO:**
+
+O servidor da ANAC trunca o download do arquivo `Dados_Estatisticos.csv` (337 MB) em
+torno de 50–160 MB, independentemente do método de download usado (httr2, libcurl,
+PowerShell). O servidor retorna o conteúdo parcial sem sinalizar erro (HTTP 200 + fim de
+conexão prematuro). Não é um problema de URL — o arquivo existe e tem o conteúdo correto,
+mas a transferência é interrompida pelo servidor antes de concluir.
+
+O índice de Transportes usa apenas diesel ANP enquanto ANAC não estiver acessível. O script
+documenta a instrução para download manual do arquivo e processamento com `fread`.
+
+**BCB — ABANDONADO:**
+
+Todos os endpoints OData do BCB (Estban e NotaCredito, versões v1/v2/v3) retornam HTTP 404.
+O Banco Central aparentemente descontinuou esses serviços. Não há série SGS com granularidade
+estadual para depósitos ou concessões de crédito. Financeiro permanece como NA.
+
+**Variações anuais do índice de serviços após a correção:**
+
+| Período | Variação |
+|---|---|
+| 2021 vs. 2020 | +19,0% |
+| 2022 vs. 2021 | +7,7% |
+| 2023 vs. 2022 | +12,0% |
+| 2024 vs. 2023 | +11,8% |
+| 2025 vs. 2024 | +10,8% |
+
+Os valores mudaram ligeiramente em relação à execução anterior porque Transportes agora
+contribui para o composto (peso 1,92% do VAB de Serviços).
+
+**Output atualizado:**
+- `data/output/indice_servicos.csv` — 24 observações (2020T1–2025T4), Transportes com dados reais
+
+---
+
+*Última atualização: 12 de abril de 2026 — Fase 4: ANP resolvido; Transportes com série completa; pronto para Fase 5*

@@ -276,28 +276,63 @@ if (file.exists(arq_anac_out)) {
   anac_mensal <- read_csv(arq_anac_out, show_col_types = FALSE)
 } else {
   # Download do CSV consolidado (único arquivo, ~353 MB)
-  if (!file.exists(arq_anac_raw)) {
+  # Usa PowerShell Invoke-WebRequest (melhor suporte a arquivos grandes no Windows)
+  # Fallback: download.file com libcurl
+  tamanho_esperado_anac <- 340e6  # ~340 MB mínimo esperado
+
+  anac_arquivo_ok <- function(f) {
+    file.exists(f) && file.size(f) >= tamanho_esperado_anac
+  }
+
+  if (!anac_arquivo_ok(arq_anac_raw)) {
+    if (file.exists(arq_anac_raw)) {
+      message(sprintf("ANAC: arquivo parcial (%.1f MB) — re-baixando.",
+                      file.size(arq_anac_raw) / 1e6))
+      unlink(arq_anac_raw)
+    }
     message("ANAC: baixando Dados_Estatisticos.csv (~353 MB)...")
-    ret_anac <- tryCatch(
-      request(url_anac_est) |>
-        req_timeout(600) |>
-        req_error(is_error = function(r) FALSE) |>
-        req_perform(),
-      error = function(e) {
-        message(sprintf("  Erro de rede ANAC: %s", e$message))
-        NULL
-      }
+
+    # Método 1: PowerShell (sem limite de memória, streaming nativo no Windows)
+    ps_cmd <- sprintf(
+      'Invoke-WebRequest -Uri "%s" -OutFile "%s" -TimeoutSec 900',
+      url_anac_est,
+      normalizePath(arq_anac_raw, mustWork = FALSE)
     )
-    if (!is.null(ret_anac) && httr2::resp_status(ret_anac) == 200) {
-      writeBin(httr2::resp_body_raw(ret_anac), arq_anac_raw)
-      message(sprintf("  ANAC: arquivo salvo (%.1f MB).",
+    anac_dl_ok <- tryCatch({
+      ret <- system2("powershell", args = c("-NoProfile", "-Command", ps_cmd),
+                     stdout = TRUE, stderr = TRUE)
+      anac_arquivo_ok(arq_anac_raw)
+    }, error = function(e) FALSE)
+
+    # Método 2: download.file libcurl com verificação de tamanho
+    if (!anac_dl_ok) {
+      message("  PowerShell falhou, tentando libcurl...")
+      options(timeout = 900)
+      tryCatch({
+        suppressWarnings(
+          download.file(url_anac_est, destfile = arq_anac_raw,
+                        method = "libcurl", mode = "wb", quiet = FALSE)
+        )
+        anac_dl_ok <- anac_arquivo_ok(arq_anac_raw)
+      }, error = function(e) {
+        message(sprintf("  libcurl falhou: %s", e$message))
+      })
+    }
+
+    if (anac_dl_ok) {
+      message(sprintf("  ANAC: arquivo completo (%.1f MB).",
                       file.size(arq_anac_raw) / 1e6))
     } else {
-      message(sprintf("  ANAC: HTTP %s — sem dados.",
-                      if (is.null(ret_anac)) "?" else httr2::resp_status(ret_anac)))
+      sz <- if (file.exists(arq_anac_raw)) file.size(arq_anac_raw) / 1e6 else 0
+      message(sprintf("  ANAC: download incompleto (%.1f MB de ~353 MB esperados).", sz))
+      message("  AÇÃO MANUAL: baixar o arquivo em:")
+      message("  ", url_anac_est)
+      message("  e salvar em: ", arq_anac_raw)
+      if (file.exists(arq_anac_raw)) unlink(arq_anac_raw)
     }
   } else {
-    message("ANAC: arquivo bruto em cache — processando.")
+    message(sprintf("ANAC: arquivo bruto em cache (%.1f MB) — processando.",
+                    file.size(arq_anac_raw) / 1e6))
   }
 
   anac_mensal <- data.frame(ano = integer(), mes = integer(),
@@ -371,94 +406,127 @@ if (file.exists(arq_anp_out)) {
   message("ANP: cache local encontrado — carregando.")
   anp_mensal <- read_csv(arq_anp_out, show_col_types = FALSE)
 } else {
-  # ANP publica Excel com todas as UFs e anos em arquivo único.
-  # URL do Portal de Dados Abertos ANP (verificar atualização anual):
-  # https://www.anp.gov.br/dados-abertos (seção "Combustíveis")
+  # ANP — Dados Abertos: CSV com vendas de derivados por UF (1990–presente)
+  # URL atualizada em 2025: formato CSV semicolon-delimited, mês em texto PT
+  # Colunas: ANO;MÊS;GRANDE REGIÃO;UNIDADE DA FEDERAÇÃO;PRODUTO;VENDAS
+  # Meses: JAN, FEV, MAR, ABR, MAI, JUN, JUL, AGO, SET, OUT, NOV, DEZ
   url_anp <- paste0(
-    "https://www.anp.gov.br/images/dadosabertos/",
-    "venda-derivados-petroleo/VendaDerivadosCombustiveis_m.xlsx"
+    "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/",
+    "arquivos/vdpb/vendas-derivados-petroleo-e-etanol/",
+    "vendas-combustiveis-m3-1990-2025.csv"
   )
 
-  tmp_anp <- file.path(dir_anp, "VendaDerivadosCombustiveis_m.xlsx")
+  tmp_anp <- file.path(dir_anp, "vendas-combustiveis-m3-1990-2025.csv")
 
-  message("ANP: baixando Excel de vendas de combustíveis...")
-  ret_anp <- tryCatch(
-    request(url_anp) |>
-      req_timeout(300) |>
-      req_error(is_error = function(r) FALSE) |>
-      req_perform(),
-    error = function(e) {
-      message(sprintf("  Erro de rede ANP: %s", e$message))
-      NULL
-    }
-  )
+  message("ANP: baixando CSV de vendas de combustíveis...")
+  anp_dl_ok <- tryCatch({
+    options(timeout = 300)
+    download.file(url_anp, destfile = tmp_anp, method = "libcurl",
+                  mode = "wb", quiet = TRUE)
+    file.exists(tmp_anp) && file.size(tmp_anp) > 1e5
+  }, error = function(e) {
+    message(sprintf("  download.file ANP falhou: %s", e$message))
+    FALSE
+  })
 
   anp_mensal <- NULL
 
-  if (!is.null(ret_anp) && httr2::resp_status(ret_anp) == 200) {
-    writeBin(httr2::resp_body_raw(ret_anp), tmp_anp)
-    message("ANP: arquivo baixado. Lendo Excel...")
+  if (isTRUE(anp_dl_ok)) {
+    message(sprintf("ANP: arquivo baixado (%.1f MB). Processando...",
+                    file.size(tmp_anp) / 1e6))
 
+    # Meses em texto PT → inteiro
+    meses_pt <- c(JAN=1, FEV=2, MAR=3, ABR=4, MAI=5, JUN=6,
+                  JUL=7, AGO=8, SET=9, OUT=10, NOV=11, DEZ=12)
+
+    # Tentar UTF-8 primeiro (padrão gov.br); fallback para latin1
     anp_raw <- tryCatch(
-      read_excel(tmp_anp, sheet = 1),
+      read_delim(tmp_anp, delim = ";", locale = locale(encoding = "UTF-8"),
+                 show_col_types = FALSE),
       error = function(e) {
-        message(sprintf("  Erro leitura ANP Excel: %s", e$message))
-        NULL
+        message(sprintf("  Leitura ANP CSV (UTF-8) falhou: %s — tentando latin1.", e$message))
+        tryCatch(
+          read_delim(tmp_anp, delim = ";", locale = locale(encoding = "latin1"),
+                     show_col_types = FALSE),
+          error = function(e2) {
+            message(sprintf("  Leitura ANP CSV (latin1) falhou: %s", e2$message))
+            NULL
+          }
+        )
       }
     )
 
-    if (!is.null(anp_raw)) {
-      # Detectar colunas (ANP usa nomes em português, variáveis ao longo do tempo)
-      nomes_anp <- toupper(names(anp_raw))
-      col_uf    <- grep("^UF$|ESTADO|SIGLA", nomes_anp, value = TRUE)[1]
-      col_prod  <- grep("PRODUTO|DERIVADO|COMBUSTIVEL", nomes_anp, value = TRUE)[1]
-      col_ano   <- grep("^ANO$|^YEAR$", nomes_anp, value = TRUE)[1]
-      col_mes   <- grep("^MES$|^MONTH$|^M[EÊ]S", nomes_anp, value = TRUE)[1]
-      col_vol   <- grep("VOLUME|VENDAS|M3|QUANT", nomes_anp, value = TRUE)[1]
+    if (!is.null(anp_raw) && nrow(anp_raw) > 0) {
+      # Normalizar nomes: remover acentos e converter para ASCII maiúsculo
+      nomes_orig <- names(anp_raw)
+      nomes_norm <- toupper(iconv(nomes_orig, from = "UTF-8", to = "ASCII//TRANSLIT"))
+      # Se iconv retornar NA (encoding incorreto), usar gsub manual
+      nomes_norm <- ifelse(is.na(nomes_norm),
+                           toupper(gsub("[^A-Za-z0-9_ ]", "", nomes_orig)),
+                           nomes_norm)
+      names(anp_raw) <- nomes_norm
+
+      col_ano  <- grep("^ANO$", nomes_norm, value = TRUE)[1]
+      col_mes  <- grep("^M[E?]S$|^MES$", nomes_norm, value = TRUE)[1]
+      if (is.na(col_mes)) col_mes <- nomes_norm[grepl("^M.S$", nomes_norm)][1]
+      col_uf   <- nomes_norm[grepl("UNIDADE|ESTADO|^UF$", nomes_norm)][1]
+      col_prod <- nomes_norm[grepl("PRODUTO|DERIVADO", nomes_norm)][1]
+      col_vol  <- nomes_norm[grepl("VENDAS|VOLUME|M3", nomes_norm)][1]
+
+      message(sprintf("  Colunas: %s", paste(nomes_norm, collapse = " | ")))
+      message(sprintf("  Detectadas: ano=%s mes=%s uf=%s prod=%s vol=%s",
+                      col_ano, col_mes, col_uf, col_prod, col_vol))
 
       if (!is.na(col_uf) && !is.na(col_prod) && !is.na(col_vol)) {
-        names(anp_raw)[match(col_uf,   nomes_anp)] <- "uf"
-        names(anp_raw)[match(col_prod, nomes_anp)] <- "produto"
-        names(anp_raw)[match(col_vol,  nomes_anp)] <- "volume_m3"
-        if (!is.na(col_ano)) names(anp_raw)[match(col_ano, nomes_anp)] <- "ano"
-        if (!is.na(col_mes)) names(anp_raw)[match(col_mes, nomes_anp)] <- "mes"
-
-        # Filtrar RR e diesel (óleo diesel total ou diesel S10/S500/B)
+        # Normalizar valores da coluna UF para comparação sem acento
+        uf_norm <- toupper(iconv(anp_raw[[col_uf]], from = "UTF-8", to = "ASCII//TRANSLIT"))
+        anp_raw[["_uf_norm"]] <- ifelse(is.na(uf_norm),
+                                         toupper(anp_raw[[col_uf]]),
+                                         uf_norm)
+        prod_norm <- toupper(iconv(anp_raw[[col_prod]], from = "UTF-8", to = "ASCII//TRANSLIT"))
+        anp_raw[["_prod_norm"]] <- ifelse(is.na(prod_norm),
+                                           toupper(anp_raw[[col_prod]]),
+                                           prod_norm)
         anp_filtrado <- anp_raw |>
           filter(
-            toupper(trimws(uf)) == "RR",
-            grepl("DIESEL|DIESEL S|ÓL.*DIESEL|OLEO.*DIESEL", toupper(produto))
+            trimws(`_uf_norm`) == "RORAIMA",
+            grepl("DIESEL|OLEO.*DIESEL|OL.*DIESEL", `_prod_norm`)
           )
 
-        if ("ano" %in% names(anp_filtrado) && "mes" %in% names(anp_filtrado)) {
+        if (nrow(anp_filtrado) > 0 && !is.na(col_ano) && !is.na(col_mes)) {
           anp_mensal <- anp_filtrado |>
             mutate(
-              ano       = as.integer(ano),
-              mes       = as.integer(mes),
-              volume_m3 = suppressWarnings(as.numeric(gsub(",", ".", volume_m3)))
+              ano  = as.integer(.data[[col_ano]]),
+              mes  = suppressWarnings(
+                       as.integer(meses_pt[toupper(trimws(.data[[col_mes]]))])
+                     ),
+              diesel_m3 = suppressWarnings(
+                            as.numeric(gsub(",", ".", .data[[col_vol]]))
+                          )
             ) |>
             filter(!is.na(ano), !is.na(mes), ano >= ano_inicio) |>
             group_by(ano, mes) |>
-            summarise(diesel_m3 = sum(volume_m3, na.rm = TRUE), .groups = "drop") |>
+            summarise(diesel_m3 = sum(diesel_m3, na.rm = TRUE), .groups = "drop") |>
             arrange(ano, mes)
 
           write_csv(anp_mensal, arq_anp_out)
-          message(sprintf("ANP — %d meses de diesel RR salvos.", nrow(anp_mensal)))
+          message(sprintf("ANP — %d meses de diesel RR salvos (%.0f–%.0f).",
+                          nrow(anp_mensal),
+                          min(anp_mensal$ano), max(anp_mensal$ano)))
         } else {
-          message("ANP: colunas ano/mes não detectadas. Inspecionar arquivo manualmente.")
-          message("  Colunas disponíveis: ", paste(names(anp_raw), collapse = ", "))
+          message("ANP: nenhum registro RR/diesel encontrado. Verificar filtros.")
+          message("  Primeiras UFs: ", paste(unique(head(anp_raw[[col_uf]], 20)), collapse=", "))
         }
       } else {
-        message("ANP: estrutura do Excel não reconhecida. Colunas: ",
-                paste(nomes_anp, collapse = ", "))
+        message("ANP: colunas não detectadas. Colunas do arquivo: ",
+                paste(nomes_norm, collapse = ", "))
       }
     }
     unlink(tmp_anp)
   } else {
-    message(sprintf("ANP: download falhou (HTTP %s).",
-                    if (is.null(ret_anp)) "?" else httr2::resp_status(ret_anp)))
+    message("ANP: download falhou.")
     message("  URL tentada: ", url_anp)
-    message("  AÇÃO: baixar manualmente de https://www.anp.gov.br/dados-abertos")
+    message("  AÇÃO MANUAL: baixar CSV de https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos")
     message("  e salvar em: ", arq_anp_out,
             " com colunas: ano, mes, diesel_m3")
   }
@@ -557,9 +625,10 @@ if (!is.null(ipca_raw) && nrow(ipca_raw) > 0) {
 
 # ============================================================
 # ETAPA 4.6 — BCB Estban: depósitos totais em RR
-# OData: RecursosMensalEstban, CODUF=14, CODVERBETE=160
-# Verbete 160 = Depósitos totais (saldos)
-# Tipo: estoque (valor nominal) | Qualidade: fraca mas necessária
+# NOTA: endpoints OData BCB (Estban v1/v2/v3) retornam HTTP 404
+# desde 2025. Setor Financeiro permanece NA nesta versão.
+# Para reativar: colocar arquivo com colunas ano,mes,depositos em:
+#   data/raw/bcb/bcb_estban_rr_mensal.csv
 # ============================================================
 
 message("\n=== ETAPA 4.6: BCB Estban — depósitos RR ===\n")
@@ -567,87 +636,23 @@ message("\n=== ETAPA 4.6: BCB Estban — depósitos RR ===\n")
 if (file.exists(arq_estban_out)) {
   message("Estban: cache local encontrado.")
   estban_mensal <- read_csv(arq_estban_out, show_col_types = FALSE)
-} else {
-  message("Estban: consultando OData BCB...")
-
-  url_estban_base <- paste0(
-    "https://olinda.bcb.gov.br/olinda/servico/Estban/versao/v1/odata/",
-    "RecursosMensalEstban"
-  )
-
-  estban_paginas <- list()
-  top    <- 500L
-  skip   <- 0L
-  total  <- Inf
-
-  while (skip < total) {
-    resp_est <- tryCatch(
-      request(url_estban_base) |>
-        req_url_query(
-          `$filter`  = "CODUF eq '14' and CODVERBETE eq '160'",
-          `$select`  = "ANOMES,SALDO",
-          `$top`     = top,
-          `$skip`    = skip,
-          `$count`   = "true",
-          `$format`  = "json"
-        ) |>
-        req_timeout(60) |>
-        req_perform(),
-      error = function(e) {
-        message(sprintf("  Estban erro (skip=%d): %s", skip, e$message))
-        NULL
-      }
-    )
-    if (is.null(resp_est)) break
-
-    dados_est <- fromJSON(resp_body_string(resp_est))
-    if (is.null(dados_est$value) || length(dados_est$value) == 0) break
-
-    if (is.infinite(total) && !is.null(dados_est$`@odata.count`))
-      total <- as.integer(dados_est$`@odata.count`)
-
-    est_bloco <- as.data.frame(dados_est$value)
-    estban_paginas <- c(estban_paginas, list(est_bloco))
-    message(sprintf("  Estban: %d/%s registros", min(skip + nrow(est_bloco), total), total))
-
-    if (nrow(est_bloco) < top) break
-    skip <- skip + top
-  }
-
-  if (length(estban_paginas) > 0) {
-    estban_raw <- bind_rows(estban_paginas) |>
-      mutate(
-        ano   = as.integer(substr(as.character(ANOMES), 1, 4)),
-        mes   = as.integer(substr(as.character(ANOMES), 5, 6)),
-        saldo = as.numeric(gsub(",", ".", as.character(SALDO)))
-      ) |>
-      filter(!is.na(ano), !is.na(mes)) |>
-      group_by(ano, mes) |>
-      summarise(depositos = sum(saldo, na.rm = TRUE), .groups = "drop") |>
-      arrange(ano, mes)
-
-    write_csv(estban_raw, arq_estban_out)
-    estban_mensal <- estban_raw
-    message(sprintf("Estban — %d obs. salvas.", nrow(estban_mensal)))
-  } else {
-    warning("Estban: nenhum dado coletado. Financeiro usará apenas concessões (ou será excluído).")
-    estban_mensal <- data.frame(ano = integer(), mes = integer(), depositos = numeric())
-  }
-}
-
-if (nrow(estban_mensal) > 0) {
-  estban_mensal <- estban_mensal |> filter(ano >= ano_inicio)
   message(sprintf("Estban — %d obs. (%.0f–%.0f)",
                   nrow(estban_mensal),
                   min(estban_mensal$ano), max(estban_mensal$ano)))
+} else {
+  message("Estban: sem cache. API OData BCB indisponível (HTTP 404 em todas as versões).")
+  message("  Setor Financeiro será excluído do índice composto nesta versão.")
+  message("  Para incluir: salvar manualmente em ", arq_estban_out,
+          " (colunas: ano, mes, depositos).")
+  estban_mensal <- data.frame(ano = integer(), mes = integer(), depositos = numeric())
 }
 
 
 # ============================================================
 # ETAPA 4.7 — BCB: concessões de crédito por UF (Roraima)
-# OData NotaCredito — CreditoConcedidoUFDestinatarioRecurso
-# UF = 14 (Roraima). Fluxo mensal de novos créditos concedidos.
-# Tipo: fluxo (valor nominal) | Qualidade: aceitável
+# NOTA: endpoint OData NotaCredito retorna HTTP 404.
+# Para reativar: salvar arquivo com colunas ano,mes,concessoes em:
+#   data/raw/bcb/bcb_concessoes_rr_mensal.csv
 # ============================================================
 
 message("\n=== ETAPA 4.7: BCB — concessões de crédito (RR) ===\n")
@@ -658,98 +663,15 @@ if (file.exists(arq_concessoes_out)) {
   message("Concessões BCB: cache local encontrado.")
   concessoes_mensal <- read_csv(arq_concessoes_out, show_col_types = FALSE)
   bcb_concessoes_ok <- nrow(concessoes_mensal) > 0
+  if (bcb_concessoes_ok)
+    message(sprintf("Concessões BCB — %d obs. (%.0f–%.0f)",
+                    nrow(concessoes_mensal),
+                    min(concessoes_mensal$ano), max(concessoes_mensal$ano)))
 } else {
-  message("Concessões BCB: consultando OData...")
-
-  url_nota_base <- paste0(
-    "https://olinda.bcb.gov.br/olinda/servico/NotaCredito/versao/v1/odata/",
-    "CreditoConcedidoUFDestinatarioRecurso"
-  )
-
-  conc_paginas <- list()
-  top_c  <- 500L
-  skip_c <- 0L
-  total_c <- Inf
-
-  while (skip_c < total_c) {
-    resp_c <- tryCatch(
-      request(url_nota_base) |>
-        req_url_query(
-          `$filter`  = "codUF eq '14'",
-          `$select`  = "dataBase,concessoes",
-          `$top`     = top_c,
-          `$skip`    = skip_c,
-          `$count`   = "true",
-          `$format`  = "json"
-        ) |>
-        req_timeout(60) |>
-        req_error(is_error = function(r) FALSE) |>
-        req_perform(),
-      error = function(e) {
-        message(sprintf("  Concessões BCB erro: %s", e$message))
-        NULL
-      }
-    )
-    if (is.null(resp_c)) break
-    if (httr2::resp_status(resp_c) != 200) {
-      message(sprintf("  Concessões BCB: HTTP %d. Endpoint pode ter nome diferente.",
-                      httr2::resp_status(resp_c)))
-      break
-    }
-
-    dados_c <- tryCatch(fromJSON(resp_body_string(resp_c)), error = function(e) NULL)
-    if (is.null(dados_c) || is.null(dados_c$value) || length(dados_c$value) == 0) break
-
-    if (is.infinite(total_c) && !is.null(dados_c$`@odata.count`))
-      total_c <- as.integer(dados_c$`@odata.count`)
-
-    bloco_c <- as.data.frame(dados_c$value)
-    conc_paginas <- c(conc_paginas, list(bloco_c))
-    message(sprintf("  Concessões: %d/%s registros",
-                    min(skip_c + nrow(bloco_c), total_c), total_c))
-
-    if (nrow(bloco_c) < top_c) break
-    skip_c <- skip_c + top_c
-  }
-
-  if (length(conc_paginas) > 0) {
-    concessoes_raw <- bind_rows(conc_paginas)
-
-    # Detectar colunas de data e valor
-    nomes_c   <- names(concessoes_raw)
-    col_data  <- grep("data|date|periodo|mes|anomes", tolower(nomes_c), value = TRUE)[1]
-    col_valor <- grep("concess|valor|amount|credito", tolower(nomes_c), value = TRUE)[1]
-
-    if (!is.na(col_data) && !is.na(col_valor)) {
-      data_raw_c <- as.character(concessoes_raw[[col_data]])
-      # Formato pode ser YYYY-MM-DD, YYYYMM, ou YYYY-MM
-      ano_c <- as.integer(substr(gsub("[^0-9]", "", data_raw_c), 1, 4))
-      mes_c <- as.integer(substr(gsub("[^0-9]", "", data_raw_c), 5, 6))
-
-      concessoes_mensal <- data.frame(
-        ano         = ano_c,
-        mes         = mes_c,
-        concessoes  = suppressWarnings(as.numeric(
-          gsub(",", ".", as.character(concessoes_raw[[col_valor]]))))
-      ) |>
-        filter(!is.na(ano), !is.na(mes), !is.na(concessoes)) |>
-        group_by(ano, mes) |>
-        summarise(concessoes = sum(concessoes, na.rm = TRUE), .groups = "drop") |>
-        arrange(ano, mes)
-
-      write_csv(concessoes_mensal, arq_concessoes_out)
-      bcb_concessoes_ok <- TRUE
-      message(sprintf("Concessões BCB — %d obs. salvas.", nrow(concessoes_mensal)))
-    } else {
-      message("  Concessões BCB: colunas não identificadas.")
-      message("  Colunas disponíveis: ", paste(nomes_c, collapse = ", "))
-      concessoes_mensal <- data.frame(ano = integer(), mes = integer(), concessoes = numeric())
-    }
-  } else {
-    message("Concessões BCB: dados não obtidos via OData.")
-    message("  Alternativa: Financeiro usará apenas depósitos BCB Estban.")
-    concessoes_mensal <- data.frame(ano = integer(), mes = integer(), concessoes = numeric())
-  }
+  message("Concessões BCB: sem cache. API OData BCB indisponível.")
+  message("  Para incluir: salvar manualmente em ", arq_concessoes_out,
+          " (colunas: ano, mes, concessoes).")
+  concessoes_mensal <- data.frame(ano = integer(), mes = integer(), concessoes = numeric())
 }
 
 if (bcb_concessoes_ok) {

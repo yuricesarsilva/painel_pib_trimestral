@@ -221,6 +221,7 @@
 - [x] Energia industrial = classe "Industrial" do ANEEL (reaproveitada da coleta 3.1)
 - [x] ICMS industrial: excluído (SEFAZ-RR sem desagregação automatizável por CNAE)
 - [x] Agregação trimestral: média dos 3 meses
+
 - [x] Denton-Cholette contra VAB Ind. Transformação (Tab. 5.4)
 - [x] Salvar como componente em `data/output/indice_industria.csv`
 
@@ -262,12 +263,16 @@
 - [x] Implementar coleta de dados do aeroporto de Boa Vista via ANAC
   - [x] Passageiros embarcados e desembarcados (VRA mensal — ICAO SBBV)
   - [x] Carga aérea (VRA mensal — ICAO SBBV)
-- [x] Implementar coleta de vendas de óleo diesel em RR via ANP (Excel dados abertos)
+- [x] Implementar coleta de vendas de óleo diesel em RR via ANP (CSV dados abertos — URL atualizada)
+- [x] ANP diesel: 74 meses coletados (2020–2026) ✓
 - [x] Construir índice composto com pesos explícitos
-  - [x] Pesos: passageiros ANAC 40%, carga ANAC 30%, diesel ANP 30%
+  - [x] Pesos nominais: passageiros ANAC 40%, carga ANAC 30%, diesel ANP 30%
+  - [x] Fallback documentado: diesel ANP 100% quando ANAC indisponível
   - [x] Documentar sobreposição do diesel na nota técnica (proxy contaminada)
 - [x] Denton-Cholette contra VAB Transporte das Contas Regionais (2020–2023)
-- [ ] Executar e validar dados ANAC/ANP após primeira coleta
+- [x] Executar: Transportes com 24 trimestres (diesel 100% — ANAC pendente) ✓
+- [ ] ANAC: servidor trunca download — download manual pendente
+  - Salvar em `data/raw/anac/Dados_Estatisticos.csv` e re-executar script quando disponível
 
 ### 4.3 Atividades financeiras
 - [x] Implementar coleta de concessões de crédito por UF via BCB OData (NotaCredito)
@@ -277,7 +282,8 @@
   - [x] Deflacionar pelo IPCA nacional
 - [x] Índice composto: concessões 70% + depósitos 30% (com fallback se API indisponível)
 - [x] Denton-Cholette contra VAB Financeiro das Contas Regionais (2020–2023)
-- [ ] Executar e validar dados BCB após primeira coleta
+- [ ] BCB OData indisponível (HTTP 404 em todas as versões v1/v2/v3) — Financeiro com NA
+  - Reativar quando BCB disponibilizar nova API ou via download manual
 
 ### 4.4 Imobiliário
 - [x] Interpolação linear entre benchmarks anuais das Contas Regionais (sem proxy de mercado)
@@ -300,9 +306,9 @@
 - [x] Coluna de saída: `indice_servicos` + subíndices por setor
 - [x] **Executar** `R/04_servicos.R` e verificar outputs
 - [x] Validar: comparar variações anuais com Contas Regionais IBGE (2020–2023)
-  - 2021: +18,8% / 2022: +7,9% / 2023: +11,4% / 2024: +11,4% / 2025: +13,4%
+  - 2021: +19,0% / 2022: +7,7% / 2023: +12,0% / 2024: +11,8% / 2025: +10,8%
   - Denton âncora exatamente 2020–2023 (anos com benchmark CR)
-  - Transportes e Financeiro com NA (ANAC/ANP/BCB OData inacessíveis — coleta manual pendente)
+  - Transportes com dados reais (diesel ANP — ANAC pendente); Financeiro com NA (BCB OData 404)
 - [x] Confirmar 24 observações (2020T1–2025T4) no arquivo de saída ✓
 - [x] Salvar em `data/output/indice_servicos.csv` ✓
 - [x] Atualizar `historico_simples.md` com conclusão da Fase 4
