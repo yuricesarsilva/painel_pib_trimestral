@@ -173,13 +173,15 @@ bimestral_para_trimestral <- function(df) {
 # ETAPA 2.1 — Folha Federal (SIAPE — arquivos manuais do Portal da Transparência)
 # ============================================================
 #
-# Estratégia de identificação de UF:
-#   UF_EXERCICIO = -1 em 100% dos registros — campo inutilizável.
-#   Alternativa: grepl("RORAIMA", ORG_LOTACAO | UORG_LOTACAO) após
-#   normalização de acentos (iconv Latin-1 → ASCII//TRANSLIT).
-#   Cobre UFRR, IFRR, órgãos federais em RR e Ex-Território Federal.
+# Estratégia de identificação de UF (critério OR — qualquer indicativo vale):
+#   1. UF_EXERCICIO == "RR"   (quando preenchido — nem sempre disponível)
+#   2. grepl("RORAIMA", ORG_LOTACAO | UORG_LOTACAO) após normalização de acentos
+#      (iconv Latin-1 → ASCII//TRANSLIT) — cobre UFRR, IFRR, órgãos federais
+#      em RR e servidores do Ex-Território Federal de Roraima.
+#   As duas estratégias se complementam: meses com UF_EXERCICIO preenchido
+#   ganham cobertura extra; meses com -1 dependem dos nomes de órgão.
 #
-# Resultado: ~6.100 servidores/mês identificados em RR (jan/2020).
+# Resultado: ~6.100+ servidores/mês identificados em RR (jan/2020).
 # "Governo do Ex-Território Federal de Roraima" (≈3.400 obs.) = ATIVO PERMANENTE.
 #
 # Colunas do cache salvo (arq_siape):
@@ -204,12 +206,13 @@ if (file.exists(arq_siape)) {
   zips <- sort(list.files(dir_siape_bulk, pattern = "\\.zip$",
                            full.names = TRUE, ignore.case = TRUE))
   message(sprintf("SIAPE: processando %d ZIPs de %s ...", length(zips), dir_siape_bulk))
-  message("  UF_EXERCICIO=-1 em 100% dos registros — identificando RR via ORG/UORG_LOTACAO.")
+  message("  Critério RR (OR): UF_EXERCICIO=='RR'  OU  'RORAIMA' em ORG/UORG_LOTACAO")
+  message("  (UF_EXERCICIO pode ser -1 em alguns meses — as duas estratégias se complementam)")
 
-  tmp_dir   <- tempdir()
-  norm_col  <- function(x) toupper(iconv(x, from = "latin1", to = "ASCII//TRANSLIT"))
+  tmp_dir  <- tempdir()
+  norm_col <- function(x) toupper(iconv(x, from = "latin1", to = "ASCII//TRANSLIT"))
   resultados <- vector("list", length(zips))
-  idx_res   <- 0L
+  idx_res  <- 0L
 
   for (zip_path in zips) {
     zip_nome <- basename(zip_path)
@@ -238,7 +241,8 @@ if (file.exists(arq_siape)) {
 
     cad <- tryCatch(
       data.table::fread(cad_path, sep = ";", encoding = "Latin-1",
-                        select = c("Id_SERVIDOR_PORTAL", "ORG_LOTACAO", "UORG_LOTACAO"),
+                        select = c("Id_SERVIDOR_PORTAL", "UF_EXERCICIO",
+                                   "ORG_LOTACAO", "UORG_LOTACAO"),
                         showProgress = FALSE, data.table = TRUE),
       error = function(e) {
         message(sprintf("  %s: erro no Cadastro — %s", zip_nome, e$message)); NULL
@@ -247,13 +251,23 @@ if (file.exists(arq_siape)) {
     unlink(cad_path)
     if (is.null(cad) || nrow(cad) == 0) next
 
+    # Critério combinado (OR): qualquer indicativo de RR é válido
     cad[, `:=`(org_norm  = norm_col(ORG_LOTACAO),
-               uorg_norm = norm_col(UORG_LOTACAO))]
-    cad_rr <- cad[grepl("RORAIMA", org_norm, fixed = TRUE) |
+               uorg_norm = norm_col(UORG_LOTACAO),
+               uf_e_rr   = trimws(toupper(as.character(UF_EXERCICIO))) == "RR")]
+    cad_rr <- cad[uf_e_rr == TRUE |
+                  grepl("RORAIMA", org_norm,  fixed = TRUE) |
                   grepl("RORAIMA", uorg_norm, fixed = TRUE)]
 
+    # Diagnóstico por critério (para acompanhamento da qualidade)
+    n_uf  <- cad[uf_e_rr == TRUE, .N]
+    n_org <- cad[(grepl("RORAIMA", org_norm, fixed = TRUE) |
+                  grepl("RORAIMA", uorg_norm, fixed = TRUE)), .N]
+    message(sprintf("  %s: %d servidores RR  [UF_EXERCICIO=%d | ORG/UORG=%d | único=%d]",
+                    aaaamm, nrow(cad_rr), n_uf, n_org, nrow(cad_rr)))
+
     if (nrow(cad_rr) < 50)
-      message(sprintf("  AVISO %s: apenas %d servidores com RORAIMA em ORG/UORG_LOTACAO",
+      message(sprintf("  AVISO %s: total muito baixo (%d) — verificar base.",
                       zip_nome, nrow(cad_rr)))
 
     ids_rr <- unique(cad_rr$Id_SERVIDOR_PORTAL)
