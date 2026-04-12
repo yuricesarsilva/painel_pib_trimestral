@@ -271,14 +271,43 @@ if (file.exists(arq_siape)) {
                       zip_nome, nrow(cad_rr)))
 
     ids_rr <- unique(cad_rr$Id_SERVIDOR_PORTAL)
+    rm(cad, cad_rr); gc(verbose = FALSE)   # liberar memória do Cadastro (~40MB)
 
-    # --- Remuneracao: somar folha bruta ----------------------
+    # --- Remuneracao: ler cabeçalho → selecionar 2 colunas → filtrar RR ----
+    # Estratégia de baixo consumo de memória:
+    #   1. Lê apenas 0 linhas para obter nomes das colunas
+    #   2. Identifica coluna de salário sem iconv (busca substring sem acento)
+    #   3. Lê apenas Id_SERVIDOR_PORTAL + coluna de salário (~10 MB vs ~171 MB)
     tryCatch(unzip(zip_path, files = arq_rem, exdir = tmp_dir, overwrite = TRUE),
              error = function(e) NULL)
     rem_path <- file.path(tmp_dir, arq_rem)
+    if (!file.exists(rem_path)) next
 
+    # Passo 1: cabeçalho (custo ~0 MB)
+    rem_cols <- tryCatch(
+      names(data.table::fread(rem_path, sep = ";", encoding = "Latin-1",
+                              nrows = 0L, showProgress = FALSE)),
+      error = function(e) character(0)
+    )
+    if (length(rem_cols) == 0) { unlink(rem_path); next }
+
+    # Passo 2: identificar coluna de remuneração bruta em R$
+    # "BRUTA" não tem acento → funciona sem iconv em qualquer plataforma
+    col_bruta <- rem_cols[
+      grepl("BRUTA", rem_cols, ignore.case = TRUE) &
+      grepl("R\\$",  rem_cols, fixed      = TRUE)  &
+      !grepl("U\\$", rem_cols, fixed      = TRUE)
+    ][1]
+
+    if (is.na(col_bruta)) {
+      message(sprintf("  %s: coluna de remuneração bruta não localizada.", zip_nome))
+      unlink(rem_path); next
+    }
+
+    # Passo 3: ler apenas 2 colunas (economia de ~94% de memória)
     rem <- tryCatch(
       data.table::fread(rem_path, sep = ";", encoding = "Latin-1",
+                        select = c("Id_SERVIDOR_PORTAL", col_bruta),
                         showProgress = FALSE, data.table = TRUE),
       error = function(e) {
         message(sprintf("  %s: erro na Remuneracao — %s", zip_nome, e$message)); NULL
@@ -288,18 +317,9 @@ if (file.exists(arq_siape)) {
     if (is.null(rem) || nrow(rem) == 0) next
 
     rem_rr <- rem[Id_SERVIDOR_PORTAL %in% ids_rr]
+    rm(rem); gc(verbose = FALSE)   # liberar os ~10 MB da tabela nacional
     if (nrow(rem_rr) == 0) {
       message(sprintf("  %s: 0 servidores RR na Remuneracao.", zip_nome)); next
-    }
-
-    # Localizar coluna REMUNERAÇÃO BÁSICA BRUTA (R$) — nome pode ter acentos
-    nomes_norm <- toupper(iconv(names(rem_rr), from = "latin1", to = "ASCII//TRANSLIT"))
-    col_bruta  <- names(rem_rr)[
-      grepl("REMUNER.*BASICA.*BRUTA", nomes_norm) & !grepl("U\\$", nomes_norm)
-    ][1]
-
-    if (is.na(col_bruta)) {
-      message(sprintf("  %s: coluna de remuneração bruta não localizada.", zip_nome)); next
     }
 
     # Converter formato BR ("14.249,03") → numérico R$
@@ -318,6 +338,7 @@ if (file.exists(arq_siape)) {
     )
     message(sprintf("  %s: %d servidores RR — R$ %.1f mi",
                     aaaamm, nrow(rem_rr), folha_rr / 1e6))
+    rm(rem_rr, vals); gc(verbose = FALSE)
   }
 
   if (idx_res > 0) {
