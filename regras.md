@@ -290,6 +290,32 @@ R/05_agregacao.R          → Fase 5 (índice final)
 
 ---
 
+## Manutenção de documentos da reforma metodológica
+
+Os arquivos abaixo documentam a reforma metodológica de ancoragem ao VAB real (iniciada em
+2026-04-12). Eles devem ser mantidos atualizados sempre que houver mudanças relacionadas.
+
+### `plano_reforma_indicador_real.md`
+
+Atualizar sempre que:
+- A estratégia de ancoragem ao volume real for revisada (ex: mudança de Tabela 6 para outra fonte)
+- A abordagem do VAB nominal trimestral (Ponto 2) for alterada ou descartada
+- O mapeamento de atividades IBGE × setores do projeto for corrigido
+- As taxas de crescimento esperadas após a reforma forem verificadas e diferirem do previsto
+
+### `checklist_reforma.md`
+
+Atualizar imediatamente sempre que:
+- Uma etapa ou subetapa for concluída → marcar com `[x]`
+- Uma etapa precisar ser refeita (ex: erro detectado após conclusão) → desmarcar e adicionar nota
+- Uma nova subetapa não prevista for identificada durante a implementação → adicionar ao checklist
+- O status geral da tabela ao final do arquivo mudar
+
+**Regra**: nunca encerrar uma sessão que modifique scripts da reforma (00, 01, 02, 03, 04, 05)
+sem antes atualizar o `checklist_reforma.md`.
+
+---
+
 ## Protocolo de release trimestral
 
 Um **release** é a publicação oficial de um novo trimestre do indicador. O protocolo abaixo
