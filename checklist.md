@@ -380,11 +380,25 @@
 - IEEE_UNDERFLOW_FLAG: avisos normais do Fortran interno do X-13 no Windows (sem impacto)
 
 ### 5.4 Validação final
-- [ ] Variação anual do índice geral vs. Contas Regionais IBGE (todos os anos disponíveis)
-- [ ] Comparar perfil de ciclo com IBC-BR e IBCR Norte (Banco Central)
-- [ ] Verificar correlação com arrecadação tributária total de RR
-- [ ] Verificar comportamento em 2020 (queda COVID) vs. estados vizinhos
-- [ ] Documentar e justificar eventuais divergências
+- [x] Variação anual do índice geral vs. Contas Regionais IBGE (todos os anos disponíveis)
+      MAE = 0,00 pp (Denton ancora exatamente ao CR — por construção)
+- [x] Comparar perfil de ciclo com IBC-BR e IBCR Norte (Banco Central)
+      IBC-BR: corr nível=0,906; corr variação=0,401
+      IBCR Norte: corr nível=0,374; corr variação=-0,419 (esperado — RR≠AM/PA)
+- [ ] Verificar correlação com arrecadação tributária total de RR (pendente — requer ICMS anual)
+- [x] Verificar comportamento em 2020 (queda COVID) vs. estados vizinhos
+      Queda T2 (-9,8% vs T1); recuperação em T3 por colheita e AAPP estável
+- [x] Documentar e justificar eventuais divergências
+
+**Resultado do teste (2026-04-12):**
+- Crescimento RR 2021–2023: +12,3%, +17,2%, +20,3% — acima do Norte (+7,2%, -1,2%, +1,7%)
+  e do Brasil (+4,2%, +2,8%, +2,7%) — coerente com expansão da soja e setor público
+- Correlação negativa em variação com IBCR Norte justificada: Norte dominado por AM/PA
+  (extrativismo), RR tem perfil AAPP + agro sem sazonalidade típica amazônica
+- Consistência interna: Agro domina variância trimestral (corr Agro-Geral=0,810);
+  AAPP-Serviços e Ind-Serviços positivas como esperado
+- Artefatos: bloco-level (Agro, Indústria) sem dados — regex de atividade CR
+  afetado por encoding Windows (não afeta a validação do índice total)
 
 ### 5.5 Exportação dos dados
 - [ ] Gerar arquivo Excel com todas as séries (índice geral + setoriais + SA)

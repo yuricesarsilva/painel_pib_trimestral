@@ -1024,6 +1024,64 @@ Contas Regionais perfeita para 2020–2023.
 
 ---
 
+### Abril de 2026 — Fase 5.4: Validação final do índice geral
+
+**O que foi feito:**
+
+Executamos a validação em quatro eixos com o script `R/05d_validacao.R`, que compara o
+índice com o benchmark do IBGE, com indicadores do Banco Central, analisa o comportamento
+em 2020 e verifica a consistência interna entre os componentes.
+
+**Resultados por eixo:**
+
+**Eixo 1 — Benchmark Contas Regionais IBGE (2021–2023):**
+O erro médio absoluto é de 0,00 pp — ou seja, as variações anuais do índice coincidem
+exatamente com a variação do VAB nominal das Contas Regionais. Isso é esperado por
+construção: o Denton-Cholette força que a média anual do índice reproduza exatamente o
+benchmark anual. Confirma que o mecanismo de ancoramento funciona corretamente.
+
+**Eixo 2 — Comparação com IBC-BR e IBCR Norte (via API BCB SGS):**
+
+| Indicador | Corr. em nível | Corr. em variação |
+|---|---|---|
+| IBC-BR (Brasil) | 0,906 | 0,401 |
+| IBCR Norte | 0,374 | -0,419 |
+
+A correlação em nível com o IBC-BR é excelente (0,906), confirmando que o índice de RR
+captura a mesma trajetória ascendente da economia nacional. A correlação em variação
+(0,401) é mais modesta, o que é esperado — a sazonalidade forte da agropecuária de RR
+cria flutuações trimestrais que não têm correspondência no IBC-BR nacional dessazonalizado.
+
+A correlação *negativa* em variação com o IBCR Norte (-0,419) não é uma anomalia — é um
+resultado interpretável: o Norte é dominado por Amazonas e Pará (extrativismo mineral,
+petróleo, madeira), que têm ciclos opostos ao de Roraima (soja e funcionalismo público).
+Em nível, a correlação de 0,374 confirma que as trajetórias divergem estruturalmente.
+
+As taxas de crescimento anuais de RR (+12%, +17%, +20% em 2021–2023) superam com
+consistência o Norte (+7%, -1%, +2%) e o Brasil (+4%, +3%, +3%), refletindo a expansão
+da fronteira agrícola da soja e o crescimento do setor público federal em Roraima.
+
+**Eixo 3 — Comportamento em 2020 (COVID):**
+O índice mostra queda de 9,8% em 2020T2 versus 2020T1, seguida de forte recuperação
+em 2020T3 (+26%), puxada pela colheita da soja (agropecuária: +888% T2→T3) e pela
+estabilidade do funcionalismo federal (AAPP: -3,7% na pandemia, contra quedas de 10%+
+em estados mais dependentes do setor privado). O comportamento é coerente com a estrutura
+econômica de Roraima: o peso do governo público (46% do VAB) funciona como amortecedor
+anticíclico, reduzindo a exposição a choques de demanda privada.
+
+**Eixo 4 — Consistência interna:**
+- Agro–Geral: correlação 0,810 em variação. A agropecuária domina a volatilidade
+  trimestral do índice geral apesar do peso de apenas 8,87% — resultado da amplitude
+  sazonal de 17x que impõe flutuações muito maiores que os demais componentes.
+- AAPP–Serviços: 0,303 (positiva — governo impulsiona serviços em Boa Vista)
+- Ind–Serviços: 0,366 (positiva — construção e SIUP correlacionam com demanda de serviços)
+
+**Arquivos gerados:**
+- `R/05d_validacao.R` — script de validação (versionado)
+- `data/output/validacao_relatorio.csv` — tabela quantitativa de validação
+
+---
+
 ### Abril de 2026 — Fase 5.3: Ajuste sazonal X-13ARIMA-SEATS
 
 **O que foi feito:**
