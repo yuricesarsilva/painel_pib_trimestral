@@ -34,9 +34,10 @@ library(lubridate)
 
 # --- Caminhos -----------------------------------------------
 
-dir_processed <- file.path("data", "processed")
-dir_output    <- file.path("data", "output")
-dir_raw_sidra <- file.path("data", "raw", "sidra")
+dir_processed  <- file.path("data", "processed")
+dir_output     <- file.path("data", "output")
+dir_raw_sidra  <- file.path("data", "raw", "sidra")
+dir_referencias <- file.path("data", "referencias")
 
 dir.create(dir_processed, recursive = TRUE, showWarnings = FALSE)
 dir.create(dir_output,    recursive = TRUE, showWarnings = FALSE)
@@ -51,6 +52,22 @@ arq_ovos      <- file.path(dir_raw_sidra, "ovos_rr.csv")           # tab 915
 
 arq_cobertura <- file.path(dir_processed, "cobertura_lspa_pam.csv")
 arq_coef_saz  <- file.path(dir_processed, "coef_sazonais_colheita.csv")
+
+# --- Calendários de colheita (versão A = produção; B e C = teste A/B Fase 5.2) ---
+#   seadi           — Calendário agrícola SEADI-RR (versão A — padrão de produção)
+#                     Fonte: Calendário Agrícola SEADI-RR (PDF da secretaria estadual)
+#                     Mais aderente à realidade local; revisado pela SEADI para cada cultura em RR.
+#   censo2006_area  — Censo Agropecuário 2006, coeficientes por área colhida (versão B)
+#                     Fonte: IBGE, ufs.zip, tabelas de época principal de colheita por UF
+#   censo2006_estab — Censo Agropecuário 2006, coeficientes por nº de estabelecimentos (versão C)
+#                     Fonte: idem acima, ponderação alternativa
+#
+# Para rodar o teste A/B (Fase 5.2), mude o valor abaixo e reexecute o script.
+versao_calendario <- "seadi"
+
+arq_cal_seadi  <- file.path(dir_referencias, "calendario_colheita_seadi_rr.csv")
+arq_cal_area   <- file.path(dir_referencias, "calendario_colheita_censo2006_area_rr.csv")
+arq_cal_estab  <- file.path(dir_referencias, "calendario_colheita_censo2006_estabelecimentos_rr.csv")
 arq_lavouras  <- file.path(dir_processed, "serie_lavouras_trimestral.csv")
 arq_pecuaria  <- file.path(dir_processed, "serie_pecuaria_trimestral.csv")
 arq_indice    <- file.path(dir_output,    "indice_agropecuaria.csv")
@@ -212,57 +229,88 @@ message(sprintf("Cobertura salva: %s (%.1f%% do VBP coberto pelas 10 culturas)",
                 arq_cobertura, cobertura_total_pct))
 
 # ============================================================
-# ETAPA 1.1 — Calendário de colheita (Censo Agropecuário 2006)
+# ETAPA 1.1 — Calendário de colheita
 # ============================================================
 
 message("\n=== ETAPA 1.1: Calendário de colheita ===\n")
 
-# Coeficientes mensais de colheita para Roraima.
-# Fonte de referência: Censo Agropecuário 2006 (IBGE) — tabelas de época de
-# colheita por UF e produto. O Censo 2017 não publicou tabela equivalente
-# com a mesma granularidade por estado.
+# Os coeficientes mensais de colheita distribuem a produção anual (PAM/LSPA)
+# entre os 12 meses do ano, refletindo o ritmo real de colheita em Roraima.
+# Cada linha (cultura) soma exatamente 1,0.
 #
-# Calendário agroclimático de RR:
-#   Período chuvoso: dezembro – abril (plantio de soja e milho 2ª safra)
-#   Período seco: maio – setembro (colheita principal da maioria das culturas)
-#   Transição: outubro – novembro
+# Três versões disponíveis em data/referencias/:
+#   A (padrão) — SEADI-RR: calendário agrícola oficial da Secretaria de
+#                Agricultura do estado de Roraima. Mais aderente ao ciclo
+#                atual das culturas no estado. Fonte primária desta versão.
+#   B — Censo Agropecuário 2006, ponderado por área colhida.
+#       Coeficientes derivados das tabelas de época de colheita por UF/produto.
+#       Culturas sem dados mensais no Censo ficam com distribuição uniforme (1/12).
+#   C — Censo Agropecuário 2006, ponderado por nº de estabelecimentos.
+#       Ponderação alternativa à versão B; feijão = média de feijão-de-cor e fradinho.
 #
-# NOTA: Estes coeficientes devem ser validados contra a publicação impressa
-# do Censo Agropecuário 2006 antes da publicação oficial do indicador.
-# Disponível em: https://biblioteca.ibge.gov.br (Censo Agropecuário 2006)
-#
-# Restrição: cada linha deve somar exatamente 1,0
+# Versões B e C são candidatas ao teste de sensibilidade (Fase 5.2).
+# Para reproduzir o teste, altere `versao_calendario` no bloco de parâmetros
+# (próximo do topo do script) e reexecute.
 
 meses <- c("jan", "fev", "mar", "abr", "mai", "jun",
            "jul", "ago", "set", "out", "nov", "dez")
 
-coef_colheita <- matrix(c(
-# jan   fev   mar   abr   mai   jun   jul   ago   set   out   nov   dez
-  0.00, 0.00, 0.00, 0.00, 0.00, 0.10, 0.30, 0.40, 0.20, 0.00, 0.00, 0.00, # arroz
-  0.00, 0.00, 0.00, 0.00, 0.10, 0.25, 0.35, 0.20, 0.10, 0.00, 0.00, 0.00, # feijao
-  0.00, 0.10, 0.00, 0.00, 0.00, 0.10, 0.35, 0.35, 0.10, 0.00, 0.00, 0.00, # milho
-  0.00, 0.20, 0.40, 0.30, 0.10, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, # soja
-  0.00, 0.00, 0.00, 0.00, 0.10, 0.20, 0.30, 0.25, 0.15, 0.00, 0.00, 0.00, # cana
-  0.05, 0.05, 0.05, 0.05, 0.10, 0.15, 0.15, 0.15, 0.15, 0.05, 0.02, 0.03, # mandioca
-  0.00, 0.00, 0.00, 0.00, 0.05, 0.20, 0.30, 0.30, 0.15, 0.00, 0.00, 0.00, # tomate
-  0.08, 0.08, 0.08, 0.08, 0.08, 0.10, 0.10, 0.10, 0.10, 0.08, 0.06, 0.06, # banana
-  0.05, 0.05, 0.10, 0.05, 0.05, 0.05, 0.20, 0.25, 0.10, 0.05, 0.02, 0.03, # cacau
-  0.02, 0.02, 0.02, 0.02, 0.05, 0.15, 0.25, 0.25, 0.15, 0.05, 0.01, 0.01  # laranja
-), nrow = 10, byrow = TRUE)
+arq_cal <- switch(versao_calendario,
+  seadi           = arq_cal_seadi,
+  censo2006_area  = arq_cal_area,
+  censo2006_estab = arq_cal_estab,
+  stop("versao_calendario inválida: '", versao_calendario,
+       "'. Use 'seadi', 'censo2006_area' ou 'censo2006_estab'.")
+)
 
-rownames(coef_colheita) <- culturas_ord
-colnames(coef_colheita) <- meses
-
-somas <- rowSums(coef_colheita)
-problemas <- names(somas)[abs(somas - 1) > 1e-6]
-if (length(problemas) > 0) {
-  stop("Coeficientes de colheita com soma != 1: ", paste(problemas, collapse = ", "))
+if (!file.exists(arq_cal)) {
+  stop("Arquivo de calendário não encontrado: ", arq_cal)
 }
-message("Verificação dos coeficientes: OK (todas as 10 culturas somam 1,0)")
 
-df_coef <- cbind(data.frame(cultura = culturas_ord), as.data.frame(coef_colheita))
+cal_raw <- read.csv(arq_cal, check.names = FALSE, stringsAsFactors = FALSE)
+
+# Selecionar apenas as culturas do conjunto de trabalho, na ordem canônica
+cal_filt <- cal_raw[cal_raw$cultura %in% culturas_ord, ]
+cal_filt  <- cal_filt[match(culturas_ord, cal_filt$cultura), ]
+
+if (nrow(cal_filt) < length(culturas_ord)) {
+  faltando <- setdiff(culturas_ord, cal_filt$cultura)
+  stop("Calendário '", versao_calendario, "': culturas faltando — ",
+       paste(faltando, collapse = ", "))
+}
+
+coef_colheita <- as.matrix(cal_filt[, meses])
+rownames(coef_colheita) <- cal_filt$cultura
+
+# Substituir NA por 0 (meses sem colheita registrada = zero)
+coef_colheita[is.na(coef_colheita)] <- 0
+
+# Normalizar cada linha para soma exata = 1 (protege contra imprecisão de float)
+somas <- rowSums(coef_colheita)
+if (any(somas == 0)) {
+  stop("Linha(s) com soma zero: ", paste(culturas_ord[somas == 0], collapse = ", "))
+}
+coef_colheita <- sweep(coef_colheita, 1, somas, "/")
+
+somas_check <- rowSums(coef_colheita)
+problemas <- rownames(coef_colheita)[abs(somas_check - 1) > 1e-9]
+if (length(problemas) > 0) {
+  stop("Coeficientes com soma != 1 após normalização: ", paste(problemas, collapse = ", "))
+}
+
+message(sprintf("Versão do calendário: %s (%s)", versao_calendario, basename(arq_cal)))
+for (i in seq_len(nrow(coef_colheita))) {
+  meses_ativos <- sum(coef_colheita[i, ] > 0)
+  message(sprintf("  %-10s  fonte: %-40s  meses ativos: %d",
+                  rownames(coef_colheita)[i],
+                  cal_filt$fonte_mensalizacao[i],
+                  meses_ativos))
+}
+
+df_coef <- cbind(data.frame(cultura = culturas_ord, versao = versao_calendario),
+                 as.data.frame(coef_colheita))
 write.csv(df_coef, arq_coef_saz, row.names = FALSE)
-message(sprintf("Calendário salvo: %s", arq_coef_saz))
+message(sprintf("\nCalendário salvo: %s", arq_coef_saz))
 
 # ============================================================
 # ETAPA 1.2 — Série mensal e trimestral de lavouras

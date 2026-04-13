@@ -944,4 +944,61 @@ exportação Excel (5.5) e nota técnica (5.7).
 
 ---
 
-*Última atualização: 12 de abril de 2026 — Fase 5.1 concluída: índice geral gerado (2020T1–2025T4)*
+### Abril de 2026 — Calendário de colheita: substituição por fonte oficial SEADI-RR
+
+**Motivação:**
+
+O calendário de colheita original em `01_agropecuaria.R` usava coeficientes arbitrários
+(inseridos manualmente sem fundamentação documental), inconsistentes com as referências
+metodológicas da literatura e com o plano inicial do projeto, que prevê o Censo Agropecuário
+como fonte dos coeficientes.
+
+**O que foi feito:**
+
+Exploração completa na pasta de laboratório `teste_calendario_colheita_censo_agro_2006/`,
+que derivou três versões de calendário usando fontes distintas:
+
+- **Versão A (SEADI-RR)** — Calendário Agrícola oficial da Secretaria de Agricultura do estado
+  de Roraima. Mais aderente ao ciclo real das culturas em RR. Adotado como versão de produção.
+- **Versão B (Censo 2006 — área colhida)** — Coeficientes derivados das tabelas de época
+  principal de colheita por UF/produto do Censo Agropecuário 2006 (IBGE, ufs.zip), ponderados
+  pela área colhida. Culturas sem mensalização oficial ficam com distribuição uniforme (1/12).
+- **Versão C (Censo 2006 — estabelecimentos)** — Mesma fonte, ponderação alternativa por
+  número de estabelecimentos.
+
+**Mudanças no código:**
+
+1. Os três calendários foram salvos em `data/referencias/` (diretório novo, versionado no Git):
+   - `calendario_colheita_seadi_rr.csv`
+   - `calendario_colheita_censo2006_area_rr.csv`
+   - `calendario_colheita_censo2006_estabelecimentos_rr.csv`
+
+2. `01_agropecuaria.R` (ETAPA 1.1) reescrito: carrega o calendário do CSV via parâmetro
+   `versao_calendario` (padrão: "seadi"). A troca de versão para teste A/B é feita alterando
+   esse parâmetro e reexecutando os scripts 01 e 05.
+
+**Impacto no índice:**
+
+O perfil sazonal trimestral da agropecuária mudou significativamente:
+
+| Trimestre | Calendário anterior (arbitrário) | SEADI (produção) |
+|---|---|---|
+| T1 | 177 | 28 (plantio — soja em germinação) |
+| T2 | 132 | 22 (transição — pouco a colher) |
+| T3 | 78 | 217 (pico — soja, milho, arroz colhidos) |
+| T4 | 13 | 133 (final — grãos de 2ª safra, tomate, feijão) |
+
+O perfil novo é muito mais realista para Roraima. Soja representa 53% dos pesos Laspeyres
+e tem colheita concentrada em agosto–outubro no calendário SEADI, o que explica o pico em T3.
+
+**O índice anual permanece idêntico** (Denton-Cholette ancora ao VAB das Contas Regionais):
+a mudança afeta apenas a distribuição intra-anual e a extrapolação de 2024–2025.
+
+**Output atualizado:**
+- `data/output/indice_agropecuaria.csv` — novo perfil sazonal (SEADI)
+- `data/output/indice_geral_rr.csv` — propagado (05_agregacao.R re-executado)
+- `data/processed/coef_sazonais_colheita.csv` — calendário SEADI registrado
+
+---
+
+*Última atualização: 12 de abril de 2026 — Calendário SEADI-RR implantado; 3 versões para teste A/B preparadas*

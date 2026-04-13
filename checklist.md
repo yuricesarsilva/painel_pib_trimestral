@@ -98,11 +98,17 @@
 ### 1.1 Estrutura sazonal de colheita (calendário agrícola)
 - [x] Localizar tabelas de "época de colheita" do Censo Agropecuário 2006 para Roraima
 - [x] Verificar se o Censo Agropecuário 2017 publicou tabela equivalente
-  - [x] Censo 2017 não publicou tabela equivalente — mantido Censo 2006 como referência
-- [x] Construir matriz: cultura × mês → coeficiente de colheita
-  - [x] Verificar que cada linha (cultura) soma 1,0 (100%) → OK
-  - [x] Validar com calendário agroclimático de RR (chuvas: dez–abr; seca: mai–set) → OK
-- [x] Salvar matriz em `data/processed/coef_sazonais_colheita.csv`
+  - [x] Censo 2017 não publicou tabela equivalente — mantido como referência metodológica secundária
+- [x] Construir três versões do calendário (laboratório `teste_calendario_colheita_censo_agro_2006/`):
+  - [x] Versão A — SEADI-RR: calendário oficial da secretaria estadual (versão de produção)
+  - [x] Versão B — Censo Agro 2006, ponderado por área colhida
+  - [x] Versão C — Censo Agro 2006, ponderado por nº de estabelecimentos
+- [x] Versões A/B/C salvas em `data/referencias/` (versionadas no Git)
+- [x] `01_agropecuaria.R` carrega calendário do CSV via parâmetro `versao_calendario`
+  - [x] Versão ativa em produção: **SEADI** (`versao_calendario <- "seadi"`)
+  - [x] Verificar que cada linha soma 1,0 (normalização automática no script) → OK
+  - [x] Validar com calendário agroclimático de RR → OK (T3 = pico colheita soja/milho/arroz)
+- [x] Salvar matriz ativa em `data/processed/coef_sazonais_colheita.csv`
 
 ### 1.2 Série mensal de produção de lavouras
 - [x] Baixar PAM para Roraima via `sidrar` (tabela 5457 — temporárias e permanentes)
@@ -324,11 +330,22 @@
 - [x] Aplicar Denton-Cholette final contra PIB total de RR das Contas Regionais
 - [x] Salvar em `data/output/indice_geral_rr.csv`
 
-### 5.2 Teste de sensibilidade (versão A vs. versão B)
-- [ ] Gerar versão B do índice com variação de hipótese a definir, por exemplo:
-  - [ ] Calendário agrícola alternativo (Censo 2017 se disponível, ou hipótese simplificada)
-  - [ ] Pesos alternativos nos índices compostos (ex: ICMS com peso maior em Comércio)
-- [ ] Comparar versão A e versão B: calcular divergência trimestral e anual
+### 5.2 Teste de sensibilidade (versão A vs. versão B vs. versão C)
+
+**Candidatos definidos — calendário agrícola (três versões já preparadas):**
+- [x] Versão A (produção): Calendário SEADI-RR — `data/referencias/calendario_colheita_seadi_rr.csv`
+      Fonte: Calendário Agrícola SEADI-RR (secretaria estadual de agricultura)
+- [x] Versão B (candidata): Censo Agropecuário 2006, ponderado por área colhida
+      `data/referencias/calendario_colheita_censo2006_area_rr.csv`
+- [x] Versão C (candidata): Censo Agropecuário 2006, ponderado por nº de estabelecimentos
+      `data/referencias/calendario_colheita_censo2006_estabelecimentos_rr.csv`
+- [ ] Para testar: alterar `versao_calendario` em `R/01_agropecuaria.R` ("censo2006_area" ou "censo2006_estab"), reexecutar 01 e 05, comparar resultados
+
+**Outros candidatos (a definir):**
+- [ ] Pesos alternativos nos índices compostos (ex: ICMS com peso maior em Comércio)
+
+**Execução do teste:**
+- [ ] Comparar versões A/B/C: calcular divergência trimestral e anual
 - [ ] Documentar resultado do teste na nota técnica
 
 ### 5.3 Ajuste sazonal
