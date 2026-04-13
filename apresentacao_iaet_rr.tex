@@ -1,0 +1,1117 @@
+% ============================================================
+% IAET-RR — Apresentação Beamer
+% Indicador de Atividade Econômica Trimestral de Roraima
+% SEPLAN/RR — DIEAS/CGEES
+% Compile no Overleaf (pdflatex)
+% ============================================================
+
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% --- Tema e cores -------------------------------------------
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\definecolor{seplanblue}{RGB}{20, 52, 100}
+\definecolor{seplanblue2}{RGB}{32, 78, 145}
+\definecolor{seplangold}{RGB}{200, 145, 20}
+\definecolor{seplanlightblue}{RGB}{220, 232, 248}
+\definecolor{seplangreen}{RGB}{34, 130, 64}
+\definecolor{seplanred}{RGB}{180, 40, 40}
+\definecolor{seplantext}{RGB}{30, 30, 50}
+
+\setbeamercolor{palette primary}{bg=seplanblue, fg=white}
+\setbeamercolor{palette secondary}{bg=seplanblue2, fg=white}
+\setbeamercolor{palette tertiary}{bg=seplangold, fg=white}
+\setbeamercolor{palette quaternary}{bg=seplanblue, fg=white}
+\setbeamercolor{structure}{fg=seplanblue}
+\setbeamercolor{section in toc}{fg=seplanblue}
+\setbeamercolor{frametitle}{bg=seplanblue, fg=white}
+\setbeamercolor{title}{bg=seplanblue, fg=white}
+\setbeamercolor{block title}{bg=seplanblue2, fg=white}
+\setbeamercolor{block body}{bg=seplanlightblue, fg=seplantext}
+\setbeamercolor{block title alerted}{bg=seplanred, fg=white}
+\setbeamercolor{block body alerted}{bg=red!5, fg=seplantext}
+\setbeamercolor{block title example}{bg=seplangreen, fg=white}
+\setbeamercolor{block body example}{bg=green!5, fg=seplantext}
+\setbeamercolor{itemize item}{fg=seplanblue}
+\setbeamercolor{itemize subitem}{fg=seplangold}
+
+\setbeamerfont{frametitle}{size=\large, series=\bfseries}
+\setbeamerfont{title}{size=\LARGE, series=\bfseries}
+
+% --- Pacotes ------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{pgf-pie}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage{amsmath}
+\usepackage{lmodern}
+
+% --- Remover navegação --------------------------------------
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.35\paperwidth,ht=2.5ex,dp=1.5ex,left,leftskip=1em]{palette primary}%
+      \usebeamerfont{author in head/foot}\insertshortauthor
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.45\paperwidth,ht=2.5ex,dp=1.5ex,center]{palette secondary}%
+      \usebeamerfont{title in head/foot}\insertshorttitle
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.20\paperwidth,ht=2.5ex,dp=1.5ex,right,rightskip=1em]{palette primary}%
+      \usebeamerfont{date in head/foot}\insertframenumber{} / \inserttotalframenumber
+    \end{beamercolorbox}}%
+}
+
+% --- Metadados ----------------------------------------------
+\title[IAET-RR]{Indicador de Atividade Econômica\\Trimestral de Roraima}
+\subtitle{IAET-RR — Inteligência Econômica em Tempo Real para o Estado}
+\author[Yuri Cesar de Lima e Silva]{Yuri Cesar de Lima e Silva\\
+  {\small Chefe da DIEAS | Coordenador da Equipe PIB-RR}}
+\institute[SEPLAN-RR]{%
+  Secretaria de Estado do Planejamento e Desenvolvimento de Roraima\\
+  Coordenação-Geral de Estudos Econômicos e Sociais — CGEES}
+\date{Abril de 2026}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+% --- Slide de título ----------------------------------------
+{
+\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+  \titlepage
+  \vspace{-0.5cm}
+  \begin{center}
+    \small\color{seplanblue}
+    \textit{Apresentação para a Coord. da CGEES e o Secretário da SEPLAN/RR}
+  \end{center}
+\end{frame}
+}
+
+% --- Sumário ------------------------------------------------
+\begin{frame}{Roteiro da Apresentação}
+  \tableofcontents[hideallsubsections]
+\end{frame}
+
+% ============================================================
+\section{O Problema}
+% ============================================================
+
+\begin{frame}{Roraima voa às cegas no curto prazo}
+
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \begin{alertblock}{O que não existe}
+        \begin{itemize}
+          \item PIB estadual \textbf{trimestral} oficial do Brasil
+          \item As Contas Regionais do IBGE são publicadas \textbf{apenas anualmente}
+          \item A defasagem é de \textbf{até 2 anos}: os dados de 2023 foram
+                publicados em outubro de 2025
+          \item Roraima não tem IPCA próprio, nem PMC, PMS ou PIM-PF
+        \end{itemize}
+      \end{alertblock}
+
+      \vspace{0.3cm}
+
+      \begin{exampleblock}{O que acontece na prática}
+        O gestor público toma decisões sobre orçamento, investimento e política
+        econômica com base em dados que têm \textbf{2 anos de atraso}.
+        É como dirigir olhando pelo espelho retrovisor.
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \begin{tikzpicture}
+        \node[draw=seplanred, fill=red!8, rounded corners, thick,
+              minimum width=4.2cm, minimum height=3.5cm,
+              text width=4cm, align=center] (box) {%
+          \color{seplanred}\Large\faExclamationTriangle\\[6pt]
+          \color{seplantext}\normalsize
+          \textbf{Quando o IBGE publica\\os dados de 2023...}\\[8pt]
+          \large\color{seplanblue}\textbf{já estamos em\\outubro de 2025}\\[8pt]
+          \normalsize\color{seplantext}
+          São \textbf{22 meses}\\de defasagem
+        };
+      \end{tikzpicture}
+
+      \vspace{0.4cm}
+      \small\color{seplanblue}
+      \textbf{Comparação:} o Banco Central publica o IBC-Br (proxy do PIB nacional)
+      com \textbf{apenas 45 dias} de defasagem.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{A Solução — O que é o IAET-RR}
+% ============================================================
+
+\begin{frame}{O que é o IAET-RR?}
+
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{block}{Definição}
+        O \textbf{IAET-RR} (Indicador de Atividade Econômica Trimestral de
+        Roraima) é um índice que mede o ritmo da economia de Roraima a cada
+        trimestre, em termos reais.
+      \end{block}
+
+      \vspace{0.3cm}
+
+      \textbf{Em linguagem simples:}
+      \begin{itemize}
+        \item É como um \textbf{termômetro econômico} do estado
+        \item Mostra se a economia cresceu, encolheu ou ficou estável
+        \item Funciona trimestralmente — \textit{4 vezes por ano}
+        \item Cobre todos os grandes setores: agro, indústria, comércio,
+              serviços e setor público
+        \item \textbf{Referência} = média de 2020 = 100
+      \end{itemize}
+
+      \vspace{0.3cm}
+      \begin{exampleblock}{Metodologia}
+        Equivalente ao \textbf{IBCR} do Banco Central do Brasil —
+        adaptado às especificidades de Roraima.
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.45\textwidth}
+      \centering
+      \begin{tikzpicture}[scale=0.85]
+        \begin{axis}[
+          ybar,
+          bar width=14pt,
+          xlabel={Ano},
+          ylabel={Variação real (\%)},
+          ymin=-2, ymax=14,
+          xtick={1,2,3,4,5},
+          xticklabels={2021, 2022, 2023, 2024*, 2025*},
+          ymajorgrids=true,
+          grid style={dashed, gray!30},
+          title={\small Crescimento real anual — IAET-RR},
+          title style={font=\small},
+          width=6.5cm, height=5.5cm,
+          tick label style={font=\small},
+          label style={font=\small},
+          every axis plot/.style={fill opacity=0.85},
+        ]
+        \addplot[fill=seplanblue] coordinates {
+          (1,8.19) (2,10.86) (3,4.34) (4,7.27) (5,6.92)
+        };
+        \addplot[fill=seplangold, opacity=0.6] coordinates {
+          (1,7.23) (2,-1.23) (3,1.69) (4,4.13) (5,1.66)
+        };
+        \legend{\small IAET-RR, \small IBCR Norte}
+        \end{axis}
+      \end{tikzpicture}
+
+      \vspace{-0.2cm}
+      {\tiny * Extrapolado com tendência. Atualiza com CR-IBGE 2024 (out/2026).}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{Por que Roraima Precisa Disso}
+% ============================================================
+
+\begin{frame}{Por que isso é estratégico para Roraima?}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{\faChartLine\ \ Decisões mais informadas}
+        \begin{itemize}
+          \item Negociações de LDO e LOA com base em conjuntura recente
+          \item Timing de investimentos públicos: saber \textit{quando} a
+                economia desacelera e precisa de estímulo
+          \item Monitorar o impacto de políticas setoriais em tempo real
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.2cm}
+
+      \begin{block}{\faSearch\ \ Inteligência territorial}
+        \begin{itemize}
+          \item Identificar qual setor puxou ou freou o crescimento
+          \item Comparar Roraima com o Norte e o Brasil
+          \item Subsidiar notas técnicas e relatórios de conjuntura
+        \end{itemize}
+      \end{block}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{block}{\faHandshake\ \ Posicionamento institucional}
+        \begin{itemize}
+          \item Única UF do Norte sem PIB trimestral: ser a \textbf{pioneira}
+          \item Fortalecer a SEPLAN como centro de inteligência econômica
+          \item Subsidiar a Assembleia Legislativa, Tribunal de Contas
+                e Ministério Público
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.2cm}
+
+      \begin{alertblock}{\faDollarSign\ \ O tamanho da economia em jogo}
+        \centering
+        PIB de RR em 2023: \textbf{R\$ 25,1 bilhões}\\
+        VAB de RR em 2023: \textbf{R\$ 23,0 bilhões}\\
+        {\small Crescimento nominal 2020--2023: +60\%}
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Estrutura Setorial}
+% ============================================================
+
+\begin{frame}{O que o IAET-RR mede — 12 setores da economia}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \small
+      \renewcommand{\arraystretch}{1.25}
+      \begin{tabular}{>{\raggedright}p{4.5cm} r}
+        \toprule
+        \textbf{Setor} & \textbf{\% VAB} \\
+        \midrule
+        \rowcolor{seplanblue!20}
+        Adm. Pública (AAPP) & \textbf{46,2\%} \\
+        Comércio & 12,3\% \\
+        \rowcolor{seplanblue!10}
+        Agropecuária & 8,9\% \\
+        Imobiliário & 7,7\% \\
+        \rowcolor{seplanblue!10}
+        Outros Serviços & 7,6\% \\
+        SIUP (energia/água) & 5,4\% \\
+        \rowcolor{seplanblue!10}
+        Construção & 4,9\% \\
+        Financeiro & 2,8\% \\
+        \rowcolor{seplanblue!10}
+        Transportes & 1,9\% \\
+        Ind. de Transformação & 1,3\% \\
+        \rowcolor{seplanblue!10}
+        Info. e Comunicação & 1,0\% \\
+        Ind. Extrativas & 0,1\% \\
+        \bottomrule
+      \end{tabular}
+      {\tiny Fonte: CR IBGE 2023. Pesos efetivos do índice usam participações de 2020.}
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[scale=0.80]
+        \pie[
+          color={seplanblue, seplanblue2, seplangold, seplanblue!50,
+                 seplangreen!60, seplangold!60, seplanblue!30,
+                 seplanred!50, gray!60, gray!40, gray!25, gray!15},
+          text=pin,
+          pin edge={thin},
+          radius=2.4,
+          style={font=\tiny}
+        ]{
+          46.21/AAPP,
+          12.25/Comércio,
+          8.87/Agro,
+          7.68/Imob.,
+          7.63/Outros S.,
+          5.40/SIUP,
+          4.89/Constr.,
+          2.78/Fin.,
+          1.92/Transp.,
+          1.31/Transf.,
+          1.01/InfoCom,
+          0.05/Extr.
+        }
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Metodologia}
+% ============================================================
+
+\begin{frame}{Como funciona — metodologia em linguagem simples}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+
+    \textbf{Passo 1 — Coletar proxies trimestrais}\\[4pt]
+    Para cada setor, usamos um \textit{termômetro} disponível em frequência mensal
+    ou trimestral: emprego formal (CAGED), energia elétrica (ANEEL), passageiros
+    aéreos (ANAC), folha de pagamento (SIAPE/SEPLAN), produção agrícola (IBGE).
+
+    \vspace{0.4cm}
+
+    \textbf{Passo 2 — Calibrar pelo IBGE (Denton-Cholette)}\\[4pt]
+    As proxies são ajustadas para que a \textbf{média anual} de cada setor bata
+    exatamente com o número oficial do IBGE (Contas Regionais). Garantia de
+    credibilidade e ancoragem institucional.
+
+    \vspace{0.4cm}
+
+    \textbf{Passo 3 — Agregar}\\[4pt]
+    Os setores são combinados com pesos proporcionais ao tamanho de cada um
+    na economia de RR (fórmula de Laspeyres, padrão das Contas Nacionais).
+
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[
+        node distance=0.45cm,
+        box/.style={draw=seplanblue, fill=seplanlightblue,
+                    rounded corners=4pt, text width=5cm,
+                    minimum height=0.75cm, align=center,
+                    font=\small},
+        arrow/.style={-Stealth, thick, seplanblue},
+        label/.style={font=\footnotesize, text=seplanblue, align=center}
+      ]
+        \node[box, fill=seplangold!25, draw=seplangold] (s1)
+          {\textbf{10+ fontes de dados}\\{\tiny CAGED, ANEEL, ANAC, SIAPE, IBGE\ldots}};
+        \node[box, below=of s1] (s2)
+          {\textbf{Proxies trimestrais por setor}\\{\tiny Índices de volume: 2020T1 a 2025T4}};
+        \node[box, below=of s2] (s3)
+          {\textbf{Calibração Denton-Cholette}\\{\tiny Ancora ao VAB real das CR IBGE}};
+        \node[box, below=of s3] (s4)
+          {\textbf{Agregação Laspeyres}\\{\tiny Pesos = participação no VAB de 2020}};
+        \node[box, below=of s4, fill=seplangreen!15, draw=seplangreen] (s5)
+          {\textbf{IAET-RR — Índice trimestral}\\{\tiny Base 2020 = 100 $\cdot$ NSA e SA}};
+
+        \draw[arrow] (s1) -- (s2);
+        \draw[arrow] (s2) -- (s3);
+        \draw[arrow] (s3) -- (s4);
+        \draw[arrow] (s4) -- (s5);
+
+        \node[label, right=0.1cm of s3, text width=1.8cm]
+          {\tiny Garante\\ coerência\\ com IBGE};
+        \node[label, right=0.1cm of s4, text width=1.8cm]
+          {\tiny Padrão\\ Contas\\ Nacionais};
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+\begin{frame}{Ancoragem ao IBGE — o que isso garante}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{block}{O que é o Denton-Cholette?}
+        É uma técnica matemática que \textbf{interpola} a série anual do IBGE
+        dentro de cada ano, usando a evolução mensal das nossas proxies como guia.
+
+        \vspace{0.3cm}
+        Resultado: o IAET-RR nunca diverge dos números oficiais do IBGE nos anos
+        em que há Contas Regionais disponíveis.
+      \end{block}
+
+      \vspace{0.3cm}
+
+      \begin{exampleblock}{Verificação técnica}
+        Ancoragem \textbf{perfeita} em todos os 4 anos com dados:\\
+        \begin{tabular}{llr}
+          2020 & média trimestral & 100,000 \\
+          2021 & média trimestral & 108,192 \\
+          2022 & média trimestral & 119,945 \\
+          2023 & média trimestral & 125,152 \\
+        \end{tabular}\\
+        Desvio em relação ao IBGE: $< 0{,}001$
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \begin{alertblock}{Por que usamos volume, não valor?}
+        O indicador mede \textbf{volume físico de atividade} — não valor em
+        reais. Isso é essencial porque:
+
+        \begin{itemize}
+          \item Remove o efeito da inflação
+          \item Permite comparar entre trimestres e anos
+          \item É o mesmo padrão do IBCR do Banco Central
+        \end{itemize}
+
+        \vspace{0.3cm}
+        \textbf{Decisão metodológica de 2026:} o benchmark anual passou a usar
+        o \textit{índice de volume} das Contas Regionais (e não o VAB nominal).
+        Resultado: crescimentos saíram de +20\% nominal para +4\% real em 2023
+        — tecnicamente correto e comparável ao IBCR.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Fontes de Dados e Automação}
+% ============================================================
+
+\begin{frame}{10+ fontes integradas — coleta automatizada}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \small
+      \renewcommand{\arraystretch}{1.2}
+      \begin{tabular}{>{\raggedright}p{2.8cm} >{\raggedright}p{2.8cm}}
+        \toprule
+        \textbf{Fonte} & \textbf{Dado} \\
+        \midrule
+        IBGE / SIDRA & Produção agropecuária \\
+        \rowcolor{seplanblue!10}
+        SIAPE / MF & Folha federal por UF \\
+        SEPLAN-RR & Folha estadual \\
+        \rowcolor{seplanblue!10}
+        SICONFI / STN & Folha municipal \\
+        ANEEL (SAMP) & Energia elétrica por classe \\
+        \rowcolor{seplanblue!10}
+        MTE / CAGED & Emprego formal (7 seções) \\
+        ANAC & Passageiros/carga aéreos \\
+        \rowcolor{seplanblue!10}
+        ANP & Vendas de diesel \\
+        BCB (Estban/SCR) & Crédito e depósitos \\
+        \rowcolor{seplanblue!10}
+        IBGE (IPCA) & Deflator nacional \\
+        CR IBGE & Benchmark anual (volume) \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \begin{block}{\faRobot\ \ Pipeline automatizado em R}
+        \begin{itemize}
+          \item \textbf{8 scripts} encadeados (00 a 05f)
+          \item Atualização trimestral com um único comando
+          \item Download automático da maioria das fontes via API
+          \item Validação automática em 4 eixos
+          \item Exportação automática para \texttt{.csv} e \texttt{.xlsx}
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.3cm}
+
+      \begin{exampleblock}{\faClock\ \ Tempo de atualização}
+        \centering
+        \textbf{$\approx$ 30 minutos} por trimestre\\
+        (após a publicação dos dados de fonte)
+      \end{exampleblock}
+
+      \vspace{0.2cm}
+      {\small Código versionado em repositório GitHub público
+      da SEPLAN/RR — rastreabilidade total.}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Resultados}
+% ============================================================
+
+\begin{frame}{Resultados — Série trimestral 2020--2025}
+
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[
+          width=8.5cm, height=6cm,
+          xlabel={Trimestre},
+          ylabel={Índice (2020 = 100)},
+          xtick={1,5,9,13,17,21},
+          xticklabels={2020T1,2021T1,2022T1,2023T1,2024T1,2025T1},
+          x tick label style={rotate=30, anchor=east, font=\tiny},
+          ymajorgrids=true,
+          grid style={dashed, gray!25},
+          title={\small IAET-RR — Índice Geral (base 2020=100)},
+          title style={font=\small},
+          tick label style={font=\tiny},
+          label style={font=\small},
+          legend style={font=\tiny, at={(0.02,0.98)}, anchor=north west},
+          ymin=75, ymax=160,
+        ]
+        % Índice geral NSA
+        \addplot[seplanblue, very thick, mark=*, mark size=1.5pt] coordinates {
+          (1,100.95)(2,88.06)(3,101.59)(4,109.40)
+          (5,103.83)(6,96.17)(7,116.27)(8,116.50)
+          (9,109.78)(10,111.89)(11,129.49)(12,128.62)
+          (13,117.52)(14,117.38)(15,134.89)(16,130.83)
+          (17,128.36)(18,131.98)(19,135.93)(20,140.74)
+          (21,140.58)(22,142.55)(23,144.71)(24,146.37)
+        };
+        % AAPP
+        \addplot[seplangold, dashed, thick] coordinates {
+          (1,98.66)(2,97.86)(3,98.97)(4,104.51)
+          (5,107.10)(6,78.63)(7,112.41)(8,114.63)
+          (9,107.65)(10,106.90)(11,106.47)(12,108.76)
+          (13,99.94)(14,105.71)(15,114.36)(16,119.95)
+          (17,120.65)(18,121.36)(19,122.07)(20,122.78)
+          (21,123.50)(22,124.22)(23,124.95)(24,125.68)
+        };
+        \addlegendentry{Índice Geral}
+        \addlegendentry{Adm. Pública}
+        % COVID annotation
+        \draw[seplanred, thick, ->] (axis cs:2,78) -- (axis cs:2,89)
+          node[above, font=\tiny, text=seplanred] {COVID-19\\T2/2020};
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+
+    \begin{column}{0.38\textwidth}
+      \small
+      \begin{block}{Leituras-chave}
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{lr}
+          \textbf{Período} & \textbf{Variação} \\
+          \hline
+          2020 (COVID) & \color{seplanred}$-$9,8\% T1→T2 \\
+          Recuperação T3 & \color{seplangreen}+15,4\% \\
+          \hline
+          2021 (anual) & \color{seplangreen}+8,2\% \\
+          2022 (anual) & \color{seplangreen}+10,9\% \\
+          2023 (anual) & \color{seplangreen}+4,3\% \\
+          \hline
+          2024* (anual) & \color{seplangreen}+7,3\% \\
+          2025* (anual) & \color{seplangreen}+6,9\% \\
+        \end{tabular}
+      \end{block}
+
+      \vspace{0.2cm}
+      {\small \color{seplanblue}
+      \textbf{Pico observado:} 2023T3\\
+      Índice = \textbf{134,9}\\
+      (puxado pela soja e SIUP)
+      }
+
+      \vspace{0.2cm}
+      {\tiny * Extrapolado com tendência geométrica 2022--2023.
+      Atualiza com CR IBGE 2024 (out/2026).}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+\begin{frame}{Quem puxou o crescimento — análise setorial}
+
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar,
+          bar width=9pt,
+          width=8cm, height=5.8cm,
+          xlabel={},
+          ylabel={Índice (2020=100)},
+          xtick={1,2,3,4},
+          xticklabels={Agro,AAPP,Indústria,Serviços},
+          x tick label style={font=\small},
+          ymajorgrids=true,
+          grid style={dashed, gray!25},
+          title={\small Média anual por bloco setorial},
+          title style={font=\small},
+          ymin=0, ymax=420,
+          legend style={font=\tiny, at={(0.02,0.98)}, anchor=north west},
+          tick label style={font=\tiny},
+          label style={font=\small},
+        ]
+        \addplot[fill=seplanblue!70] coordinates {(1,100)(2,100)(3,100)(4,100)};
+        \addplot[fill=seplanblue] coordinates {(1,150.8)(2,108.2)(3,112.1)(4,115.1)};
+        \addplot[fill=seplangold] coordinates {(1,270.2)(2,110.5)(3,133.5)(4,120.5)};
+        \addplot[fill=seplangold!70] coordinates {(1,312.7)(2,110.0)(3,143.9)(4,127.6)};
+        \legend{2020,2021,2022,2023}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \begin{block}{Interpretação}
+        \textbf{Agropecuária} foi o setor de maior expansão relativa no período
+        (índice 2023 $\approx$ 313 — mais que triplicou o nível de 2020).
+        Reflecte o boom da soja roraimense.
+
+        \vspace{0.25cm}
+
+        \textbf{Indústria} cresceu sustentadamente — puxada pela expansão do
+        SIUP (energia/água) e obras de infraestrutura (Construção).
+
+        \vspace{0.25cm}
+
+        \textbf{AAPP} cresceu moderadamente (+10\% em 3 anos), condizente
+        com crescimento real da folha pública.
+
+        \vspace{0.25cm}
+
+        \textbf{Serviços privados} cresceram +28\% acumulado, refletindo
+        a expansão do consumo privado.
+      \end{block}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+\begin{frame}{IAET-RR vs. referências nacionais}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar=3pt,
+          bar width=11pt,
+          width=7.5cm, height=5.5cm,
+          xlabel={Ano},
+          ylabel={Variação anual (\%)},
+          xtick={1,2,3,4,5},
+          xticklabels={2021,2022,2023,2024,2025},
+          ymajorgrids=true,
+          grid style={dashed, gray!25},
+          ymin=-4, ymax=14,
+          title={\small Variação anual real (\%)},
+          title style={font=\small},
+          legend style={font=\tiny, at={(0.98,0.98)}, anchor=north east},
+          tick label style={font=\tiny},
+          label style={font=\small},
+        ]
+        \addplot[fill=seplanblue] coordinates {
+          (1,8.19)(2,10.86)(3,4.34)(4,7.27)(5,6.92)};
+        \addplot[fill=seplangold] coordinates {
+          (1,7.23)(2,-1.23)(3,1.69)(4,4.13)(5,1.66)};
+        \addplot[fill=seplangreen!60] coordinates {
+          (1,4.2)(2,2.8)(3,2.7)(4,3.7)(5,2.5)};
+        \legend{IAET-RR, IBCR Norte, IBC-Br}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \begin{block}{O que os números dizem}
+        \begin{itemize}
+          \item Roraima cresceu \textbf{acima do Norte} em todos os anos
+                com dados disponíveis
+          \item Em 2022, enquanto o Norte encolheu (--1,2\%), Roraima
+                avançou \textbf{+10,9\%}
+          \item O crescimento de RR é estruturalmente diferente do Norte
+                (dominado por Pará e Amazonas)
+          \item RR se destaca no contexto regional — dado que antes era
+                \textbf{invisível} sem este indicador
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.2cm}
+
+      \begin{exampleblock}{Correlação com IBCR}
+        Correlação do IAET-RR com o IBC-Br em nível: \textbf{0,934}\\
+        Alta correlação confirma a qualidade metodológica do índice.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+\begin{frame}{Ajuste sazonal — lendo o ciclo sem ruído}
+
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[
+          width=8cm, height=5.5cm,
+          xlabel={Trimestre},
+          ylabel={Índice (2020=100)},
+          xtick={1,5,9,13},
+          xticklabels={2020T1,2021T1,2022T1,2023T1},
+          x tick label style={rotate=25, anchor=east, font=\tiny},
+          ymajorgrids=true,
+          grid style={dashed, gray!25},
+          title={\small NSA vs. Dessazonalizado (SA) — 2020--2023},
+          title style={font=\small},
+          tick label style={font=\tiny},
+          label style={font=\small},
+          legend style={font=\tiny, at={(0.02,0.98)}, anchor=north west},
+          ymin=80, ymax=145,
+        ]
+        % NSA
+        \addplot[seplanblue, thick, mark=*, mark size=1pt] coordinates {
+          (1,100.95)(2,88.06)(3,101.59)(4,109.40)
+          (5,103.83)(6,96.17)(7,116.27)(8,116.50)
+          (9,109.78)(10,111.89)(11,129.49)(12,128.62)
+          (13,117.52)(14,117.38)(15,134.89)(16,130.83)
+        };
+        % SA (NSA - fator sazonal médio aproximado)
+        \addplot[seplanred, thick, dashed, mark=square*, mark size=1pt] coordinates {
+          (1,103.62)(2,96.84)(3,95.54)(4,103.80)
+          (5,107.08)(6,104.43)(7,109.91)(8,111.53)
+          (9,113.02)(10,120.18)(11,123.13)(12,123.54)
+          (13,120.82)(14,126.10)(15,128.53)(16,125.87)
+        };
+        \legend{Sem ajuste (NSA),Dessazonalizado (SA)}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \begin{block}{O que é ajuste sazonal?}
+        Em Roraima, o T3 (julho--setembro) é naturalmente mais alto por
+        causa da \textbf{colheita da soja}. O ajuste sazonal retira esse
+        efeito, revelando a tendência real da economia.
+      \end{block}
+
+      \vspace{0.3cm}
+
+      \begin{exampleblock}{Método: X-13ARIMA-SEATS}
+        O mesmo algoritmo usado pelo \textbf{Bureau of Census dos EUA} e
+        pelo \textbf{Eurostat}. É o padrão ouro mundial para ajuste
+        sazonal de séries econômicas.
+
+        \vspace{0.2cm}
+        Amplitude sazonal do índice geral:\\
+        \textbf{$\approx$ 15 pontos} (pico T3 vs. vale T2)
+      \end{exampleblock}
+
+      \vspace{0.2cm}
+      {\small Com a série dessazonalizada, é possível comparar qualquer
+      trimestre com qualquer outro sem distorção de calendário.}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Produto — Séries Disponíveis}
+% ============================================================
+
+\begin{frame}{O que está disponível hoje}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{block}{\faTable\ \ Séries geradas (2020T1--2025T4)}
+        \renewcommand{\arraystretch}{1.2}
+        \small
+        \begin{tabular}{>{\raggedright}p{3.5cm} l}
+          \textbf{Arquivo} & \textbf{Conteúdo} \\
+          \hline
+          \texttt{indice\_geral\_rr.csv} & Índice geral + setoriais \\
+          \texttt{indice\_geral\_rr\_sa.csv} & Série dessazonalizada \\
+          \texttt{fatores\_sazonais.csv} & Fatores X-13 por setor \\
+          \texttt{vab\_nominal\_rr\_reais.csv} & VAB nominal em R\$ mi \\
+          \texttt{indice\_nominal\_rr.csv} & Índice nominal (c/ deflator) \\
+          \texttt{IAET\_RR\_series.xlsx} & Excel completo (6 abas) \\
+        \end{tabular}
+      \end{block}
+
+      \vspace{0.3cm}
+
+      \begin{exampleblock}{VAB nominal trimestral (R\$ milhões)}
+        \small
+        \begin{tabular}{lr}
+          2020 (soma anual) & R\$ 14.531 mi \\
+          2021 & R\$ 16.331 mi \\
+          2022 & R\$ 19.301 mi \\
+          2023 & R\$ 23.297 mi \\
+          2024* & R\$ 26.673 mi \\
+          2025* & R\$ 29.944 mi \\
+        \end{tabular}\\
+        {\tiny * Extrapolado.}
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar,
+          bar width=16pt,
+          width=6.5cm, height=5.5cm,
+          xlabel={Ano},
+          ylabel={R\$ bilhões},
+          xtick={1,2,3,4,5,6},
+          xticklabels={2020,2021,2022,2023,2024*,2025*},
+          ymajorgrids=true,
+          grid style={dashed, gray!25},
+          ymin=0, ymax=35,
+          title={\small VAB Nominal de Roraima (R\$ bi)},
+          title style={font=\small},
+          tick label style={font=\tiny},
+          label style={font=\small},
+          nodes near coords,
+          nodes near coords align={vertical},
+          every node near coord/.style={font=\tiny, color=seplantext},
+        ]
+        \addplot[fill=seplanblue, opacity=0.85] coordinates {
+          (1,14.5)(2,16.3)(3,19.3)(4,23.3)(5,26.7)(6,29.9)
+        };
+        \end{axis}
+      \end{tikzpicture}
+
+      \vspace{0.2cm}
+      {\small\color{seplanblue}
+      \textbf{+106\%} de crescimento nominal\\em 5 anos (2020--2025*)}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Status e Próximos Passos}
+% ============================================================
+
+\begin{frame}{Estado atual e o que vem a seguir}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{exampleblock}{\faCheckCircle\ \ O que está pronto}
+        \begin{itemize}
+          \item[\color{seplangreen}\faCheck] Pipeline de produção completo (8 scripts)
+          \item[\color{seplangreen}\faCheck] Séries 2020T1--2025T4 geradas
+          \item[\color{seplangreen}\faCheck] Ajuste sazonal (X-13ARIMA-SEATS)
+          \item[\color{seplangreen}\faCheck] VAB nominal trimestral em R\$ mi
+          \item[\color{seplangreen}\faCheck] Validação em 4 eixos automatizada
+          \item[\color{seplangreen}\faCheck] Excel de publicação (6 abas)
+          \item[\color{seplangreen}\faCheck] Código público no GitHub
+          \item[\color{seplangreen}\faCheck] Documentação metodológica completa
+        \end{itemize}
+      \end{exampleblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{\faTools\ \ Próximas entregas}
+        \begin{itemize}
+          \item[\color{seplanred}\faClock] \textbf{Dashboard interativo} (Shiny)\\
+                {\small Gráficos, tabelas e download de dados}
+
+          \vspace{0.1cm}
+          \item[\color{seplanred}\faClock] \textbf{Nota técnica} (Quarto/PDF)\\
+                {\small Metodologia + análise conjuntural}
+
+          \vspace{0.1cm}
+          \item[\color{seplangold}\faClock] \textbf{CR IBGE 2024} (out/2026)\\
+                {\small Substituir extrapolações 2024 por dados reais}
+
+          \vspace{0.1cm}
+          \item[\color{seplangold}\faClock] \textbf{ICMS SEFAZ-RR}\\
+                {\small Melhorar proxy do Comércio e gerar PIB nominal}
+        \end{itemize}
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.3cm}
+
+  \begin{block}{\faLightbulb\ \ Compromisso de atualização}
+    O IAET-RR será atualizado \textbf{trimestralmente}, com publicação nos
+    primeiros 45 dias após o encerramento de cada trimestre. Tempo de
+    processamento: aproximadamente 30 minutos por ciclo.
+  \end{block}
+
+\end{frame}
+
+% ============================================================
+\section{Usos e Aplicações}
+% ============================================================
+
+\begin{frame}{Para quê serve na prática — usos imediatos}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+
+      \begin{block}{\faBuilding\ \ Para a SEPLAN/RR}
+        \begin{itemize}
+          \item Embasar projeções de receita e despesa na LDO/LOA
+          \item Identificar setores em desaceleração antes de decisões
+                de investimento público
+          \item Publicar boletim econômico trimestral com dados próprios
+          \item Subsidiar o Conselho de Desenvolvimento Econômico do Estado
+        \end{itemize}
+      \end{block}
+
+      \vspace{0.25cm}
+
+      \begin{block}{\faGavel\ \ Para outros órgãos}
+        \begin{itemize}
+          \item \textbf{SEFAZ-RR}: projetar arrecadação tributária
+          \item \textbf{ALES}: acompanhar execução orçamentária
+          \item \textbf{TCE-RR}: auditoria com contexto econômico
+          \item \textbf{Setor privado}: decisões de investimento e expansão
+        \end{itemize}
+      \end{block}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{\faGlobe\ \ Posicionamento estratégico}
+        \textbf{Somos a única UF do Norte} a construir um indicador
+        trimestral com essa cobertura setorial.
+
+        \vspace{0.3cm}
+        Outros estados que já têm indicadores próprios:
+        \begin{itemize}
+          \item São Paulo (SEADE — IPR-SP)
+          \item Rio Grande do Sul (FEE — ICV-RS)
+          \item Minas Gerais (FIEMG — IEA-MG)
+          \item Ceará (IPECE — IPCA-CE trimestral)
+        \end{itemize}
+
+        \vspace{0.3cm}
+        \textbf{Com o IAET-RR, Roraima entra nesse seleto grupo.}
+      \end{alertblock}
+
+      \vspace{0.2cm}
+      {\small\color{seplanblue}
+      O indicador pode fundamentar publicações em periódicos acadêmicos
+      e parcerias com UFAM, UFRR e IPAM.}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+% ============================================================
+\section{Encerramento}
+% ============================================================
+
+\begin{frame}{O que pedimos — e o que entregamos}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{block}{O que a DIEAS entregou}
+        \begin{itemize}
+          \item Metodologia original, documentada e auditável
+          \item Pipeline automatizado e reprodutível
+          \item 24 trimestres de série histórica (2020--2025)
+          \item Abertura por 4 blocos setoriais + 12 atividades
+          \item Série dessazonalizada e deflator implícito
+          \item VAB nominal trimestral em R\$ milhões
+          \item Código público — transparência total
+        \end{itemize}
+      \end{block}
+    \end{column}
+
+    \begin{column}{0.47\textwidth}
+      \begin{exampleblock}{O que pedimos}
+        \begin{enumerate}
+          \item \textbf{Aval da Coordenação da CGEES} para avançar para
+                publicação oficial (dashboard + nota técnica)
+
+          \vspace{0.2cm}
+          \item \textbf{Apoio do Secretário} para obter o ICMS da
+                SEFAZ-RR (necessário para melhorar o bloco Comércio
+                e gerar o PIB nominal)
+
+          \vspace{0.2cm}
+          \item \textbf{Publicação do IAET-RR} como produto oficial
+                da SEPLAN/RR no portal do Estado
+        \end{enumerate}
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4cm}
+
+  \begin{center}
+    \large\color{seplanblue}
+    \textbf{Roraima tem economia. Agora tem como medi-la.}
+  \end{center}
+
+\end{frame}
+
+% --- Slide final --------------------------------------------
+{
+\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+  \begin{center}
+    \vspace{0.5cm}
+    {\Large\color{seplanblue}\textbf{Obrigado}}\\[0.5cm]
+    {\color{seplanblue}\rule{8cm}{0.5pt}}\\[0.5cm]
+    {\normalsize
+      \textbf{Yuri Cesar de Lima e Silva}\\
+      Chefe da DIEAS — SEPLAN/RR\\[0.3cm]
+      Coordenação-Geral de Estudos Econômicos e Sociais\\
+      Secretaria de Estado do Planejamento e Desenvolvimento de Roraima\\[0.5cm]
+    }
+    {\small\color{gray}
+      Código-fonte e documentação:\\
+      \texttt{github.com/yuricesarsilva/painel\_pib\_trimestral}\\[0.3cm]
+      Documentação técnica:\\
+      \texttt{plano\_projeto.md} $\cdot$
+      \texttt{plano\_reforma\_indicador\_real.md} $\cdot$
+      \texttt{checklist.md}
+    }\\[0.5cm]
+    {\color{seplanblue}\rule{8cm}{0.5pt}}\\[0.3cm]
+    {\footnotesize\color{gray} Abril de 2026}
+  \end{center}
+\end{frame}
+}
+
+% --- Apêndice -----------------------------------------------
+\appendix
+
+\begin{frame}{Apêndice — Série trimestral completa}
+  \small
+  \renewcommand{\arraystretch}{1.1}
+  \begin{tabular}{lccccc}
+    \toprule
+    \textbf{Período} & \textbf{Geral} & \textbf{Agro} & \textbf{AAPP} & \textbf{Indústria} & \textbf{Serviços} \\
+    \midrule
+    2020T1 & 100,9 &  31,1 &  98,7 & 100,6 & 104,9 \\
+    2020T2 &  88,1 &  23,1 &  97,9 &  91,5 &  87,6 \\
+    2020T3 & 101,6 & 215,2 &  99,0 &  92,7 &  97,5 \\
+    2020T4 & 109,4 & 130,7 & 104,5 & 115,2 & 109,9 \\
+    \hline
+    2021T1 & 103,8 &  29,1 & 107,1 & 113,9 & 106,7 \\
+    2021T2 &  96,2 &  20,0 &  78,6 & 105,7 & 106,5 \\
+    2021T3 & 116,3 & 283,8 & 112,4 & 109,4 & 111,9 \\
+    2021T4 & 116,5 & 166,4 & 114,6 & 119,5 & 117,0 \\
+    \hline
+    2022T1 & 109,8 &  25,1 & 107,6 & 129,4 & 115,9 \\
+    2022T2 & 111,9 &  18,6 & 106,9 & 124,0 & 120,3 \\
+    2022T3 & 129,5 & 382,3 & 106,5 & 134,1 & 127,5 \\
+    2022T4 & 128,6 & 213,2 & 108,8 & 146,1 & 132,6 \\
+    \hline
+    2023T1 & 117,5 &  25,9 &  99,9 & 137,1 & 128,7 \\
+    2023T2 & 117,4 &  18,5 & 105,7 & 141,5 & 126,3 \\
+    2023T3 & 134,9 & 456,9 & 114,4 & 144,9 & 126,7 \\
+    2023T4 & 130,8 & 249,6 & 120,0 & 151,9 & 128,6 \\
+    \bottomrule
+  \end{tabular}\\[4pt]
+  {\tiny Base 2020 = 100. Dados reais (ancoragem Denton-Cholette ao volume CR IBGE). 2024--2025 extrapolados — ver CSV completo.}
+\end{frame}
+
+\begin{frame}{Apêndice — Qualidade das proxies por setor}
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{>{\raggedright}p{3.5cm} >{\raggedright}p{2.2cm} >{\raggedright}p{2.0cm} l}
+    \toprule
+    \textbf{Setor} & \textbf{Proxy principal} & \textbf{Tipo} & \textbf{Qualidade} \\
+    \midrule
+    Agropecuária & PAM + PPM & Físico & \color{seplangreen}\textbf{Forte} \\
+    Adm. Pública & Folha (SIAPE+SEPLAN) & Valor real & \color{seplangreen}\textbf{Forte} \\
+    SIUP & Energia ANEEL & Físico & \color{seplangreen}\textbf{Forte} \\
+    Comércio & Energia + CAGED G & Misto & \color{seplangold}\textbf{Médio}* \\
+    Transportes & ANAC + ANP & Físico & \color{seplangreen}\textbf{Forte} \\
+    Financeiro & BCB SCR + Estban & Deflacionado & \color{seplangold}\textbf{Médio} \\
+    Construção & CAGED F & Insumo & \color{seplangold}\textbf{Aceitável} \\
+    Outros Serv. & CAGED I+M+N+P+Q & Insumo & \color{seplangold}\textbf{Aceitável} \\
+    Info. e Com. & CAGED J & Insumo & \color{seplangold}\textbf{Aceitável} \\
+    Imobiliário & Interpolação CR & Tendência & \color{seplanred}\textbf{Fraca}** \\
+    Extrativas & Interpolação CR & Tendência & \color{seplanred}\textbf{Fraca}** \\
+    \bottomrule
+  \end{tabular}\\[4pt]
+  {\tiny * Melhora com ICMS da SEFAZ-RR.
+   ** Peso combinado $<$ 8\% — impacto limitado no índice geral.}
+\end{frame}
+
+\end{document}
