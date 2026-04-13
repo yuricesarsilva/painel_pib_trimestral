@@ -76,6 +76,7 @@ arq_pecuaria  <- file.path(dir_processed, "serie_pecuaria_trimestral.csv")
 # o valor externo é preservado.
 if (!exists("arq_indice")) arq_indice <- file.path(dir_output, "indice_agropecuaria.csv")
 arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
+arq_vol_serie <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 
 # --- Culturas de interesse ----------------------------------
 # Nomes exatos como aparecem na tabela SIDRA 5457
@@ -551,17 +552,16 @@ if (length(series_pec) == 0) {
   message("\nNenhuma série pecuária trimestral disponível para RR.")
   message("Proxy pecuário: interpolação linear do VAB agropecuário anual (Contas Regionais).")
 
-  cr_serie <- read.csv(arq_cr_serie, stringsAsFactors = FALSE)
-  vab_agro_anual <- cr_serie %>%
+  vol_serie <- read.csv(arq_vol_serie, stringsAsFactors = FALSE)
+  vol_agro_anual <- vol_serie %>%
     filter(atividade == "Agropecuária") %>%
-    select(ano, vab_mi) %>% arrange(ano)
+    select(ano, vab_volume_rebased) %>% arrange(ano)
 
-  base_pec <- mean(vab_agro_anual$vab_mi[vab_agro_anual$ano == 2020], na.rm = TRUE)
-  idx_pec_trim <- vab_agro_anual %>%
+  idx_pec_trim <- vol_agro_anual %>%
     crossing(trimestre = 1:4) %>%
     arrange(ano, trimestre) %>%
     mutate(
-      indice_pecuaria = vab_mi / base_pec * 100,
+      indice_pecuaria = vab_volume_rebased,
       periodo         = sprintf("%dT%d", ano, trimestre)
     ) %>%
     select(ano, trimestre, periodo, indice_pecuaria)
@@ -652,20 +652,20 @@ idx_agro <- idx_lavouras_trim %>%
   arrange(ano, trimestre) %>%
   filter(!is.na(indice_agro_raw))
 
-# --- Denton-Cholette: ancoragem ao VAB agropecuário anual ---
+# --- Denton-Cholette: ancoragem ao volume real agropecuário ---
 
-cr_serie <- read.csv(arq_cr_serie, stringsAsFactors = FALSE)
-vab_agro <- cr_serie %>%
+vol_serie <- read.csv(arq_vol_serie, stringsAsFactors = FALSE)
+vol_agro <- vol_serie %>%
   filter(atividade == "Agropecuária") %>%
-  select(ano, vab_mi) %>% arrange(ano)
+  select(ano, vab_volume_rebased) %>% arrange(ano)
 
-vab_base2020 <- vab_agro$vab_mi[vab_agro$ano == 2020]
-if (length(vab_base2020) == 0 || is.na(vab_base2020)) {
-  stop("VAB agropecuário de 2020 não encontrado nas Contas Regionais.")
+if (nrow(vol_agro) == 0 || !any(vol_agro$ano == 2020)) {
+  stop("Série de volume agropecuário de 2020 não encontrada. Executar 00_dados_referencia.R.")
 }
 
-benchmark <- vab_agro %>%
-  mutate(bench = vab_mi / vab_base2020 * 100)
+# vab_volume_rebased já está em base 2020=100 — sem normalização adicional
+benchmark <- vol_agro %>%
+  rename(bench = vab_volume_rebased)
 
 anos_comuns <- intersect(unique(idx_agro$ano), benchmark$ano)
 
@@ -707,7 +707,7 @@ validar_serie(idx_agro_final$indice_agropecuaria, "indice_agropecuaria")
 # --- Validação: variação anual índice vs. VAB IBGE ----------
 
 cat("\nValidação — variação anual do índice vs. VAB agropecuário (Contas Regionais):\n\n")
-cat(sprintf("%-6s %16s %16s\n", "Ano", "Var. índice (%)", "Var. VAB nom. (%)"))
+cat(sprintf("%-6s %16s %16s\n", "Ano", "Var. índice (%)", "Var. VAB vol. (%)"))
 cat(strrep("-", 42), "\n")
 
 medias_anuais <- idx_agro_final %>%
@@ -718,10 +718,10 @@ medias_anuais <- idx_agro_final %>%
 for (i in 2:nrow(medias_anuais)) {
   ano_i   <- medias_anuais$ano[i]
   var_idx <- (medias_anuais$media[i] / medias_anuais$media[i-1] - 1) * 100
-  vab_i   <- vab_agro$vab_mi[vab_agro$ano == ano_i]
-  vab_im1 <- vab_agro$vab_mi[vab_agro$ano == medias_anuais$ano[i-1]]
-  var_vab <- if (length(vab_i) == 1 && length(vab_im1) == 1)
-               (vab_i / vab_im1 - 1) * 100 else NA_real_
+  vol_i   <- vol_agro$vab_volume_rebased[vol_agro$ano == ano_i]
+  vol_im1 <- vol_agro$vab_volume_rebased[vol_agro$ano == medias_anuais$ano[i-1]]
+  var_vab <- if (length(vol_i) == 1 && length(vol_im1) == 1)
+               (vol_i / vol_im1 - 1) * 100 else NA_real_
   cat(sprintf("%-6d %15.1f%% %15.1f%%\n", ano_i, var_idx, var_vab))
 }
 

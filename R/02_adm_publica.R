@@ -53,6 +53,7 @@ arq_municipal <- file.path(dir_raw, "folha_municipal_rr.csv")
 arq_ipca      <- file.path(dir_raw, "ipca_mensal.csv")
 arq_indice    <- file.path(dir_output, "indice_adm_publica.csv")
 arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
+arq_vol_serie <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 
 # --- Parâmetros ---------------------------------------------
 
@@ -639,19 +640,21 @@ if (is.na(base_2020) || base_2020 == 0) {
 folha_real <- folha_real |>
   mutate(indice_aapp_raw = folha_real / base_2020 * 100)
 
-# --- Denton-Cholette contra VAB AAPP anual ------------------
+# --- Denton-Cholette contra volume real AAPP anual ----------
 
-cr_serie <- read.csv(arq_cr_serie, stringsAsFactors = FALSE)
-vab_aapp <- cr_serie |>
+vol_serie <- read.csv(arq_vol_serie, stringsAsFactors = FALSE)
+vol_aapp <- vol_serie |>
   filter(atividade == "Adm., defesa, educação e saúde públicas e seguridade social") |>
-  select(ano, vab_mi) |>
+  select(ano, vab_volume_rebased) |>
   arrange(ano)
 
-vab_base2020 <- vab_aapp$vab_mi[vab_aapp$ano == 2020]
-if (length(vab_base2020) == 0) stop("VAB AAPP de 2020 não encontrado.")
+if (nrow(vol_aapp) == 0 || !any(vol_aapp$ano == 2020)) {
+  stop("Série de volume AAPP de 2020 não encontrada. Executar 00_dados_referencia.R.")
+}
 
-benchmark <- vab_aapp |>
-  mutate(bench = vab_mi / vab_base2020 * 100)
+# vab_volume_rebased já está em base 2020=100 — sem normalização adicional
+benchmark <- vol_aapp |>
+  rename(bench = vab_volume_rebased)
 
 # Interseção de anos com exatamente 4 trimestres
 anos_comuns <- intersect(unique(folha_real$ano), benchmark$ano)
@@ -691,7 +694,7 @@ validar_serie(idx_aapp_final$indice_adm_publica, "indice_adm_publica")
 # --- Validação: variação anual índice vs. VAB IBGE ----------
 
 cat("\nValidação — variação anual do índice vs. VAB AAPP (Contas Regionais):\n\n")
-cat(sprintf("%-6s %16s %16s\n", "Ano", "Var. índice (%)", "Var. VAB nom. (%)"))
+cat(sprintf("%-6s %16s %16s\n", "Ano", "Var. índice (%)", "Var. VAB vol. (%)"))
 cat(strrep("-", 42), "\n")
 
 medias_anuais <- idx_aapp_final |>
@@ -702,10 +705,10 @@ medias_anuais <- idx_aapp_final |>
 for (i in 2:nrow(medias_anuais)) {
   ano_i   <- medias_anuais$ano[i]
   var_idx <- (medias_anuais$media[i] / medias_anuais$media[i-1] - 1) * 100
-  vab_i   <- vab_aapp$vab_mi[vab_aapp$ano == ano_i]
-  vab_im1 <- vab_aapp$vab_mi[vab_aapp$ano == medias_anuais$ano[i-1]]
-  var_vab <- if (length(vab_i)==1 && length(vab_im1)==1)
-               (vab_i / vab_im1 - 1) * 100 else NA_real_
+  vol_i   <- vol_aapp$vab_volume_rebased[vol_aapp$ano == ano_i]
+  vol_im1 <- vol_aapp$vab_volume_rebased[vol_aapp$ano == medias_anuais$ano[i-1]]
+  var_vab <- if (length(vol_i)==1 && length(vol_im1)==1)
+               (vol_i / vol_im1 - 1) * 100 else NA_real_
   cat(sprintf("%-6d %15.1f%% %15.1f%%\n", ano_i, var_idx, var_vab))
 }
 

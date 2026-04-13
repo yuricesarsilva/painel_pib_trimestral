@@ -86,6 +86,7 @@ arq_estban_out     <- file.path(dir_bcb,   "bcb_estban_rr_mensal.csv")
 arq_concessoes_out <- file.path(dir_bcb,   "bcb_concessoes_rr_mensal.csv")
 arq_ipca           <- file.path(dir_raw,   "ipca_mensal.csv")
 arq_cr_serie       <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
+arq_vol_serie      <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 arq_indice         <- file.path(dir_output, "indice_servicos.csv")
 
 # Pastas de dados baixados manualmente
@@ -954,14 +955,15 @@ message(sprintf("Comércio: %d trimestres (energia %.0f%% + CAGED G %.0f%% — s
                 peso_energia_comercio_ef * 100,
                 peso_caged_g_ef * 100))
 
-# Contas Regionais — VAB Comércio para benchmark Denton
-cr_all <- read_csv(arq_cr_serie, show_col_types = FALSE)
+# Contas Regionais — VAB nominal (pesos) e volume (benchmark Denton)
+cr_all  <- read_csv(arq_cr_serie,  show_col_types = FALSE)
+vol_all <- read_csv(arq_vol_serie, show_col_types = FALSE)
 
-bench_comercio <- cr_all |>
+bench_comercio <- vol_all |>
   filter(grepl("Com.rcio", atividade, ignore.case = TRUE),
          ano %in% anos_cr) |>
   arrange(ano) |>
-  pull(vab_mi)
+  pull(vab_volume_rebased)
 
 if (length(bench_comercio) != length(anos_cr)) {
   warning(sprintf("Benchmark Comércio: %d anos (esperado %d). Verificar CR.",
@@ -1101,11 +1103,11 @@ if (!tem_anac && !tem_anp) {
     ) |>
     ungroup()
 
-  bench_transp <- cr_all |>
+  bench_transp <- vol_all |>
     filter(grepl("Transporte", atividade, ignore.case = TRUE),
            ano %in% anos_cr) |>
     arrange(ano) |>
-    pull(vab_mi)
+    pull(vab_volume_rebased)
 
   ind_tr_para_denton <- transportes_trim |>
     filter(ano >= min(anos_cr)) |>
@@ -1249,11 +1251,11 @@ if (!tem_concessoes && !tem_depositos) {
     ) |>
     ungroup()
 
-  bench_financ <- cr_all |>
+  bench_financ <- vol_all |>
     filter(grepl("financeiras", atividade, ignore.case = TRUE),
            ano %in% anos_cr) |>
     arrange(ano) |>
-    pull(vab_mi)
+    pull(vab_volume_rebased)
 
   ind_fin_para_denton <- financeiro_trim |>
     filter(ano >= min(anos_cr)) |>
@@ -1289,11 +1291,11 @@ if (!tem_concessoes && !tem_depositos) {
 
 message("\n=== ETAPA 4.11: Imobiliário — interpolação linear CR ===\n")
 
-bench_imob <- cr_all |>
+bench_imob <- vol_all |>
   filter(grepl("imobili", atividade, ignore.case = TRUE),
          ano %in% anos_cr) |>
   arrange(ano) |>
-  pull(vab_mi)
+  pull(vab_volume_rebased)
 
 # Interpolar anualmente de 2020 a (ano_atual), extrapolando a tendência
 # Tendência de longo prazo: inclinação média dos últimos 2 anos CR
@@ -1424,11 +1426,11 @@ if (!disponivel_i && !disponivel_mn && !disponivel_pq) {
     ) |>
     ungroup()
 
-  bench_outros <- cr_all |>
+  bench_outros <- vol_all |>
     filter(grepl("Outros servi", atividade, ignore.case = TRUE),
            ano %in% anos_cr) |>
     arrange(ano) |>
-    pull(vab_mi)
+    pull(vab_volume_rebased)
 
   ind_os_para_denton <- outros_trim |>
     filter(ano >= min(anos_cr)) |>
@@ -1468,11 +1470,11 @@ if (is.null(caged_j) || nrow(caged_j) == 0) {
     ano = integer(), trimestre = integer(), indice_infocom = numeric()
   )
 } else {
-  bench_info <- cr_all |>
+  bench_info <- vol_all |>
     filter(grepl("Informa", atividade, ignore.case = TRUE),
            ano %in% anos_cr) |>
     arrange(ano) |>
-    pull(vab_mi)
+    pull(vab_volume_rebased)
 
   ind_j_para_denton <- caged_j |>
     filter(ano >= min(anos_cr)) |>
@@ -1506,11 +1508,11 @@ if (is.null(caged_j) || nrow(caged_j) == 0) {
 
 message("\n=== ETAPA 4.14: Extrativas — interpolação linear CR ===\n")
 
-bench_extr <- cr_all |>
+bench_extr <- vol_all |>
   filter(grepl("extrativ", atividade, ignore.case = TRUE),
          ano %in% anos_cr) |>
   arrange(ano) |>
-  pull(vab_mi)
+  pull(vab_volume_rebased)
 
 n_extr <- length(bench_extr)
 # Para setores voláteis/pequenos, não extrapolar tendência negativa — usar último benchmark

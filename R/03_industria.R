@@ -64,6 +64,7 @@ arq_aneel_out  <- file.path(dir_aneel, "aneel_energia_rr.csv")
 arq_caged_out  <- file.path(dir_caged, "caged_rr_mensal.csv")
 arq_snic       <- file.path(dir_raw,   "snic_cimento_rr.csv")
 arq_cr_serie   <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
+arq_vol_serie  <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 arq_indice     <- file.path(dir_output, "indice_industria.csv")
 
 # --- Parâmetros ---------------------------------------------
@@ -625,11 +626,12 @@ print(transf_trim |> select(ano, trimestre, indice_transf_raw))
 message("\n=== ETAPA 3.6: Denton-Cholette — benchmarks IBGE ===\n")
 
 # Carregar benchmarks
-if (!file.exists(arq_cr_serie)) {
-  stop("Arquivo de Contas Regionais não encontrado: ", arq_cr_serie,
+if (!file.exists(arq_vol_serie)) {
+  stop("Arquivo de volume não encontrado: ", arq_vol_serie,
        "\nExecutar R/00_dados_referencia.R primeiro.")
 }
-cr_serie <- read.csv(arq_cr_serie, stringsAsFactors = FALSE)
+cr_serie  <- read.csv(arq_cr_serie,  stringsAsFactors = FALSE)  # mantido para pesos de agregação
+vol_serie <- read.csv(arq_vol_serie, stringsAsFactors = FALSE)  # benchmark volume real
 
 # Nomes das atividades conforme 00_dados_referencia.R
 atividade_siup    <- "Eletricidade, gás, água, esgoto e resíduos (SIUP)"
@@ -637,24 +639,26 @@ atividade_const   <- "Construção"
 atividade_transf  <- "Indústrias de transformação"
 
 # Função auxiliar: aplicar Denton a um data frame trimestral
-aplicar_denton <- function(df_trim, col_indice, atividade_nome, cr_serie) {
-  vab_ativ <- cr_serie |>
+# vol_serie: contas_regionais_RR_volume.csv (vab_volume_rebased, base 2020=100)
+aplicar_denton <- function(df_trim, col_indice, atividade_nome, vol_serie) {
+  vol_ativ <- vol_serie |>
     filter(atividade == atividade_nome) |>
+    select(ano, vab_volume_rebased) |>
     arrange(ano)
 
-  if (nrow(vab_ativ) == 0) {
+  if (nrow(vol_ativ) == 0) {
     message(sprintf("AVISO: benchmark '%s' não encontrado — pulando Denton.", atividade_nome))
     return(df_trim |> mutate(indice_denton = .data[[col_indice]]))
   }
 
-  vab_base2020 <- vab_ativ$vab_mi[vab_ativ$ano == 2020]
-  if (length(vab_base2020) == 0 || vab_base2020 == 0) {
-    message(sprintf("AVISO: VAB 2020 ausente para '%s' — usando índice bruto.", atividade_nome))
+  if (!any(vol_ativ$ano == 2020)) {
+    message(sprintf("AVISO: volume 2020 ausente para '%s' — usando índice bruto.", atividade_nome))
     return(df_trim |> mutate(indice_denton = .data[[col_indice]]))
   }
 
-  bench <- vab_ativ |>
-    mutate(bench = vab_mi / vab_base2020 * 100) |>
+  # vab_volume_rebased já está em base 2020=100 — sem normalização adicional
+  bench <- vol_ativ |>
+    rename(bench = vab_volume_rebased) |>
     select(ano, bench)
 
   # Somente anos com 4 trimestres completos na série de indicadores
@@ -699,17 +703,17 @@ aplicar_denton <- function(df_trim, col_indice, atividade_nome, cr_serie) {
 # Aplicar Denton aos três subsetores
 message("\n--- SIUP ---")
 siup_trim <- aplicar_denton(energia_trim, "indice_siup_raw",
-                             atividade_siup, cr_serie) |>
+                             atividade_siup, vol_serie) |>
   rename(indice_siup = indice_denton)
 
 message("\n--- Construção ---")
 const_trim <- aplicar_denton(construcao_trim, "indice_construcao_raw",
-                              atividade_const, cr_serie) |>
+                              atividade_const, vol_serie) |>
   rename(indice_construcao = indice_denton)
 
 message("\n--- Transformação ---")
 transf_trim_d <- aplicar_denton(transf_trim, "indice_transf_raw",
-                                 atividade_transf, cr_serie) |>
+                                 atividade_transf, vol_serie) |>
   rename(indice_transformacao = indice_denton)
 
 # ============================================================

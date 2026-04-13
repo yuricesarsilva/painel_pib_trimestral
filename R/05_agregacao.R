@@ -43,6 +43,7 @@ arq_aapp      <- file.path(dir_output,    "indice_adm_publica.csv")
 arq_ind       <- file.path(dir_output,    "indice_industria.csv")
 arq_serv      <- file.path(dir_output,    "indice_servicos.csv")
 arq_cr        <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
+arq_vol       <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 arq_saida     <- file.path(dir_output,    "indice_geral_rr.csv")
 
 # --- Parâmetros ---------------------------------------------
@@ -51,19 +52,42 @@ ano_inicio <- 2020L
 ano_atual  <- as.integer(format(Sys.Date(), "%Y"))
 anos_cr    <- 2020:2023   # anos com benchmark CR publicado
 
-# Pesos setoriais 2023 (participação % no VAB total — CR IBGE 2023)
-# Bloco Indústria = SIUP (5,40%) + Construção (4,89%) + Transformação (1,31%)
-# Bloco Serviços = Comércio (12,25%) + Transportes (1,92%) + Financeiro (2,78%)
-#                 + Imobiliário (7,68%) + Outros (7,63%) + InfoCom (1,01%)
-#                 + Extrativas (0,05%)
+# Pesos setoriais base 2020 (Laspeyres, participação % no VAB total — CR IBGE 2020)
+# Calculados dinamicamente a partir de contas_regionais_RR_serie.csv para garantir
+# consistência com o ano base do índice (2020=100).
+nom_cr_pesos <- read_csv(arq_cr, show_col_types = FALSE) |>
+  filter(ano == 2020)
+tot_vab_2020 <- sum(nom_cr_pesos$vab_mi, na.rm = TRUE)
+
+peso_agro_2020 <- sum(
+  nom_cr_pesos$vab_mi[grepl("Agropecu", nom_cr_pesos$atividade, ignore.case = TRUE)],
+  na.rm = TRUE) / tot_vab_2020 * 100
+
+peso_aapp_2020 <- sum(
+  nom_cr_pesos$vab_mi[grepl("Adm\\..*def|Adm.*educa", nom_cr_pesos$atividade, ignore.case = TRUE)],
+  na.rm = TRUE) / tot_vab_2020 * 100
+
+peso_ind_2020 <- sum(
+  nom_cr_pesos$vab_mi[grepl("transforma|Constru|Eletricidade", nom_cr_pesos$atividade,
+                             ignore.case = TRUE)],
+  na.rm = TRUE) / tot_vab_2020 * 100
+
+peso_serv_2020 <- 100 - peso_agro_2020 - peso_aapp_2020 - peso_ind_2020
+
 pesos_blocos <- c(
-  agropecuaria = 8.87,
-  aapp         = 46.21,
-  industria    = 11.60,   # SIUP + Const. + Transf.
-  servicos     = 33.32    # restante (inclui Extrativas 0,05%)
+  agropecuaria = peso_agro_2020,
+  aapp         = peso_aapp_2020,
+  industria    = peso_ind_2020,
+  servicos     = peso_serv_2020
 )
+
+message(sprintf(
+  "Pesos 2020 (Laspeyres): Agro=%.2f%% AAPP=%.2f%% Ind=%.2f%% Serv=%.2f%%",
+  pesos_blocos["agropecuaria"], pesos_blocos["aapp"],
+  pesos_blocos["industria"],    pesos_blocos["servicos"]))
+
 # Verificação: soma deve ser 100%
-stopifnot(abs(sum(pesos_blocos) - 100) < 0.1)
+stopifnot(abs(sum(pesos_blocos) - 100) < 0.5)
 
 
 # ============================================================
@@ -245,27 +269,37 @@ message(sprintf("  Pesos efetivos: Agro=%.1f%% AAPP=%.1f%% Ind=%.1f%% Serv=%.1f%
 # ETAPA 5.1.4 — Benchmark: VAB total anual (CR IBGE 2020–2023)
 # ============================================================
 
-message("\n=== ETAPA 5.1.4: Benchmark CR — VAB total ===\n")
+message("\n=== ETAPA 5.1.4: Benchmark — índice de volume total RR (Laspeyres, base 2020=100) ===\n")
 
-cr <- read_csv(arq_cr, show_col_types = FALSE)
+# Reforma metodológica: o benchmark do segundo Denton é o índice de volume total de RR
+# (Laspeyres com pesos do VAB nominal 2020), não o VAB nominal somado e normalizado.
+# Motivação: o índice composto usa proxies de VOLUME → ancoragem deve ser em VOLUME.
+nom_cr  <- read_csv(arq_cr,  show_col_types = FALSE)
+vol_cr  <- read_csv(arq_vol, show_col_types = FALSE)
 
-# VAB total por ano = soma de todas as atividades (os 4 blocos cobrem ~100% do VAB)
-vab_anual <- cr |>
+# Pesos Laspeyres: participação de cada atividade no VAB nominal total de 2020
+pesos_ativ_2020 <- nom_cr |>
+  filter(ano == 2020) |>
+  select(atividade, vab_mi) |>
+  mutate(peso = vab_mi / sum(vab_mi, na.rm = TRUE))
+
+# Volume total RR por ano = média ponderada dos índices setoriais (base 2020=100)
+# Resultado também é base 2020=100 por construção (pesos somam 1 e vol_2020=100 para todos)
+vol_total <- vol_cr |>
   filter(ano %in% anos_cr) |>
+  left_join(pesos_ativ_2020 |> select(atividade, peso), by = "atividade") |>
   group_by(ano) |>
-  summarise(vab_total = sum(vab_mi, na.rm = TRUE), .groups = "drop") |>
+  summarise(vol_total = sum(vab_volume_rebased * peso, na.rm = TRUE), .groups = "drop") |>
   arrange(ano)
 
-message(sprintf("VAB total RR (CR IBGE):"))
-for (i in seq_len(nrow(vab_anual))) {
-  message(sprintf("  %d: R$ %.0f milhões", vab_anual$ano[i], vab_anual$vab_total[i]))
+message("Índice de volume total RR (Laspeyres, base 2020=100):")
+for (i in seq_len(nrow(vol_total))) {
+  message(sprintf("  %d: %.2f", vol_total$ano[i], vol_total$vol_total[i]))
 }
 
-# Normalizar VAB para base 2020 = 100 (mesma escala do índice)
-base_vab_2020 <- vab_anual$vab_total[vab_anual$ano == 2020]
-bench_cr <- vab_anual$vab_total / base_vab_2020 * 100
+bench_cr <- vol_total$vol_total
 
-message(sprintf("\nBenchmark CR normalizado (base 2020=100): %s",
+message(sprintf("\nBenchmark volume total (base 2020=100): %s",
                 paste(sprintf("%.1f", bench_cr), collapse = " | ")))
 
 
