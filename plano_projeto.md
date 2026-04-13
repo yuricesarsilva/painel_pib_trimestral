@@ -65,15 +65,28 @@ consolidado na PAM.
 A produção anual não tem desagregação mensal publicada. Para obter um fluxo trimestral:
 
 1. Tomar a **produção anual por cultura** (PAM ou LSPA dezembro)
-2. Aplicar **coeficientes mensais de colheita** do **Censo Agropecuário 2006** como pesos de
-   distribuição ao longo dos 12 meses → produção mensal estimada por cultura
+2. Aplicar **coeficientes mensais de colheita** como pesos de distribuição ao longo dos 12 meses
+   → produção mensal estimada por cultura
 3. Agregar meses em trimestres
 4. Calcular índice de Laspeyres com pesos VBP (médio 2018–2022)
 5. Aplicar Denton-Cholette contra o VAB agropecuário anual das Contas Regionais
 
-**Nota sobre o Censo 2017**: não publicou tabela equivalente de época de colheita. Os coeficientes
-do Censo 2006 permanecem como referência — refletem o calendário agroclimático de Roraima, que
-é relativamente estável.
+**Fonte dos coeficientes de colheita — três versões disponíveis (parâmetro `versao_calendario`):**
+
+| Versão | Fonte | Arquivo | Status |
+|---|---|---|---|
+| A — **SEADI-RR** (produção) | Calendário Agrícola oficial da Secretaria de Agricultura do Estado de RR | `data/referencias/calendario_colheita_seadi_rr.csv` | Ativo |
+| B — Censo 2006 (área) | Censo Agropecuário 2006, tabelas de época de colheita por UF, ponderação por área colhida | `data/referencias/calendario_colheita_censo2006_area_rr.csv` | Candidato Fase 5.2 |
+| C — Censo 2006 (estabelecimentos) | Idem, ponderação por número de estabelecimentos | `data/referencias/calendario_colheita_censo2006_estabelecimentos_rr.csv` | Candidato Fase 5.2 |
+
+A **versão A (SEADI-RR)** é adotada como padrão de produção por ser mais aderente ao ciclo
+atual das culturas em Roraima. As versões B e C, derivadas das tabelas de época principal de
+colheita do Censo Agropecuário 2006, são mantidas para o teste de sensibilidade da Fase 5.2.
+Para culturas sem mensalização oficial no Censo (banana, cacau, laranja, cana, tomate), as
+versões B/C usam distribuição uniforme de 1/12.
+
+**Nota sobre o Censo 2017**: não publicou tabela equivalente de época de colheita. As versões
+B/C do Censo 2006 são mantidas como referência metodológica secundária para o teste A/B.
 
 **Fontes SIDRA — lavouras:**
 
@@ -409,10 +422,12 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Arquivo: `data/processed/cobertura_lspa_pam.csv`
 
 **Etapa 1.1 — Estrutura sazonal** ✅
-- Censo Agropecuário 2006 — única publicação com tabela de época de colheita por cultura e estado
-- Censo 2017 não publicou tabela equivalente (confirmado)
-- Matriz 10 × 12 construída; cada linha soma 1,0 por cultura
-- Arquivo: `data/processed/coef_sazonais_colheita.csv`
+- Versão ativa: **Calendário SEADI-RR** — `data/referencias/calendario_colheita_seadi_rr.csv`
+- Versões candidatas para teste A/B (Fase 5.2): Censo 2006 área e Censo 2006 estabelecimentos
+- Parâmetro `versao_calendario` em `01_agropecuaria.R` controla qual versão é carregada
+- Normalização automática de cada linha (rowSums); NA → 0 (meses sem colheita registrada)
+- Matriz ativa: 10 culturas × 12 meses; cada linha soma 1,0
+- Arquivo com versão ativa: `data/processed/coef_sazonais_colheita.csv`
 
 **Etapa 1.2 — Série de lavouras** ✅
 - PAM: Tab. 5457, c782 → cobre RR até 2024
@@ -511,30 +526,75 @@ na geração e distribuição de energia do estado (conexão ao SIN, revisão ta
 volatilidade do índice composto em 2023 é fiel ao dado do IBGE — não é artefato do script.
 Para 2024–2025 (sem benchmark), o script usa o indicador bruto.
 
-### Fase 4 — Serviços privados (Comércio + Transportes + Outros) 🟡 Script criado
+### Fase 4 — Serviços privados (Comércio + Transportes + Outros) ✅
 
 **Script**: `R/04_servicos.R`
-**Saída prevista**: `data/output/indice_servicos.csv` (24 obs., 2020T1–2025T4)
+**Saída**: `data/output/indice_servicos.csv` (24 obs., 2020T1–2025T4)
 
 **Decisão de implementação (Opção A — sem ICMS):**
 ICMS por atividade econômica (SEFAZ-RR) não disponível nesta versão. Comércio calculado
 com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 40%, ICMS 40%, CAGED 20%.
 
-**Componentes implementados:**
+**Componentes:**
 - Comércio: energia comercial ANEEL (67%) + CAGED G (33%) — Denton vs. CR Comércio
-- Transportes: ANAC VRA mensal (SBBV) pax 40% + carga 30% + ANP diesel 30% — Denton vs. CR
-- Financeiro: BCB concessões de crédito OData (70%) + BCB Estban depósitos (30%), ambos
-  deflacionados e suavizados — Denton vs. CR Financeiro
+- Transportes: ANAC microdados mensais SBBV pax 40% + carga 30% + ANP diesel 30% — Denton vs. CR
+  - ANAC: microdados baixados manualmente (74 ZIPs, jan/2020–fev/2026), pasta
+    `bases_baixadas_manualmente/microdados_anac_mensal_2020.1_2026.2_basico/`
+- Financeiro: BCB concessões de crédito (70%) + BCB Estban depósitos (30%), ambos
+  deflacionados pelo IPCA e suavizados (MM3 em concessões) — Denton vs. CR Financeiro
+  - BCB Estban: 72 ZIPs baixados manualmente, pasta `bases_baixadas_manualmente/dados_estban_bcb/`
+  - BCB SCR concessões: 7 ZIPs baixados manualmente, pasta `bases_baixadas_manualmente/dados_bcb_src_2020_2025/`
+  - IPCA: variável SIDRA 2266 = nível do índice (base dez/1993=100); deflator calculado como
+    `indice_preco = indice_nivel / indice_nivel[jan/2020]`
 - Imobiliário: interpolação linear entre benchmarks CR anuais + extrapolação tendência 2024–2025
 - Outros serviços: CAGED I + M+N + P+Q, pesos dinâmicos por estoque de emprego 2020 — Denton
 - Informação e comunicação: CAGED J — Denton vs. CR Info/Com
 - Extrativas (0,05%): interpolação linear CR (sem proxy específico)
 - Composto final: Laspeyres com pesos % VAB 2023 (CR IBGE)
 
+**Resultado:**
+- `data/output/indice_servicos.csv` — 24 trimestres (2020T1–2025T4, base 2020=100)
+- Variações anuais: 2021 +19,0% / 2022 +7,7% / 2023 +12,0% / 2024 +11,8% / 2025 +10,8%
+- Denton âncora exatamente os 4 anos com benchmark CR (2020–2023)
+
 ### Fase 5 — Agregação, ajuste sazonal e publicação
-- Laspeyres encadeado com pesos das Contas Regionais
-- X-13ARIMA-SEATS
-- Outputs: CSV/XLSX, dashboard Shiny/flexdashboard, nota técnica Quarto
+
+**Fase 5.1 — Índice geral agregado** ✅
+
+**Script**: `R/05_agregacao.R`
+**Saída**: `data/output/indice_geral_rr.csv` (24 obs., 2020T1–2025T4, base 2020=100)
+
+**Pesos setoriais (VAB 2023, CR IBGE):**
+
+| Bloco | Pesos VAB 2023 |
+|---|---|
+| Agropecuária | 8,87% |
+| Administração Pública | 46,21% |
+| Indústria (SIUP + Const. + Transf.) | 11,60% |
+| Serviços Privados | 33,32% |
+
+**Tratamento de AAPP e Agropecuária para 2024–2025:**
+Os índices de AAPP e Agropecuária têm benchmark CR apenas até 2023 (CR publicado out/2025).
+Para 2024–2025, o script extrapola com tendência geométrica do bieênio 2022–2023:
+- Agropecuária: +12,0%/ano (com calendário SEADI-RR)
+- AAPP: +20,0%/ano
+
+Atualizar quando CR 2024 for publicado (previsão IBGE: out/2026).
+
+**Ancoragem Denton-Cholette:** benchmark = VAB total anual CR IBGE (2020–2023).
+Fator de ajuste no último benchmark (2023T4): 0,9888.
+
+**Variações anuais do índice geral (média anual, base 2020=100):**
+
+| Ano | Variação | Tipo |
+|---|---|---|
+| 2021 | +12,3% | Ancorado (CR) |
+| 2022 | +17,2% | Ancorado (CR) |
+| 2023 | +20,3% | Ancorado (CR) |
+| 2024 | +21,7% | Extrapolado |
+| 2025 | +15,7% | Extrapolado |
+
+**Fases 5.2–5.7** (ajuste sazonal, sensibilidade, exportação, dashboard, nota técnica): a iniciar.
 
 ---
 
@@ -543,16 +603,19 @@ com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 
 ```
 PIB Trimestral - Projeto 2026/
 ├── data/
-│   ├── raw/           # downloads brutos (APIs, portais, SEPLAN)
-│   ├── processed/     # séries limpas por setor
-│   └── output/        # índice final + componentes
+│   ├── raw/           # downloads brutos (APIs, portais, SEPLAN) — local, não versionado
+│   ├── processed/     # séries limpas por setor — local, não versionado
+│   ├── output/        # índice final + componentes — local, não versionado
+│   └── referencias/   # arquivos de referência versionados (calendários de colheita, etc.)
 ├── R/
 │   ├── utils.R                  # Denton wrapper, encadeamento, deflação
-│   ├── 01_agropecuaria.R        # inclui análise de cobertura PAM
-│   ├── 02_adm_publica.R
-│   ├── 03_industria.R
-│   ├── 04_servicos.R
-│   └── 05_agregacao.R
+│   ├── run_all.R                # orquestrador do pipeline completo
+│   ├── 00_dados_referencia.R    # Contas Regionais (pesos e benchmarks)
+│   ├── 01_agropecuaria.R        # Fase 1: lavouras (LSPA/PAM) e pecuária
+│   ├── 02_adm_publica.R         # Fase 2: SIAPE + folha estadual e municipal
+│   ├── 03_industria.R           # Fase 3: SIUP, Construção, Transformação
+│   ├── 04_servicos.R            # Fase 4: Comércio, Transportes, Serviços
+│   └── 05_agregacao.R           # Fase 5: índice geral agregado
 ├── dashboard/
 │   └── app.R
 ├── notas/

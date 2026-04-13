@@ -1001,4 +1001,27 @@ a mudança afeta apenas a distribuição intra-anual e a extrapolação de 2024�
 
 ---
 
-*Última atualização: 12 de abril de 2026 — Calendário SEADI-RR implantado; 3 versões para teste A/B preparadas*
+### Abril de 2026 — Correção de dois bugs no setor Financeiro
+
+**Motivação:** Ao revisar as caixas abertas da Fase 4, identificamos que o Denton-Cholette
+do setor Financeiro estava falhando silenciosamente e o índice resultante tinha todos os
+valores como NA (não computado).
+
+**Bug 1 — IPCA (bug no código):**
+O script baixa do SIDRA a variável 2266, que é o *nível* do índice IPCA (base dez/1993=100),
+e não a variação mensal em percentual. O código anterior aplicava `cumprod(1 + nível/100)`,
+o que para valores modernos como 5.700 gera overflow para infinito em todos os meses,
+tornando o deflator inútil. Todos os valores deflacionados viravam NA. Corrigido para
+`indice_preco = indice_nivel / indice_nivel[jan/2020]` — razão direta ao período base.
+
+**Bug 2 — Estban jan/2023 ausente:**
+O arquivo ZIP de janeiro de 2023 do BCB/Estban estava faltando na pasta de dados manuais,
+fazendo o trimestre 2023T1 ter apenas 2 meses e ser descartado. O arquivo foi adicionado
+manualmente e o cache foi regenerado com 72 meses (cobertura completa jan/2020–dez/2025).
+
+**Resultado:** Denton-Cholette do Financeiro executado com sucesso. Ancoragem ao VAB das
+Contas Regionais perfeita para 2020–2023.
+
+---
+
+*Última atualização: 12 de abril de 2026 — Bugs IPCA e Estban corrigidos; Financeiro com Denton funcional*

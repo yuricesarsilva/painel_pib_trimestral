@@ -423,8 +423,8 @@
 | 1 | Agropecuária | 🟢 Concluída |
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
-| 4 | Serviços Privados | 🟢 Concluída (Transportes e Financeiro pendentes de dados externos) |
-| 5 | Agregação e publicação | ⚪ Não iniciada |
+| 4 | Serviços Privados | 🟢 Concluída |
+| 5 | Agregação e publicação | 🟡 Em andamento (5.1 concluída; 5.2–5.7 a iniciar) |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada

@@ -40,7 +40,7 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 
 - **Desagregação temporal**: método de Denton-Cholette (`tempdisagg`) — garante que a média dos quatro trimestres de cada ano reproduza o VAB anual das Contas Regionais do IBGE
 - **Ajuste sazonal**: X-13ARIMA-SEATS (`seasonal`) — séries publicadas com e sem ajuste
-- **LSPA**: como a pesquisa publica projeções anuais revisadas mensalmente (não fluxo mensal), a distribuição intra-anual é feita com coeficientes de época de colheita do Censo Agropecuário 2006
+- **LSPA**: como a pesquisa publica projeções anuais revisadas mensalmente (não fluxo mensal), a distribuição intra-anual é feita com coeficientes de colheita do **Calendário Agrícola SEADI-RR** (versão de produção); versões alternativas derivadas do Censo Agropecuário 2006 ficam disponíveis para teste de sensibilidade
 - **Pesos setoriais**: participação no VAB das Contas Regionais, revisados anualmente
 - **Deflação de séries nominais**: IPCA nacional (não existe IPCA estadual para Roraima)
 - **Cobertura temporal**: a partir de 2020 (início condicionado pela consistência do CAGED pós-eSocial)
@@ -52,11 +52,15 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 ```
 ├── R/
 │   ├── utils.R              # funções auxiliares: Denton, encadeamento, deflação
-│   ├── 01_agropecuaria.R    # Fase 1: lavouras (LSPA) e pecuária
+│   ├── run_all.R            # orquestrador do pipeline completo
+│   ├── 00_dados_referencia.R# Contas Regionais (pesos e benchmarks)
+│   ├── 01_agropecuaria.R    # Fase 1: lavouras (LSPA/PAM) e pecuária
 │   ├── 02_adm_publica.R     # Fase 2: administração pública (SIAPE + folha estadual)
 │   ├── 03_industria.R       # Fase 3: construção, SIUP, indústria de transformação
-│   ├── 04_servicos.R        # Fase 4: comércio, transportes, outros serviços
-│   └── 05_agregacao.R       # Fase 5: agregação, ajuste sazonal, exportação
+│   ├── 04_servicos.R        # Fase 4: comércio, transportes, financeiro, outros serviços
+│   └── 05_agregacao.R       # Fase 5: índice geral agregado (Denton + Laspeyres)
+├── data/
+│   └── referencias/         # arquivos de referência versionados (calendários de colheita)
 ├── dashboard/
 │   └── app.R                # dashboard interativo (Shiny / flexdashboard)
 ├── notas/
@@ -67,7 +71,7 @@ Pesos calculados a partir do **VAB a preços correntes das Contas Regionais do I
 └── README.md
 ```
 
-> **Nota**: a pasta `data/` (dados brutos, processados e outputs) é mantida localmente e não é versionada.
+> **Nota**: as pastas `data/raw/`, `data/processed/` e `data/output/` são mantidas localmente e não são versionadas. Apenas `data/referencias/` (arquivos de referência metodológica) é versionada.
 
 ---
 
