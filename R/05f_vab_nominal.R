@@ -47,6 +47,7 @@ arq_deflator  <- file.path(dir_processed, "contas_regionais_RR_deflator.csv")
 arq_ipca      <- file.path(dir_raw,       "ipca_mensal.csv")
 arq_geral     <- file.path(dir_output,    "indice_geral_rr.csv")
 arq_nominal   <- file.path(dir_output,    "indice_nominal_rr.csv")
+arq_vab_reais <- file.path(dir_output,    "vab_nominal_rr_reais.csv")
 arq_excel     <- file.path(dir_output,    "IAET_RR_series.xlsx")
 
 # --- Parâmetros ---------------------------------------------
@@ -309,6 +310,54 @@ for (i in 2:nrow(medias_nom)) {
 
 write_csv(resultado_nominal, arq_nominal)
 message(sprintf("\n✓ Índice nominal salvo: %s (%d obs.)", arq_nominal, nrow(resultado_nominal)))
+
+
+# ============================================================
+# ETAPA E.5b — VAB nominal em R$ milhões
+# VAB_nom_trim = (indice_nominal / 100) × (VAB_nom_2020_anual / 4)
+# O divisor /4 converte o total anual de 2020 para média trimestral,
+# garantindo que a soma dos 4 trimestres de 2020 ≈ VAB_nominal_2020.
+# ============================================================
+
+message("\n=== ETAPA E.5b: VAB nominal em R$ milhões ===\n")
+
+# VAB nominal total de RR em 2020 (benchmark de escala)
+vab_nom_2020_anual <- cr |>
+  filter(atividade == "Total das Atividades", ano == 2020) |>
+  pull(vab_mi)
+
+if (length(vab_nom_2020_anual) == 0 || is.na(vab_nom_2020_anual)) {
+  # Fallback: somar todas as atividades em 2020
+  vab_nom_2020_anual <- cr |>
+    filter(ano == 2020) |>
+    summarise(total = sum(vab_mi, na.rm = TRUE)) |>
+    pull(total)
+}
+
+message(sprintf("VAB nominal RR 2020 (escala): R$ %.0f milhões anuais / R$ %.0f mi/trim. médio",
+                vab_nom_2020_anual, vab_nom_2020_anual / 4))
+
+vab_reais <- resultado_nominal |>
+  mutate(
+    vab_nominal_mi = round(indice_nominal / 100 * (vab_nom_2020_anual / 4), 1)
+  ) |>
+  select(periodo, ano, trimestre, indice_nominal, vab_nominal_mi)
+
+# Resumo por ano
+message("VAB nominal trimestral — soma anual (R$ milhões):")
+message(sprintf("  %-6s  %12s  %10s", "Ano", "Soma anual", "Var. (%)"))
+vab_anual_check <- vab_reais |>
+  group_by(ano) |>
+  summarise(soma = sum(vab_nominal_mi), n = n(), .groups = "drop")
+for (i in seq_len(nrow(vab_anual_check))) {
+  var_str <- if (i > 1 && vab_anual_check$n[i] == 4 && vab_anual_check$n[i-1] == 4)
+    sprintf("%+.1f%%", (vab_anual_check$soma[i] / vab_anual_check$soma[i-1] - 1) * 100)
+  else "—"
+  message(sprintf("  %d  %12.0f  %10s", vab_anual_check$ano[i], vab_anual_check$soma[i], var_str))
+}
+
+write_csv(vab_reais, arq_vab_reais)
+message(sprintf("\n✓ VAB nominal em R$ mi salvo: %s (%d obs.)", arq_vab_reais, nrow(vab_reais)))
 
 
 # ============================================================
