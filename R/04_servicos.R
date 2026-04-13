@@ -647,21 +647,24 @@ if (!is.null(ipca_raw) && nrow(ipca_raw) > 0) {
   parsed  <- parse_periodo_ipca(cod_vec, txt_vec)
 
   ipca <- data.frame(
-    ano     = parsed$ano,
-    mes     = parsed$mes,
-    var_pct = suppressWarnings(as.numeric(gsub(",", ".", ipca_raw[[col_val]])))
+    ano          = parsed$ano,
+    mes          = parsed$mes,
+    indice_nivel = suppressWarnings(as.numeric(gsub(",", ".", ipca_raw[[col_val]])))
+    # Variável SIDRA 2266 = nível do índice IPCA (base: dez/1993 = 100),
+    # NÃO variação percentual. Deflator correto: razão ao período base.
   ) |>
-    filter(!is.na(ano), !is.na(mes), !is.na(var_pct)) |>
+    filter(!is.na(ano), !is.na(mes), !is.na(indice_nivel), indice_nivel > 0) |>
     arrange(ano, mes)
 
   # Índice de preços (base: jan/2020 = 1)
+  # Deflator para o mês t = indice_nivel[t] / indice_nivel[jan/2020]
+  # Um valor > 1 indica que os preços subiram desde jan/2020 → divide o valor nominal
   idx_jan2020 <- which(ipca$ano == 2020 & ipca$mes == 1)
   if (length(idx_jan2020) == 0) idx_jan2020 <- 1
 
   ipca <- ipca |>
     mutate(
-      indice_preco = cumprod(1 + var_pct / 100),
-      indice_preco = indice_preco / indice_preco[idx_jan2020]
+      indice_preco = indice_nivel / indice_nivel[idx_jan2020]
     )
 
   message(sprintf("IPCA — %d obs. de %d/%d a %d/%d",
