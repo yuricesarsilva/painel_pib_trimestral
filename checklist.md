@@ -276,9 +276,10 @@
   - [x] Fallback documentado: diesel ANP 100% quando ANAC indisponível
   - [x] Documentar sobreposição do diesel na nota técnica (proxy contaminada)
 - [x] Denton-Cholette contra VAB Transporte das Contas Regionais (2020–2023)
-- [x] Executar: Transportes com 24 trimestres (diesel 100% — ANAC pendente) ✓
-- [ ] ANAC: servidor trunca download — download manual pendente
-  - Salvar em `data/raw/anac/Dados_Estatisticos.csv` e re-executar script quando disponível
+- [x] ANAC: microdados mensais baixados manualmente (74 ZIPs, 2020–2026) ✓
+  - Pasta: `bases_baixadas_manualmente/microdados_anac_mensal_2020.1_2026.2_basico`
+  - 74 meses SBBV processados — 2.196.361 passageiros totais
+- [x] Executar: Transportes com 24 trimestres (ANAC + diesel ANP) ✓
 
 ### 4.3 Atividades financeiras
 - [x] Implementar coleta de concessões de crédito por UF via BCB OData (NotaCredito)
@@ -288,8 +289,11 @@
   - [x] Deflacionar pelo IPCA nacional
 - [x] Índice composto: concessões 70% + depósitos 30% (com fallback se API indisponível)
 - [x] Denton-Cholette contra VAB Financeiro das Contas Regionais (2020–2023)
-- [ ] BCB OData indisponível (HTTP 404 em todas as versões v1/v2/v3) — Financeiro com NA
-  - Reativar quando BCB disponibilizar nova API ou via download manual
+- [x] BCB OData indisponível (HTTP 404) — resolvido via download manual ✓
+  - Estban: 71 ZIPs processados (`bases_baixadas_manualmente/dados_estban_bcb`)
+  - SCR concessões: 7 ZIPs processados (`bases_baixadas_manualmente/dados_bcb_src_2020_2025`)
+  - Financeiro — 24 trimestres gerados (concessões 70% + depósitos 30%)
+  - Nota: Denton-Cholette falhou por NA em alguns meses; índice gerado sem ancoragem plena
 
 ### 4.4 Imobiliário
 - [x] Interpolação linear entre benchmarks anuais das Contas Regionais (sem proxy de mercado)
