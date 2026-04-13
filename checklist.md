@@ -413,11 +413,13 @@
       `IAET_RR_series.xlsx` | `IAET_RR_geral.csv` | `IAET_RR_componentes.csv` | `IAET_RR_dessazonalizado.csv` | `indice_nominal_rr.csv`
 
 ### 5.6 Dashboard interativo
-- [ ] Criar estrutura do app (`dashboard/app.R`)
-- [ ] Implementar gráfico do índice geral (com e sem ajuste sazonal)
-- [ ] Implementar gráfico de contribuição setorial
-- [ ] Implementar tabela de variações (trimestre/trimestre e ano/ano)
-- [ ] Adicionar botão de download (CSV e XLSX)
+- [x] Criar estrutura do app (`dashboard/app.R`) — `bslib` v5 + `plotly` + `DT`
+- [x] Implementar gráfico do índice geral (com e sem ajuste sazonal) — seletor NSA/SA + slider de período
+- [x] Implementar gráfico de contribuição setorial — barras empilhadas (p.p.) + índices setoriais
+- [x] Implementar tabela de variações (trimestre/trimestre e ano/ano) — `var_trim`, `var_anual`, `var_trim_sa`
+- [x] Adicionar botão de download (CSV e XLSX) — com metadados e estilo SEPLAN no XLSX
+- [x] Aba "VAB Nominal" com gráfico de barras (benchmark vs. extrapolação) + variação anual + nota metodológica
+- [x] Aba "Sobre" com pesos setoriais (pizza interativa) + metadados do projeto
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 
