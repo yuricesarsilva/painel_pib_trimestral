@@ -1024,6 +1024,48 @@ Contas Regionais perfeita para 2020–2023.
 
 ---
 
+### Abril de 2026 — Fase 5.3: Ajuste sazonal X-13ARIMA-SEATS
+
+**O que foi feito:**
+
+Aplicamos o ajuste sazonal X-13ARIMA-SEATS (pacote `seasonal` do R) ao índice geral e
+aos quatro componentes setoriais. O script `R/05c_ajuste_sazonal.R` produz duas versões
+de cada série — sem ajuste (NSA) e dessazonalizada (SA) — além de uma tabela com os
+fatores sazonais aditivos.
+
+**Resultados:**
+
+O X-13 convergiu com sucesso para todos os cinco componentes, usando decomposição X-11
+com transformação automática (aditiva para a maioria das séries, dada a escala dos índices).
+
+Os fatores sazonais revelam o perfil sazonal intrínseco de cada componente:
+
+- **Índice geral**: range de 33,98 pontos entre o trimestre de maior e menor sazonalidade.
+  Antes do ajuste, a amplitude pico/vale (2020–2023) era 83,4→185,7. Depois do ajuste: 94,6→168,6.
+  A série SA é visivelmente mais suave, com crescimento mais linear ao longo dos anos.
+
+- **Agropecuária**: maior sazonalidade do conjunto — range de 299,76 pontos no fator
+  aditivo. Isso reflete o domínio do T3 (colheita da soja), que na série SA é removido e
+  o índice passa a mostrar apenas a tendência de volume de longo prazo.
+
+- **AAPP, Indústria e Serviços**: sazonalidades moderadas, ajustadas com sucesso.
+
+As variações anuais SA diferem das NSA porque a sazonalidade é evolutiva (amplitude muda
+ao longo do tempo, especialmente na agropecuária com crescimento da soja).
+
+**Nota técnica:**
+
+Avisos de `IEEE_UNDERFLOW_FLAG` e `IEEE_DENORMAL` aparecem no console — são emitidos pelo
+código Fortran interno do X-13 ao rodar no Windows e não têm impacto nos resultados.
+Com 24 trimestres (limite mínimo recomendado), os modelos convergiram sem fallback para STL.
+
+**Arquivos gerados:**
+- `R/05c_ajuste_sazonal.R` — script do ajuste sazonal (versionado)
+- `data/output/indice_geral_rr_sa.csv` — série completa NSA + SA para todos os componentes
+- `data/output/fatores_sazonais.csv` — fatores sazonais aditivos por componente e trimestre
+
+---
+
 ### Abril de 2026 — Fase 5.2: Teste de sensibilidade do calendário agrícola (A vs. B vs. C)
 
 **O que foi feito:**

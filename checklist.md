@@ -365,10 +365,19 @@
   ao calendário documentada — hipótese metodológica relevante para nota técnica.**
 
 ### 5.3 Ajuste sazonal
-- [ ] Aplicar X-13ARIMA-SEATS (`seasonal`) ao índice geral
-- [ ] Aplicar X-13ARIMA-SEATS a cada componente setorial
-- [ ] Publicar duas versões: com ajuste sazonal e sem ajuste sazonal
-- [ ] Salvar em `data/output/indice_geral_rr_sa.csv` (série dessazonalizada)
+- [x] Aplicar X-13ARIMA-SEATS (`seasonal`) ao índice geral
+- [x] Aplicar X-13ARIMA-SEATS a cada componente setorial
+- [x] Publicar duas versões: com ajuste sazonal e sem ajuste sazonal
+- [x] Salvar em `data/output/indice_geral_rr_sa.csv` (série dessazonalizada)
+      Arquivo gerado: `data/output/indice_geral_rr_sa.csv` (NSA + SA por componente)
+      Fatores sazonais: `data/output/fatores_sazonais.csv`
+
+**Resultado (2026-04-12):**
+- X-13ARIMA-SEATS convergiu para todos os 5 componentes (modo X-11, transformação auto)
+- Fatores sazonais aditivos: geral range=33,98 pts; agropecuária range=299,76 pts
+- Amplitude pico/vale NSA (2020–2023): 83,4 → 185,7; SA: 94,6 → 168,6 (mais suave ✓)
+- Variações anuais SA distintas das NSA — sazonalidade evolutiva bem capturada
+- IEEE_UNDERFLOW_FLAG: avisos normais do Fortran interno do X-13 no Windows (sem impacto)
 
 ### 5.4 Validação final
 - [ ] Variação anual do índice geral vs. Contas Regionais IBGE (todos os anos disponíveis)
