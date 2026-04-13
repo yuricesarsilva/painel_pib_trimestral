@@ -63,14 +63,18 @@ arq_coef_saz  <- file.path(dir_processed, "coef_sazonais_colheita.csv")
 #                     Fonte: idem acima, ponderação alternativa
 #
 # Para rodar o teste A/B (Fase 5.2), mude o valor abaixo e reexecute o script.
-versao_calendario <- "seadi"
+# Se `versao_calendario` já existir no ambiente (ex: definido por 05b_sensibilidade_calendario.R),
+# o valor externo é preservado — não sobrescrever.
+if (!exists("versao_calendario")) versao_calendario <- "seadi"
 
 arq_cal_seadi  <- file.path(dir_referencias, "calendario_colheita_seadi_rr.csv")
 arq_cal_area   <- file.path(dir_referencias, "calendario_colheita_censo2006_area_rr.csv")
 arq_cal_estab  <- file.path(dir_referencias, "calendario_colheita_censo2006_estabelecimentos_rr.csv")
 arq_lavouras  <- file.path(dir_processed, "serie_lavouras_trimestral.csv")
 arq_pecuaria  <- file.path(dir_processed, "serie_pecuaria_trimestral.csv")
-arq_indice    <- file.path(dir_output,    "indice_agropecuaria.csv")
+# Se `arq_indice` já existir no ambiente (ex: caminho alternativo para teste A/B),
+# o valor externo é preservado.
+if (!exists("arq_indice")) arq_indice <- file.path(dir_output, "indice_agropecuaria.csv")
 arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 
 # --- Culturas de interesse ----------------------------------

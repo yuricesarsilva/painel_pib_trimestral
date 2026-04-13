@@ -343,14 +343,26 @@
       `data/referencias/calendario_colheita_censo2006_area_rr.csv`
 - [x] Versão C (candidata): Censo Agropecuário 2006, ponderado por nº de estabelecimentos
       `data/referencias/calendario_colheita_censo2006_estabelecimentos_rr.csv`
-- [ ] Para testar: alterar `versao_calendario` em `R/01_agropecuaria.R` ("censo2006_area" ou "censo2006_estab"), reexecutar 01 e 05, comparar resultados
+- [x] Para testar: script `R/05b_sensibilidade_calendario.R` criado e executado
+      Usa `source(01_agropecuaria.R)` com variáveis pré-definidas — não-destrutivo
 
 **Outros candidatos (a definir):**
 - [ ] Pesos alternativos nos índices compostos (ex: ICMS com peso maior em Comércio)
 
 **Execução do teste:**
-- [ ] Comparar versões A/B/C: calcular divergência trimestral e anual
+- [x] Comparar versões A/B/C: calcular divergência trimestral e anual
+      Resultados em `data/output/sensibilidade/comparacao_calendarios.csv`
 - [ ] Documentar resultado do teste na nota técnica
+
+**Resultado do teste (2026-04-12):**
+- Médias anuais **idênticas** nas três versões (Denton correto: dif < 10⁻⁶)
+- Divergência sazonal **alta**: RMSE B vs A = 126 pts; C vs A = 117 pts
+- Ponto crítico: T4 — versão A (SEADI) = 200,9; versões B e C = ~27 (7x menor)
+- Causa: soja (53% do peso das lavouras) — SEADI distribui colheita em T3+T4;
+  Censo 2006 concentra quase tudo em T3 (calendário de 20 anos atrás)
+- Impacto máximo no índice geral: ~21,7 pts por trimestre (pelo peso de 8,87%)
+- **Conclusão: versão A (SEADI-RR) mantida como produção. Alta sensibilidade
+  ao calendário documentada — hipótese metodológica relevante para nota técnica.**
 
 ### 5.3 Ajuste sazonal
 - [ ] Aplicar X-13ARIMA-SEATS (`seasonal`) ao índice geral

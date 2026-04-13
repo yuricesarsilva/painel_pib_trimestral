@@ -1024,4 +1024,57 @@ Contas Regionais perfeita para 2020–2023.
 
 ---
 
+### Abril de 2026 — Fase 5.2: Teste de sensibilidade do calendário agrícola (A vs. B vs. C)
+
+**O que foi feito:**
+
+Rodamos o teste de sensibilidade comparando as três versões do calendário de colheita para a
+agropecuária. O script `R/05b_sensibilidade_calendario.R` executa `01_agropecuaria.R` com cada
+versão de forma não-destrutiva (sem sobrescrever os arquivos de produção) e compara os resultados.
+
+**Resultado técnico:**
+
+As médias anuais de 2020 a 2023 são **idênticas nas três versões** — diferença menor que 10⁻⁶
+pontos de índice. Isso confirma que o Denton-Cholette funciona corretamente: ele ancora todos os
+resultados ao mesmo VAB agropecuário das Contas Regionais do IBGE. O calendário não muda os
+*totais anuais*, apenas distribui a produção entre os trimestres dentro de cada ano.
+
+**A diferença é no perfil sazonal (média 2020–2023):**
+
+| Trimestre | A (SEADI-RR) | B (Censo 2006 área) | C (Censo 2006 estab) |
+|---|---|---|---|
+| T1 | 27,8 | 31,1 | 70,5 |
+| T2 | 20,4 | 24,9 | 18,5 |
+| **T3** | **351,7** | **517,4** | **485,3** |
+| **T4** | **200,9** | **27,4** | **26,5** |
+| Amplitude sazonal | 17,2x | 20,8x | 26,2x |
+
+O ponto crítico é o **T4**: na versão A (SEADI), o quarto trimestre tem índice ~200 (alta
+produção); nas versões B e C (Censo 2006), cai para ~27 — sete vezes menor. O motivo é a
+**soja**, que representa 53% do peso das lavouras: o calendário SEADI-RR distribui sua colheita
+entre agosto e outubro (T3 e T4), enquanto os calendários do Censo 2006 concentram
+praticamente tudo em agosto (T3 apenas).
+
+O impacto máximo no índice geral chega a 21,7 pontos por trimestre (pelo peso de 8,87% da
+agropecuária no VAB total).
+
+**Conclusão metodológica:**
+
+A versão A (SEADI-RR) foi mantida como versão de produção. O teste confirmou que:
+1. O calendário é uma hipótese metodológica de **alta sensibilidade** — deve ser documentada
+   com destaque na nota técnica.
+2. O Censo Agropecuário de 2006 não é adequado como base para o calendário de RR em 2026:
+   os padrões de plantio/colheita de soja no Cerrado roraimense mudaram muito nas últimas
+   duas décadas.
+3. A revisão periódica do calendário (junto à SEADI-RR) deve ser parte da rotina de
+   manutenção do indicador.
+
+**Arquivos gerados:**
+- `R/05b_sensibilidade_calendario.R` — script do teste (versionado)
+- `data/output/sensibilidade/agropecuaria_versao_B.csv`
+- `data/output/sensibilidade/agropecuaria_versao_C.csv`
+- `data/output/sensibilidade/comparacao_calendarios.csv`
+
+---
+
 *Última atualização: 12 de abril de 2026 — Bugs IPCA e Estban corrigidos; Financeiro com Denton funcional*
