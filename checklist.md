@@ -318,11 +318,11 @@
 ## Fase 5 — Agregação e publicação
 
 ### 5.1 Índice geral agregado
-- [ ] Importar índices setoriais: agropecuária, AAPP, indústria, serviços
-- [ ] Aplicar pesos das Contas Regionais (participação no VAB total)
-- [ ] Calcular índice geral trimestral encadeado (base 2020 = 100)
-- [ ] Aplicar Denton-Cholette final contra PIB total de RR das Contas Regionais
-- [ ] Salvar em `data/output/indice_geral_rr.csv`
+- [x] Importar índices setoriais: agropecuária, AAPP, indústria, serviços
+- [x] Aplicar pesos das Contas Regionais (participação no VAB total)
+- [x] Calcular índice geral trimestral encadeado (base 2020 = 100)
+- [x] Aplicar Denton-Cholette final contra PIB total de RR das Contas Regionais
+- [x] Salvar em `data/output/indice_geral_rr.csv`
 
 ### 5.2 Teste de sensibilidade (versão A vs. versão B)
 - [ ] Gerar versão B do índice com variação de hipótese a definir, por exemplo:

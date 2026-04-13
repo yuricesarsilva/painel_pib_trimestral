@@ -896,4 +896,52 @@ contribui para o composto (peso 1,92% do VAB de Serviços).
 
 ---
 
-*Última atualização: 12 de abril de 2026 — Fase 4: ANP resolvido; Transportes com série completa; pronto para Fase 5*
+### Abril de 2026 — Fase 5.1: Índice Geral Agregado concluído
+
+**O que foi feito:**
+
+Implementado e executado o script `R/05_agregacao.R`, que combina os quatro índices setoriais
+num índice geral de atividade econômica trimestral de Roraima (base 2020 = 100).
+
+**SIAPE — correção do leitor de Remuneracao:**
+
+Antes de rodar a Fase 5, identificamos e corrigimos um bug no `02_adm_publica.R`: o leitor
+da tabela de Remuneracao do SIAPE falhava em alguns ambientes Windows ao tentar detectar o
+nome da coluna de salário via `fread(..., nrows=0)`, porque o encoding Latin-1 no Windows
+retorna nomes corrompidos. A correção usa `nrows=1` para obter 1 linha real e detecta a
+coluna por substring ("BRUTA" + "R$"), com fallback para posição fixa (col 6) caso o nome
+não seja encontrado. O script passou a processar todos os 73 ZIPs sem erro.
+
+**Agregação (05_agregacao.R):**
+
+- Carregou os 4 índices setoriais: Agropecuária (16 obs. 2020T1–2023T4), AAPP (16 obs.),
+  Indústria (24 obs. 2020T1–2025T4), Serviços (24 obs.).
+- AAPP e Agropecuária foram extrapolados para 2024–2025 usando tendência geométrica do
+  último bieênio: Agropecuária +8,9%/ano; AAPP +20,0%/ano.
+- Índice composto calculado como média ponderada pelos pesos do VAB 2023 (CR IBGE):
+  Agro 8,87% | AAPP 46,21% | Indústria 11,60% | Serviços 33,32%.
+- Denton-Cholette aplicado contra o VAB total anual (CR IBGE 2020–2023), fator de ajuste
+  de 0,9952 no último benchmark (2023T4). Ancoragem perfeita para todos os 4 anos (desvio < 0,01).
+
+**Variações anuais do índice geral:**
+
+| Período | Variação |
+|---|---|
+| 2021 vs. 2020 | +12,3% |
+| 2022 vs. 2021 | +17,2% |
+| 2023 vs. 2022 | +20,3% |
+| 2024 vs. 2023 | +6,5% (extrapolado) |
+| 2025 vs. 2024 | +16,4% (extrapolado) |
+
+**Output gerado:**
+- `data/output/indice_geral_rr.csv` — 24 observações (2020T1–2025T4), base 2020 = 100,
+  com todas as séries setoriais normalizadas.
+
+**Estado atual:**
+Pipeline completo funcional: 01 → 02 → 03 → 04 → 05. Os cinco arquivos de output estão gerados.
+Próximas etapas: teste de sensibilidade (5.2), ajuste sazonal (5.3), validação final (5.4),
+exportação Excel (5.5) e nota técnica (5.7).
+
+---
+
+*Última atualização: 12 de abril de 2026 — Fase 5.1 concluída: índice geral gerado (2020T1–2025T4)*

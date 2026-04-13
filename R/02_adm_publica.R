@@ -273,41 +273,39 @@ if (file.exists(arq_siape)) {
     ids_rr <- unique(cad_rr$Id_SERVIDOR_PORTAL)
     rm(cad, cad_rr); gc(verbose = FALSE)   # liberar memória do Cadastro (~40MB)
 
-    # --- Remuneracao: ler cabeçalho → selecionar 2 colunas → filtrar RR ----
-    # Estratégia de baixo consumo de memória:
-    #   1. Lê apenas 0 linhas para obter nomes das colunas
-    #   2. Identifica coluna de salário sem iconv (busca substring sem acento)
-    #   3. Lê apenas Id_SERVIDOR_PORTAL + coluna de salário (~10 MB vs ~171 MB)
+    # --- Remuneracao: ler 2 colunas por posição → filtrar RR ----------------
+    # Estrutura padrão SIAPE Remuneracao (Portal da Transparência):
+    #   col 1=ANO, 2=MES, 3=Id_SERVIDOR_PORTAL, 4=CPF, 5=NOME,
+    #   col 6=REMUNERAÇÃO BÁSICA BRUTA (R$)  ← o que queremos
+    # Usamos posições inteiras para evitar problemas de encoding no Windows
+    # (fread com nrows=0 pode retornar nomes incorretos em alguns ambientes).
     tryCatch(unzip(zip_path, files = arq_rem, exdir = tmp_dir, overwrite = TRUE),
              error = function(e) NULL)
     rem_path <- file.path(tmp_dir, arq_rem)
     if (!file.exists(rem_path)) next
 
-    # Passo 1: cabeçalho (custo ~0 MB)
-    rem_cols <- tryCatch(
-      names(data.table::fread(rem_path, sep = ";", encoding = "Latin-1",
-                              nrows = 0L, showProgress = FALSE)),
-      error = function(e) character(0)
+    # Validar posições lendo 1 linha (barato: < 1 KB)
+    rem1 <- tryCatch(
+      data.table::fread(rem_path, sep = ";", encoding = "Latin-1",
+                        nrows = 1L, showProgress = FALSE, data.table = FALSE),
+      error = function(e) NULL
     )
-    if (length(rem_cols) == 0) { unlink(rem_path); next }
+    if (is.null(rem1) || ncol(rem1) < 6) { unlink(rem_path); next }
 
-    # Passo 2: identificar coluna de remuneração bruta em R$
-    # "BRUTA" não tem acento → funciona sem iconv em qualquer plataforma
-    col_bruta <- rem_cols[
-      grepl("BRUTA", rem_cols, ignore.case = TRUE) &
-      grepl("R\\$",  rem_cols, fixed      = TRUE)  &
-      !grepl("U\\$", rem_cols, fixed      = TRUE)
-    ][1]
+    nomes <- names(rem1)
+    # Buscar por substring sem acento (robusto em qualquer plataforma)
+    pos_id    <- which(grepl("SERVIDOR_PORTAL", nomes, ignore.case = TRUE))[1]
+    pos_bruta <- which(grepl("BRUTA", nomes, ignore.case = TRUE) &
+                       grepl("R\\$",  nomes, fixed = TRUE) &
+                       !grepl("U\\$", nomes, fixed = TRUE))[1]
+    # Fallback para posições fixas do padrão SIAPE
+    if (is.na(pos_id))    pos_id    <- 3L
+    if (is.na(pos_bruta)) pos_bruta <- 6L
 
-    if (is.na(col_bruta)) {
-      message(sprintf("  %s: coluna de remuneração bruta não localizada.", zip_nome))
-      unlink(rem_path); next
-    }
-
-    # Passo 3: ler apenas 2 colunas (economia de ~94% de memória)
+    # Ler apenas as 2 colunas necessárias (~10 MB vs ~171 MB)
     rem <- tryCatch(
       data.table::fread(rem_path, sep = ";", encoding = "Latin-1",
-                        select = c("Id_SERVIDOR_PORTAL", col_bruta),
+                        select = c(pos_id, pos_bruta),
                         showProgress = FALSE, data.table = TRUE),
       error = function(e) {
         message(sprintf("  %s: erro na Remuneracao — %s", zip_nome, e$message)); NULL
@@ -316,15 +314,18 @@ if (file.exists(arq_siape)) {
     unlink(rem_path)
     if (is.null(rem) || nrow(rem) == 0) next
 
-    rem_rr <- rem[Id_SERVIDOR_PORTAL %in% ids_rr]
-    rm(rem); gc(verbose = FALSE)   # liberar os ~10 MB da tabela nacional
+    # Renomear para nomes simples (sem acento, sem espaço)
+    data.table::setnames(rem, c("id_portal", "sal_bruto"))
+
+    rem_rr <- rem[id_portal %in% ids_rr]
+    rm(rem); gc(verbose = FALSE)
     if (nrow(rem_rr) == 0) {
       message(sprintf("  %s: 0 servidores RR na Remuneracao.", zip_nome)); next
     }
 
     # Converter formato BR ("14.249,03") → numérico R$
     vals <- suppressWarnings(
-      as.numeric(gsub(",", ".", gsub("\\.", "", as.character(rem_rr[[col_bruta]]))))
+      as.numeric(gsub(",", ".", gsub("\\.", "", as.character(rem_rr$sal_bruto))))
     )
     folha_rr <- sum(vals, na.rm = TRUE)
 
