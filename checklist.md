@@ -401,13 +401,15 @@
   afetado por encoding Windows (não afeta a validação do índice total)
 
 ### 5.5 Exportação dos dados
-- [ ] Gerar arquivo Excel com todas as séries (índice geral + setoriais + SA)
-  - [ ] Aba: índice geral
-  - [ ] Aba: componentes setoriais
-  - [ ] Aba: série dessazonalizada
-  - [ ] Aba: metadados e fontes
-- [ ] Gerar arquivo CSV para cada série
-- [ ] Salvar em `data/output/`
+- [x] Gerar arquivo Excel com todas as séries (índice geral + setoriais + SA)
+  - [x] Aba 1: Índice Geral (NSA + var. trim. e anual)
+  - [x] Aba 2: Componentes Setoriais (4 blocos NSA)
+  - [x] Aba 3: Dessazonalizado SA (índice geral + 4 blocos)
+  - [x] Aba 4: Fatores Sazonais (aditivos, X-13ARIMA-SEATS)
+  - [x] Aba 5: Metadados (fontes, pesos, notas metodológicas)
+- [x] Gerar arquivo CSV para cada série
+- [x] Salvar em `data/output/`
+      `IAET_RR_series.xlsx` | `IAET_RR_geral.csv` | `IAET_RR_componentes.csv` | `IAET_RR_dessazonalizado.csv`
 
 ### 5.6 Dashboard interativo
 - [ ] Criar estrutura do app (`dashboard/app.R`)

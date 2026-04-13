@@ -1024,6 +1024,31 @@ Contas Regionais perfeita para 2020–2023.
 
 ---
 
+### Abril de 2026 — Fase 5.5: Exportação dos dados (Excel + CSVs)
+
+**O que foi feito:**
+
+Gerado o arquivo de publicação `IAET_RR_series.xlsx` com cinco abas formatadas e três
+CSVs individuais, via script `R/05e_exportacao.R` com o pacote `openxlsx`.
+
+**Estrutura do Excel:**
+- **Aba 1 — Índice Geral**: série trimestral NSA com variação trimestral e anual (24 obs.)
+- **Aba 2 — Componentes Setoriais**: quatro blocos (Agropecuária, AAPP, Indústria, Serviços)
+- **Aba 3 — Dessazonalizado (SA)**: série SA do índice geral e dos quatro componentes
+- **Aba 4 — Fatores Sazonais**: fatores aditivos da tabela D10 do X-13ARIMA-SEATS
+- **Aba 5 — Metadados**: campos gerais, pesos setoriais e tabela com 14 fontes de dados
+
+Formatação: cabeçalhos azuis institucionais, linhas zebradas, notas de rodapé com
+ressalvas sobre o período extrapolado (2024–2025) e elaboração SEPLAN/RR.
+
+**Arquivos gerados:**
+- `data/output/IAET_RR_series.xlsx`
+- `data/output/IAET_RR_geral.csv`
+- `data/output/IAET_RR_componentes.csv`
+- `data/output/IAET_RR_dessazonalizado.csv`
+
+---
+
 ### Abril de 2026 — Fase 5.4: Validação final do índice geral
 
 **O que foi feito:**
