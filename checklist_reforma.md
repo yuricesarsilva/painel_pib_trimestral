@@ -8,20 +8,27 @@
 
 ---
 
-## Etapa A — Baixar e processar Tabelas 6 e 7 (`R/00_dados_referencia.R`)
+## Etapa A — Baixar e processar Tabelas de volume (`R/00_dados_referencia.R`)
 
-- [ ] **A.1** Adicionar download de `tabela6.zip` ao `R/00_dados_referencia.R` (URL: `https://ftp.ibge.gov.br/Contas_Regionais/2023/xls/tabela6.zip`)
-- [ ] **A.2** Adicionar download de `tabela7.zip` ao `R/00_dados_referencia.R`
-- [ ] **A.3** Inspecionar a estrutura real das Tabelas 6 e 7 (abas, colunas, formato de UF e atividade)
-- [ ] **A.4** Confirmar mapeamento entre atividades da Tabela 6 e os setores do projeto (ver tabela em `plano_reforma_indicador_real.md`)
-- [ ] **A.5** Implementar função `processar_tabela_volume()`:
-  - [ ] Parsear Excel e filtrar para Roraima
-  - [ ] Encadear índice de ano anterior = 100 para base fixa 2020 = 100
-  - [ ] Verificar cobertura temporal (espera-se 2002–2023)
-- [ ] **A.6** Salvar `data/processed/contas_regionais_RR_volume.csv` com colunas `ano`, `atividade`, `vab_volume_rebased`
-- [ ] **A.7** Implementar processamento equivalente para a Tabela 7 (deflator implícito)
-- [ ] **A.8** Salvar `data/processed/contas_regionais_RR_deflator.csv` com colunas `ano`, `atividade`, `deflator_rebased`
-- [ ] **A.9** Rodar `R/00_dados_referencia.R` e confirmar ausência de erros e NAs inesperados
+> **Correção de nomenclatura (2026-04-13):** o FTP do IBGE não tem `tabela6.zip`/`tabela7.zip`
+> como arquivos separados. Os índices de volume estão em `Especiais_2002_2023_xls.zip` →
+> `tab05.xls` (volume por atividade, base 2002=100, Roraima na linha 11 de cada aba).
+> O deflator será tratado na Etapa E (secundário).
+
+- [x] **A.1** Identificar a URL correta do volume no FTP: `Especiais_2002_2023_xls.zip` → `tab05.xls` (não existe `tabela6.zip`)
+- [x] **A.2** Adicionar download de `Especiais_2002_2023_xls.zip` ao `R/00_dados_referencia.R`
+- [x] **A.3** Inspecionar estrutura de `tab05.xls`: base 2002=100, Roraima linha 11, anos 2002–2023 nas colunas 2–23; estrutura idêntica em todas as 13 abas de atividade
+- [x] **A.4** Confirmar mapeamento: 13 atividades idênticas ao `Conta_da_Producao` — mesmo nome, mesma ordem
+- [x] **A.5** Implementar função `extrair_volume_rr()` com localização robusta de Roraima por `trimws(col1) == "Roraima"` (não por número de linha fixo)
+- [x] **A.6** Salvar `data/processed/contas_regionais_RR_volume.csv` — 286 obs., 13 atividades, 22 anos (2002–2023), base 2020=100
+- [ ] **A.7** Implementar processamento do deflator implícito (Etapa E — secundário, após Etapa D)
+- [ ] **A.8** Salvar `data/processed/contas_regionais_RR_deflator.csv` — adiado para Etapa E
+- [x] **A.9** Rodar `R/00_dados_referencia.R`: concluído sem erros; validação 2020=100 passou para todas as atividades
+
+**Taxas de crescimento real obtidas (total, base 2020=100):**
+- 2021: +8,2% (era +12,3% nominal — corrigido em −4,1 pp)
+- 2022: +10,7% (era +17,2% — corrigido em −6,5 pp)
+- 2023: +3,9% (era +20,3% — corrigido em −16,4 pp)
 
 ---
 
@@ -118,7 +125,7 @@
 
 | Etapa | Status | Observação |
 |---|---|---|
-| A — Download e processamento Tabelas 6 e 7 | ⚪ Não iniciada | |
+| A — Download e processamento (volume) | 🟢 Concluída | A.7/A.8 adiados para Etapa E |
 | B — Atualização do benchmark nos scripts | ⚪ Não iniciada | |
 | C — Reexecução do pipeline | ⚪ Não iniciada | |
 | D — Validação pós-reforma | ⚪ Não iniciada | |
