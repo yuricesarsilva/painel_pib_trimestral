@@ -1202,4 +1202,30 @@ A versão A (SEADI-RR) foi mantida como versão de produção. O teste confirmou
 
 ---
 
-*Última atualização: 12 de abril de 2026 — Bugs IPCA e Estban corrigidos; Financeiro com Denton funcional*
+---
+
+## Reforma metodológica — 13 de abril de 2026
+
+**O que mudou:** O IAET-RR tinha um problema conceitual fundamental: o benchmark anual do método Denton-Cholette usava o **VAB nominal** das Contas Regionais (valores em preços correntes), mas as proxies trimestrais são indicadores de **volume** (emprego, energia, passageiros). Isso fazia o índice absorver inflação setorial, gerando crescimentos artificialmente elevados — +20,3% em 2023, quando o crescimento real foi de apenas +4,3%.
+
+**Como foi corrigido:** O benchmark do Denton-Cholette foi substituído pelo **índice encadeado de volume** das Contas Regionais IBGE (arquivo Especiais, `tab05.xls`, série base 2002=100, rebaseada para 2020=100). A mudança afetou as 11 chamadas Denton dos scripts setoriais (01 a 04) e o segundo Denton na agregação (05). Os pesos do Laspeyres também foram corrigidos para usar participações de 2020 (ano base) em vez de 2023.
+
+**Resultado:** As taxas de crescimento anual do IAET-RR agora refletem crescimento real:
+
+| Ano | Antes (nominal) | Depois (real) | Deflator implícito |
+|-----|-----------------|---------------|--------------------|
+| 2021 | +12,3% | +8,2% | +3,8% |
+| 2022 | +17,2% | +10,9% | +6,5% |
+| 2023 | +20,3% | +4,3% | +15,7% |
+
+A diferença entre antes e depois corresponde ao deflator implícito setorial de RR — exatamente o esperado.
+
+**Comparação com IBCR Norte:** O erro médio absoluto caiu de 14 pp para 5,2 pp. A correlação em variação melhorou de -0,74 para -0,24 (ainda negativa porque RR tem 46% de AAPP, com ciclo diferente do Norte regional).
+
+**Produto adicional:** O script `R/05f_vab_nominal.R` gera o índice nominal trimestral (real × deflator implícito) para análises de arrecadação e comparação com PIB nominal. Deflator anual derivado das próprias Contas Regionais; deflator trimestral via Denton com IPCA como proxy.
+
+**Arquivos modificados:** `R/00_dados_referencia.R`, `R/01_agropecuaria.R`, `R/02_adm_publica.R`, `R/03_industria.R`, `R/04_servicos.R`, `R/05_agregacao.R`
+
+**Novos arquivos:** `R/05f_vab_nominal.R`, `data/processed/contas_regionais_RR_volume.csv`, `data/processed/contas_regionais_RR_deflator.csv`, `data/output/indice_nominal_rr.csv`, aba "VAB Nominal" no Excel
+
+*Última atualização: 13 de abril de 2026 — Reforma metodológica concluída: ancoragem Denton ao VAB real; VAB nominal trimestral adicionado como produto derivado*

@@ -31,6 +31,15 @@ Método de **Denton-Cholette** (`tempdisagg::td()`) para garantir que a média d
 de cada ano reproduza o índice anual implícito das Contas Regionais. Essencial para credibilidade
 frente ao referencial oficial do IBGE.
 
+> **Decisão metodológica (reforma de 2026-04-13):** O benchmark anual do Denton-Cholette utiliza
+> o **índice encadeado de volume** das Contas Regionais (arquivo `Especiais_2002_2023_xls.zip`,
+> `tab05.xls`), e não o VAB nominal (Tabela 5 / `Conta_da_Producao_2002_2023_xls.zip`).
+> Motivação: as proxies trimestrais são indicadores de volume (emprego, energia, passageiros, etc.)
+> — ancorá-las ao VAB nominal introduzia inflação setorial no índice real, gerando crescimentos
+> artificialmente elevados (+20% em 2023 vs. +4% real). Com a ancoragem ao volume, as taxas anuais
+> passaram a refletir crescimento real: 2021 +8,2%, 2022 +10,9%, 2023 +4,3%.
+> Referência completa: `plano_reforma_indicador_real.md` e `checklist_reforma.md`.
+
 ### Ajuste sazonal
 
 X-13ARIMA-SEATS via pacote `seasonal`. Publicar série com e sem ajuste sazonal.

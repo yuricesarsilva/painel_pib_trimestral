@@ -94,30 +94,31 @@
   - [x] 2023: +4,3% (alvo ~3–7% — dentro da faixa; ✓)
 - [x] **D.2** Ancoragem Denton perfeita (✓) — média anual do índice == benchmark volume para 2020, 2021, 2022, 2023
 - [x] **D.3** Pesos Laspeyres 2020 computados dinamicamente; soma weighted average = benchmark (✓)
-- [ ] **D.4** Avaliar correlação com IBCR Norte antes e depois da reforma (pendente análise manual)
+- [x] **D.4** Correlação IBCR Norte: pré-reforma corr=-0,74, MAE=14 pp; pós-reforma corr=-0,24, MAE=5,2 pp — melhora significativa (reforma aproxima o índice de um indicador de volume como o IBCR); correlação ainda negativa pois RR tem AAPP=46% com ciclo descolado do Norte
 - [x] **D.5** Relatório de validação regenerado — MAE 8,8 pp vs. VAB nominal é ESPERADO (indica que o índice agora é real, não nominal)
 
 ---
 
 ## Etapa E — VAB nominal trimestral (Ponto 2 — após A-D concluídos)
 
-- [ ] **E.1** Verificar cobertura e estrutura da Tabela 7 (deflator implícito por atividade/UF)
-- [ ] **E.2** Implementar encadeamento do deflator para base fixa 2020 = 100
-- [ ] **E.3** Usar IPCA mensal (já em `data/processed/`) como proxy trimestral
-- [ ] **E.4** Aplicar Denton-Cholette para gerar deflator trimestral por setor
-- [ ] **E.5** Calcular VAB nominal trimestral = `indice_real × deflator / 100`
-- [ ] **E.6** Adicionar ao Excel (`IAET_RR_series.xlsx`) como coluna adicional em "Componentes"
+- [x] **E.1** Deflator implícito derivado diretamente dos CSVs existentes: (vab_mi/vab_mi_2020) / (vab_volume_rebased/100) × 100 — sem Tabela 7 separada necessária
+- [x] **E.2** Deflator encadeado para base 2020=100 por atividade; salvo em `contas_regionais_RR_deflator.csv` (182 obs.)
+- [x] **E.3** IPCA mensal (`data/raw/ipca_mensal.csv`) agregado a trimestral e rebaseado 2020=100
+- [x] **E.4** Denton-Cholette: deflator anual (4 anos, Laspeyres) → trimestral com IPCA; ancoragem perfeita ✓ 2020–2023
+- [x] **E.5** Índice nominal = `indice_geral × deflator / 100`; salvo em `data/output/indice_nominal_rr.csv`; 2021 +12,4%, 2022 +18,2%, 2023 +20,7%
+- [x] **E.6** Aba "VAB Nominal" adicionada ao `IAET_RR_series.xlsx` com nota metodológica
+- **Script**: `R/05f_vab_nominal.R`
 
 ---
 
 ## Etapa F — Atualização de documentação e versionamento
 
-- [ ] **F.1** Atualizar `plano_projeto.md` com a decisão metodológica (ancoragem ao volume real)
-- [ ] **F.2** Atualizar `checklist.md` principal (marcar etapas afetadas como refeitas)
-- [ ] **F.3** Atualizar `historico_simples.md` com o registro da reforma
-- [ ] **F.4** Atualizar `logs/fontes_utilizadas.csv` — adicionar Tabelas 6 e 7 como fontes
-- [ ] **F.5** Commit de todos os arquivos modificados em português
-- [ ] **F.6** Push para o GitHub
+- [x] **F.1** `plano_projeto.md` atualizado com decisão metodológica da ancoragem ao volume real
+- [x] **F.2** `checklist.md` principal atualizado (seções 5.1, 5.3, 5.4, 5.5 marcadas como refeitas)
+- [x] **F.3** `historico_simples.md` atualizado com registro completo da reforma (tabela antes/depois, metodologia, resultados)
+- [x] **F.4** `logs/fontes_utilizadas.csv` atualizado — adicionados "Especiais volume" e "Deflator implícito"
+- [x] **F.5** Commit em português (realizado em dois commits: B–D e E–F)
+- [x] **F.6** Push para o GitHub
 
 ---
 
@@ -128,6 +129,6 @@
 | A — Download e processamento (volume) | 🟢 Concluída | A.7/A.8 adiados para Etapa E |
 | B — Atualização do benchmark nos scripts | 🟢 Concluída | B.1–B.5 completos (11 chamadas Denton + 05_agregacao.R) |
 | C — Reexecução do pipeline | 🟢 Concluída | Todos os scripts rodaram sem erros |
-| D — Validação pós-reforma | 🟡 Parcial | D.4 (correlação IBCR) pendente análise manual |
-| E — VAB nominal trimestral (Ponto 2) | ⚪ Não iniciada | Secundário, após D |
-| F — Documentação e commit | ⚪ Não iniciada | |
+| D — Validação pós-reforma | 🟢 Concluída | D.4: MAE IBCR Norte caiu de 14 pp para 5,2 pp |
+| E — VAB nominal trimestral (Ponto 2) | 🟢 Concluída | `R/05f_vab_nominal.R`; deflator 2021 +3,8% | 2022 +6,5% | 2023 +15,7% |
+| F — Documentação e commit | 🟢 Concluída | plano_projeto.md, checklist.md, historico_simples.md, fontes_utilizadas.csv |

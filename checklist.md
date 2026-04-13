@@ -330,8 +330,10 @@
 ### 5.1 Índice geral agregado
 - [x] Importar índices setoriais: agropecuária, AAPP, indústria, serviços
 - [x] Aplicar pesos das Contas Regionais (participação no VAB total)
+  → **REFORMA 2026-04-13**: pesos agora calculados dinamicamente do VAB nominal de 2020 (base correta do Laspeyres) — antes hardcoded com valores de 2023
 - [x] Calcular índice geral trimestral encadeado (base 2020 = 100)
-- [x] Aplicar Denton-Cholette final contra PIB total de RR das Contas Regionais
+- [x] Aplicar Denton-Cholette final contra VAB total de RR das Contas Regionais
+  → **REFORMA 2026-04-13**: benchmark substituído — agora usa índice de **volume** (Especiais IBGE, `tab05.xls`, série encadeada 2002–2023), não VAB nominal (Tabela 5). Ver `plano_reforma_indicador_real.md`.
 - [x] Salvar em `data/output/indice_geral_rr.csv`
 
 ### 5.2 Teste de sensibilidade (versão A vs. versão B vs. versão C)
@@ -372,11 +374,11 @@
       Arquivo gerado: `data/output/indice_geral_rr_sa.csv` (NSA + SA por componente)
       Fatores sazonais: `data/output/fatores_sazonais.csv`
 
-**Resultado (2026-04-12):**
+**Resultado (2026-04-12, rerrodado após reforma 2026-04-13):**
 - X-13ARIMA-SEATS convergiu para todos os 5 componentes (modo X-11, transformação auto)
-- Fatores sazonais aditivos: geral range=33,98 pts; agropecuária range=299,76 pts
-- Amplitude pico/vale NSA (2020–2023): 83,4 → 185,7; SA: 94,6 → 168,6 (mais suave ✓)
-- Variações anuais SA distintas das NSA — sazonalidade evolutiva bem capturada
+- Fatores sazonais aditivos: geral range=15,13 pts; agropecuária range=294,61 pts
+- Amplitude pico/vale NSA (2020–2023): 88,1 → 134,9; SA: 95,5 → 129,8 (mais suave ✓)
+- Variações anuais: 2021 NSA +8,19% SA +8,29% | 2022 NSA +10,86% SA +10,95% | 2023 NSA +4,34% SA +4,45%
 - IEEE_UNDERFLOW_FLAG: avisos normais do Fortran interno do X-13 no Windows (sem impacto)
 
 ### 5.4 Validação final
@@ -390,15 +392,13 @@
       Queda T2 (-9,8% vs T1); recuperação em T3 por colheita e AAPP estável
 - [x] Documentar e justificar eventuais divergências
 
-**Resultado do teste (2026-04-12):**
-- Crescimento RR 2021–2023: +12,3%, +17,2%, +20,3% — acima do Norte (+7,2%, -1,2%, +1,7%)
-  e do Brasil (+4,2%, +2,8%, +2,7%) — coerente com expansão da soja e setor público
-- Correlação negativa em variação com IBCR Norte justificada: Norte dominado por AM/PA
-  (extrativismo), RR tem perfil AAPP + agro sem sazonalidade típica amazônica
-- Consistência interna: Agro domina variância trimestral (corr Agro-Geral=0,810);
-  AAPP-Serviços e Ind-Serviços positivas como esperado
-- Artefatos: bloco-level (Agro, Indústria) sem dados — regex de atividade CR
-  afetado por encoding Windows (não afeta a validação do índice total)
+**Resultado do teste (rerrodado após reforma 2026-04-13):**
+- Crescimento RR 2021–2023 (real): **+8,2%, +10,9%, +4,3%** — antes era +12,3%, +17,2%, +20,3% nominal
+- IBCR Norte: corr nível=0,386; corr variação=-0,195 (pré-reforma: corr=-0,74, MAE=14 pp; pós: MAE=5,2 pp)
+- MAE vs. CR IBGE: 8,8 pp (esperado e correto — diferença ≈ inflação setorial de RR)
+- Consistência interna: Agro domina variância trimestral (corr Agro-Geral=0,855);
+  Ind-Serviços=0,498; AAPP-Serviços=0,214
+- Ancoragem Denton perfeita: ✓ para 2020, 2021, 2022, 2023
 
 ### 5.5 Exportação dos dados
 - [x] Gerar arquivo Excel com todas as séries (índice geral + setoriais + SA)
@@ -407,9 +407,10 @@
   - [x] Aba 3: Dessazonalizado SA (índice geral + 4 blocos)
   - [x] Aba 4: Fatores Sazonais (aditivos, X-13ARIMA-SEATS)
   - [x] Aba 5: Metadados (fontes, pesos, notas metodológicas)
+  - [x] Aba 6: VAB Nominal — índice real × deflator implícito / 100 (adicionado na reforma 2026-04-13)
 - [x] Gerar arquivo CSV para cada série
 - [x] Salvar em `data/output/`
-      `IAET_RR_series.xlsx` | `IAET_RR_geral.csv` | `IAET_RR_componentes.csv` | `IAET_RR_dessazonalizado.csv`
+      `IAET_RR_series.xlsx` | `IAET_RR_geral.csv` | `IAET_RR_componentes.csv` | `IAET_RR_dessazonalizado.csv` | `indice_nominal_rr.csv`
 
 ### 5.6 Dashboard interativo
 - [ ] Criar estrutura do app (`dashboard/app.R`)
