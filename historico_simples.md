@@ -1354,4 +1354,51 @@ evita esse risco e organiza a implementação futura do `R/05g_pib_nominal.R`.
 - `regras.md` — ganhou uma seção específica para manutenção obrigatória dos documentos da reforma
   de impostos e do futuro `05g_pib_nominal.R`
 
-*Última atualização: 13 de abril de 2026 — documentação alinhada ao estado atual do projeto; pesos internos de serviços ajustados para base 2020; dashboard corrigido para abrir localmente; frente de impostos e PIB nominal planejada; nota técnica permanece pendente*
+---
+
+### Abril de 2026 — Etapa B.1 executada: identificação do ICMS estadual no Siconfi
+
+**O que foi feito:**
+
+Executamos a primeira etapa operacional da frente de impostos: descobrir, de forma reproduzível,
+como extrair o `ICMS` do Estado de Roraima no Siconfi.
+
+**O que foi descoberto:**
+
+- a fonte correta é a **MSC Orçamentária** do Siconfi, e não o RREO;
+- o ente do Estado de Roraima aparece como `id_ente = 14`;
+- a combinação metodologicamente correta usa:
+  - `co_tipo_matriz = MSCC`;
+  - `classe_conta = 6`;
+  - `id_tv = period_change`;
+  - `conta_contabil = 621200000` para isolar a **receita realizada**;
+- nas naturezas de receita, o núcleo observado do ICMS em RR aparece como:
+  - `11145011` — principal;
+  - `11145013` — dívida ativa.
+
+Também foi identificado que a série histórica não usa um único conjunto de códigos ao longo de
+todo o período. Parte da série antiga aparece no padrão `1118021x`, enquanto a série mais recente
+usa `1114501x`. Isso significa que a rota de extração já está validada, mas a harmonização
+completa de `2020 até o presente` ainda precisa de tratamento adicional.
+
+Na primeira execução do script, a série limpa obtida ficou com **59 meses válidos**, de
+`2020-01` a `2026-02`, mas com uma lacuna de `2022-01` a `2023-03`. Ou seja: a etapa de
+identificação da rota foi concluída, mas a harmonização histórica ainda não.
+
+**O achado mais importante:**
+
+Não basta somar todas as linhas da classe 6 com código de ICMS. Isso mistura previsão, realização
+e outros movimentos contábeis, o que gera valores artificialmente altos, especialmente em janeiro.
+O filtro pela conta `621200000` resolve esse problema e entrega uma série mensal plausível de
+arrecadação realizada.
+
+**Produto desta etapa:**
+
+Foi criado um script exploratório reproduzível:
+- `R/exploratorio/inspecionar_siconfi_icms_rr.R`
+
+Esse script baixa os dados mês a mês, filtra o ICMS corretamente e salva duas bases locais:
+- `data/raw/icms_rr_siconfi_mensal_detalhado.csv`
+- `data/raw/icms_rr_siconfi_mensal_total.csv`
+
+*Última atualização: 13 de abril de 2026 — documentação alinhada ao estado atual do projeto; pesos internos de serviços ajustados para base 2020; dashboard corrigido para abrir localmente; frente de impostos e PIB nominal planejada; rota do ICMS estadual no Siconfi identificada; nota técnica permanece pendente*

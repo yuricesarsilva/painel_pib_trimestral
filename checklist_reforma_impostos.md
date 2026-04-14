@@ -22,10 +22,14 @@
 ## Etapa B — Mapeamento e coleta das fontes subnacionais
 
 ### B.1 — Estado de Roraima
-- [ ] Identificar a extração reproduzível do `ICMS` estadual no Siconfi/MSC/RREO
+- [x] Identificar a extração reproduzível do `ICMS` estadual no Siconfi/MSC/RREO
 - [ ] Confirmar periodicidade disponível e cobertura mínima 2020–presente
-- [ ] Validar a natureza de receita correta e documentar o código utilizado
-- [ ] Construir série mensal ou bimestral padronizada do `ICMS`
+- [x] Validar a natureza de receita correta e documentar o código utilizado
+- [ ] Construir série mensal padronizada do `ICMS`
+
+Observação atual: a rota limpa já gera série mensal com 59 observações (`2020-01` a `2026-02`),
+mas ainda há lacuna em `2022-01` a `2023-03`, o que impede marcar a cobertura mínima
+2020–presente como concluída.
 
 ### B.2 — Municípios de Roraima
 - [ ] Identificar a extração reproduzível do `ISS` nos 15 municípios via Siconfi/MSC/RREO
@@ -106,7 +110,7 @@
 | Etapa | Status | Observação |
 |---|---|---|
 | A — Delimitação e desenho metodológico | 🟢 Concluída | Plano e checklist criados; recomendação metodológica registrada |
-| B — Fontes subnacionais | ⚪ Não iniciada | Siconfi ainda não mapeado em nível de natureza de receita |
+| B — Fontes subnacionais | 🟡 Em andamento | Rota do ICMS estadual mapeada via MSC; harmonização histórica e ISS municipal ainda pendentes |
 | C — Fontes federais | ⚪ Não iniciada | Receita Federal por UF ainda não integrada |
 | D — Benchmark anual | ⚪ Não iniciada | Estrutura conhecida, mas não automatizada nesta frente |
 | E — Proxies trimestrais | ⚪ Não iniciada | MVP e versão ampliada ainda não implementados |

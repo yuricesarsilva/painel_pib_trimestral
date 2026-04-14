@@ -104,6 +104,37 @@ Uso pretendido:
 **Regra metodológica:** para o ILP, o tributo estadual principal é o `ICMS`. Os demais tributos
 estaduais só entram se houver justificativa conceitual forte e ganho mensurável.
 
+**Extração B.1 já validada para o Estado de Roraima:**
+
+- endpoint: `https://apidatalake.tesouro.gov.br/ords/siconfi/tt/msc_orcamentaria`
+- identificador do ente: `id_ente = 14` (Estado de Roraima)
+- parâmetros centrais:
+  - `co_tipo_matriz = MSCC`
+  - `classe_conta = 6`
+  - `id_tv = period_change`
+- filtro contábil obrigatório: `conta_contabil = 621200000`
+  - este filtro isola a **receita realizada**
+  - somar todas as contas da classe 6 superestima o ICMS, especialmente em janeiro, por misturar
+    previsão, realização e ajustes/deduções
+- filtro de natureza de receita:
+  - classificador novo observado em RR: `11145011` (principal) e `11145013` (dívida ativa)
+  - classificador legado observado em parte da série: `11180211` e `11180213`
+  - monitoramento preventivo recomendado também para multas e juros de ambos os conjuntos
+    (`11145015` a `11145018` e `11180215` a `11180218`)
+
+**Implicação metodológica:**
+O caminho mais limpo para o proxy estadual não é “qualquer linha com ICMS na MSC”, e sim a
+receita **realizada** do ICMS nas naturezas detalhadas da série `1114501x`.
+
+**Ponto de atenção já identificado:**
+Há quebra de classificação e/ou comportamento contábil na série histórica. A rota limpa de
+extração foi validada, mas a harmonização completa de `2020–presente` ainda exige tratamento da
+transição entre códigos legados (`1118021x`) e códigos novos (`1114501x`), com atenção especial a
+2022.
+
+Na primeira execução exploratória do script, a cobertura limpa obtida foi de **59 observações
+mensais**, de `2020-01` a `2026-02`, com lacuna em `2022-01` a `2023-03`.
+
 #### Municípios de Roraima
 
 **Fonte prioritária:** Siconfi / MSC / RREO  
@@ -224,6 +255,10 @@ Esta é a fase recomendada para começar.
   federal completa.
 
 **Resultado esperado:** primeira série trimestral utilizável de `ILP` e `PIB nominal`.
+
+**Status atual desta fase:**
+O componente estadual do MVP já tem rota de extração identificada no Siconfi/MSC. O próximo passo
+é replicar a mesma lógica para o `ISS` municipal agregado dos 15 municípios de Roraima.
 
 ### Fase B — Federal por UF
 
