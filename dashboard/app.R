@@ -279,6 +279,22 @@ taxas_trimestrais_pib <- serie |>
   ) |>
   pivot_longer(-label, names_to = "serie", values_to = "taxa")
 
+niveis_iaet_tab <- indices_long |>
+  filter(serie_id %in% c("iaet", "agro", "aapp", "industria", "servicos")) |>
+  select(periodo, ano, label, serie, nivel = nsa)
+
+niveis_pib_tab <- serie |>
+  transmute(
+    periodo,
+    ano,
+    label,
+    `VAB nominal` = vab_nominal_mi,
+    `Impostos sobre produtos (ILP)` = ilp_nominal_mi,
+    `PIB nominal` = pib_nominal_mi
+  ) |>
+  pivot_longer(c(`VAB nominal`, `Impostos sobre produtos (ILP)`, `PIB nominal`),
+               names_to = "serie", values_to = "nivel")
+
 # ---------------------------------------------------------------------------
 # 3. PALETA
 # ---------------------------------------------------------------------------
@@ -559,16 +575,16 @@ ui <- page_navbar(
   ),
 
   nav_panel(
-    title = "Taxas IAET",
+    title = "IAET em nivel",
     icon = icon("chart-column"),
     layout_sidebar(
       sidebar = sidebar(
         width = 320,
         radioButtons(
           "modo_taxas_iaet_tab",
-          "Visualizacao",
+          "Crescimento real no grafico inferior",
           choices = c(
-            "Anual" = "anual",
+            "Interanual" = "anual",
             "Trimestral" = "trimestral"
           ),
           selected = "anual"
@@ -580,27 +596,32 @@ ui <- page_navbar(
           value = c(1L, nrow(serie)),
           step = 1L, ticks = FALSE
         ),
-        helpText("Na visualizacao anual, o grafico mostra apenas os anos e suas taxas de crescimento.")
+        helpText("Acima aparecem os indices em nivel. Abaixo, o crescimento real do IAET e dos componentes.")
+      ),
+      card(
+        full_screen = TRUE,
+        card_header("Indices em nivel"),
+        card_body(plotlyOutput("grafico_niveis_iaet_tab", height = "320px"))
       ),
       card(
         full_screen = TRUE,
         card_header(textOutput("titulo_taxas_iaet_tab")),
-        card_body(plotlyOutput("grafico_taxas_anuais_iaet", height = "520px"))
+        card_body(plotlyOutput("grafico_taxas_anuais_iaet", height = "320px"))
       )
     )
   ),
 
   nav_panel(
-    title = "Taxas PIB",
+    title = "PIB nominal e crescimento real",
     icon = icon("percent"),
     layout_sidebar(
       sidebar = sidebar(
         width = 320,
         radioButtons(
           "modo_taxas_pib_tab",
-          "Visualizacao",
+          "Crescimento real no grafico inferior",
           choices = c(
-            "Anual" = "anual",
+            "Interanual" = "anual",
             "Trimestral" = "trimestral"
           ),
           selected = "anual"
@@ -612,12 +633,17 @@ ui <- page_navbar(
           value = c(1L, nrow(serie)),
           step = 1L, ticks = FALSE
         ),
-        helpText("Na visualizacao anual, o grafico condensa as series para o total de cada ano.")
+        helpText("Acima aparecem os valores nominais em nivel. Abaixo, o crescimento real da atividade medido pelo IAET-RR.")
+      ),
+      card(
+        full_screen = TRUE,
+        card_header("Valores nominais em nivel"),
+        card_body(plotlyOutput("grafico_niveis_pib_tab", height = "320px"))
       ),
       card(
         full_screen = TRUE,
         card_header(textOutput("titulo_taxas_pib_tab")),
-        card_body(plotlyOutput("grafico_taxas_anuais_pib", height = "520px"))
+        card_body(plotlyOutput("grafico_taxas_anuais_pib", height = "320px"))
       )
     )
   ),
@@ -797,27 +823,28 @@ server <- function(input, output, session) {
   dados_taxas_iaet_tab <- reactive({
     periodos <- faixa_df("range_taxas_iaet_tab")$periodo
 
-    if (identical(input$modo_taxas_iaet_tab, "anual")) {
-      anos_validos <- sort(unique(serie$ano[serie$periodo %in% periodos]))
-      taxas_anuais_iaet |>
-        filter(ano %in% anos_validos)
-    } else {
-      taxas_trimestrais_iaet |>
-        filter(label %in% serie$label[serie$periodo %in% periodos])
-    }
+    taxas_trimestrais_iaet |>
+      filter(label %in% serie$label[serie$periodo %in% periodos])
   })
 
   dados_taxas_pib_tab <- reactive({
     periodos <- faixa_df("range_taxas_pib_tab")$periodo
 
-    if (identical(input$modo_taxas_pib_tab, "anual")) {
-      anos_validos <- sort(unique(serie$ano[serie$periodo %in% periodos]))
-      taxas_anuais_pib |>
-        filter(ano %in% anos_validos)
-    } else {
-      taxas_trimestrais_pib |>
-        filter(label %in% serie$label[serie$periodo %in% periodos])
-    }
+    indices_long |>
+      filter(
+        serie_id == "iaet",
+        label %in% serie$label[serie$periodo %in% periodos]
+      )
+  })
+
+  dados_niveis_iaet_tab <- reactive({
+    niveis_iaet_tab |>
+      filter(periodo %in% faixa_df("range_taxas_iaet_tab")$periodo)
+  })
+
+  dados_niveis_pib_tab <- reactive({
+    niveis_pib_tab |>
+      filter(periodo %in% faixa_df("range_taxas_pib_tab")$periodo)
   })
 
   dados_estrutura <- reactive({
@@ -876,17 +903,17 @@ server <- function(input, output, session) {
 
   output$titulo_taxas_iaet_tab <- renderText({
     if (identical(input$modo_taxas_iaet_tab, "anual")) {
-      "IAET e componentes - taxa de crescimento anual"
+      "Crescimento real interanual"
     } else {
-      "IAET e componentes - taxa de crescimento trimestral"
+      "Crescimento real trimestral"
     }
   })
 
   output$titulo_taxas_pib_tab <- renderText({
     if (identical(input$modo_taxas_pib_tab, "anual")) {
-      "VAB, impostos e PIB - taxa de crescimento anual"
+      "Crescimento real interanual da atividade"
     } else {
-      "VAB, impostos e PIB - taxa de crescimento trimestral"
+      "Crescimento real trimestral da atividade"
     }
   })
 
@@ -1138,11 +1165,11 @@ server <- function(input, output, session) {
     cores_taxas_iaet <- c("IAET-RR" = cores$ardosia, cores_setores)
 
     if (identical(input$modo_taxas_iaet_tab, "anual")) {
-      plot_ly(df, x = ~ano, y = ~taxa_anual, color = ~serie,
+      plot_ly(df, x = ~label, y = ~taxa, color = ~serie,
               colors = cores_taxas_iaet, type = "scatter", mode = "lines+markers") |>
         layout(
-          xaxis = list(title = "", dtick = 1),
-          yaxis = list(title = "Taxa de crescimento anual", gridcolor = "#dbe3ec"),
+          xaxis = list(title = "", tickangle = -45),
+          yaxis = list(title = "Crescimento real interanual (%)", gridcolor = "#dbe3ec"),
           hovermode = "x unified",
           legend = layout_legenda(),
           margin = list(b = 70, r = 190),
@@ -1155,7 +1182,7 @@ server <- function(input, output, session) {
               colors = cores_taxas_iaet, type = "scatter", mode = "lines+markers") |>
         layout(
           xaxis = list(title = "", tickangle = -45),
-          yaxis = list(title = "Taxa de crescimento trimestral", gridcolor = "#dbe3ec"),
+          yaxis = list(title = "Crescimento real trimestral (%)", gridcolor = "#dbe3ec"),
           hovermode = "x unified",
           legend = layout_legenda(),
           margin = list(b = 70, r = 190),
@@ -1170,11 +1197,16 @@ server <- function(input, output, session) {
     df <- dados_taxas_pib_tab()
 
     if (identical(input$modo_taxas_pib_tab, "anual")) {
-      plot_ly(df, x = ~ano, y = ~taxa, color = ~serie,
-              colors = cores_pib, type = "scatter", mode = "lines+markers") |>
+      plot_ly(df, x = ~label) |>
+        add_lines(
+          y = ~taxa_crescimento_anual_nsa,
+          name = "IAET-RR",
+          line = list(color = cores$azul, width = 2.6),
+          hovertemplate = "Crescimento real interanual: %{y:.1f}%<extra></extra>"
+        ) |>
         layout(
-          xaxis = list(title = "", dtick = 1),
-          yaxis = list(title = "Taxa de crescimento anual", gridcolor = "#dbe3ec"),
+          xaxis = list(title = "", tickangle = -45),
+          yaxis = list(title = "Crescimento real interanual (%)", gridcolor = "#dbe3ec"),
           hovermode = "x unified",
           legend = layout_legenda(),
           margin = list(b = 70, r = 190),
@@ -1183,11 +1215,16 @@ server <- function(input, output, session) {
           font = list(family = "Segoe UI")
         )
     } else {
-      plot_ly(df, x = ~label, y = ~taxa, color = ~serie,
-              colors = cores_pib, type = "scatter", mode = "lines+markers") |>
+      plot_ly(df, x = ~label) |>
+        add_lines(
+          y = ~taxa_crescimento_trimestral_sa,
+          name = "IAET-RR",
+          line = list(color = cores$dourado, width = 2.6),
+          hovertemplate = "Crescimento real trimestral: %{y:.1f}%<extra></extra>"
+        ) |>
         layout(
           xaxis = list(title = "", tickangle = -45),
-          yaxis = list(title = "Taxa de crescimento trimestral", gridcolor = "#dbe3ec"),
+          yaxis = list(title = "Crescimento real trimestral (%)", gridcolor = "#dbe3ec"),
           hovermode = "x unified",
           legend = layout_legenda(),
           margin = list(b = 70, r = 190),
@@ -1196,6 +1233,41 @@ server <- function(input, output, session) {
           font = list(family = "Segoe UI")
         )
     }
+  })
+
+  output$grafico_niveis_iaet_tab <- renderPlotly({
+    df <- dados_niveis_iaet_tab()
+    cores_niveis_iaet <- c("IAET-RR" = cores$ardosia, cores_setores)
+
+    plot_ly(df, x = ~label, y = ~nivel, color = ~serie,
+            colors = cores_niveis_iaet, type = "scatter", mode = "lines+markers") |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Indice em nivel (base 2020 = 100)", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = layout_legenda(),
+        margin = list(b = 70, r = 190),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI")
+      )
+  })
+
+  output$grafico_niveis_pib_tab <- renderPlotly({
+    df <- dados_niveis_pib_tab()
+
+    plot_ly(df, x = ~label, y = ~nivel, color = ~serie,
+            colors = cores_pib, type = "scatter", mode = "lines+markers") |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "R$ milhoes", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = layout_legenda(),
+        margin = list(b = 70, r = 190),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI")
+      )
   })
 
   output$grafico_pesos <- renderPlotly({

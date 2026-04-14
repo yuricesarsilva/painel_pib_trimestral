@@ -1773,3 +1773,47 @@ especialmente nas abas de taxas e na aba `Sobre`.
 - o único aviso residual continuou sendo o cache local do `sass`, sem bloquear a montagem.
 
 *Última atualização: 14 de abril de 2026 — dashboard refinado com alternância anual/trimestral, legendas reposicionadas e aba Sobre interativa*
+
+---
+
+### Abril de 2026 — Ajuste conceitual das abas finais do dashboard
+
+**O que foi ajustado:**
+
+Houve uma correção conceitual nas duas abas finais do painel. A crítica central era que elas estavam
+nomeadas como abas de `taxas`, mas a leitura desejada passou a ser outra: mostrar primeiro os
+niveis das séries e, abaixo, o crescimento real correspondente.
+
+**Mudanças aplicadas:**
+
+- a aba `Taxas IAET` foi substituída por uma aba de `IAET em nível`;
+- a aba `Taxas PIB` foi substituída por `PIB nominal e crescimento real`;
+- na aba do IAET, o gráfico superior passou a mostrar:
+  - o índice geral;
+  - agropecuária;
+  - administração pública;
+  - indústria;
+  - serviços privados;
+  todos em nível;
+- abaixo, a mesma aba passou a mostrar o crescimento real com alternância entre:
+  - `interanual`;
+  - `trimestral`;
+- na aba do PIB, o gráfico superior passou a mostrar os níveis nominais de:
+  - `VAB nominal`;
+  - `impostos sobre produtos (ILP)`;
+  - `PIB nominal`;
+- abaixo, essa aba passou a mostrar o crescimento real da atividade usando o `IAET-RR`, evitando
+  interpretar o crescimento do bloco nominal como se fosse crescimento real.
+
+**Motivação metodológica:**
+
+O ajuste foi feito para reduzir ambiguidade conceitual no painel. Em especial, a aba do PIB não
+deve sugerir que o crescimento das séries nominais represente crescimento real da economia.
+
+**Validação:**
+
+- o `dashboard/app.R` passou novamente em `parse_ok`;
+- o carregamento completo do app passou em `source_ok`;
+- o único aviso residual continuou sendo o cache local do `sass`.
+
+*Última atualização: 14 de abril de 2026 — abas finais reformuladas para separar níveis nominais e crescimento real*
