@@ -10,14 +10,17 @@ Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Ro
 
 | Componente | Status | Cobertura |
 |---|---|---|
-| Agropecuária (`01_agropecuaria.R`) | ✅ Operacional | 2006T1–2023T4 |
-| Administração Pública (`02_adm_publica.R`) | ✅ Operacional | 2020T1–2023T4 |
+| Agropecuária (`01_agropecuaria.R`) | ✅ Operacional | 2020T1–2025T4 |
+| Administração Pública (`02_adm_publica.R`) | ✅ Operacional | 2020T1–2025T4 |
 | Indústria (`03_industria.R`) | ✅ Operacional | 2020T1–2025T4 |
 | Serviços Privados (`04_servicos.R`) | ✅ Operacional | 2020T1–2025T4 |
 | Índice Geral agregado (`05_agregacao.R`) | ✅ Operacional | 2020T1–2025T4 |
+| Sensibilidade do calendário (`05b_sensibilidade_calendario.R`) | ✅ Operacional | 2020T1–2025T4 |
 | Ajuste sazonal (`05c_ajuste_sazonal.R`) | ✅ Operacional | 2020T1–2025T4 |
+| Validação final (`05d_validacao.R`) | ✅ Operacional | 2020T1–2025T4 |
+| Exportação (`05e_exportacao.R`) | ✅ Operacional | 2020T1–2025T4 |
 | VAB Nominal trimestral (`05f_vab_nominal.R`) | ✅ Operacional | 2020T1–2025T4 |
-| Dashboard interativo | ⬜ Não iniciado | — |
+| Dashboard interativo (`dashboard/app.R`) | ✅ Operacional | — |
 | Nota técnica | ⬜ Não iniciada | — |
 
 **Últimas taxas de crescimento do IAET-RR (real, base 2020 = 100):**
@@ -27,8 +30,8 @@ Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Ro
 | 2021 | +8,2% | +7,2% | +4,2% |
 | 2022 | +10,9% | −1,2% | +2,8% |
 | 2023 | +4,3% | +1,7% | +2,7% |
-| 2024 | +7,3% *(extrapolado)* | +4,1% | +3,7% |
-| 2025 | +6,9% *(extrapolado)* | +1,7% | +2,5% |
+| 2024 | +7,7% *(extrapolado)* | +4,1% | +3,7% |
+| 2025 | +9,2% *(extrapolado)* | +1,7% | +2,5% |
 
 > Os anos 2024–2025 são extrapolados com tendência geométrica dos últimos dois anos de benchmark disponível (CR IBGE 2023). Serão substituídos pelos valores definitivos quando as Contas Regionais 2024 forem publicadas (previsão IBGE: outubro de 2026).
 
@@ -40,7 +43,7 @@ Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Ro
 |---|---|---|
 | 🔴 Alta | Incorporar CR IBGE 2024 quando publicada (out/2026): substituir extrapolações 2024 por dados reais | Publicação IBGE |
 | 🔴 Alta | Obter ICMS por atividade econômica da SEFAZ-RR e incorporar ao bloco Comércio | SEFAZ-RR |
-| 🟡 Média | Construir dashboard interativo (Shiny) com gráficos e download de dados | — |
+| 🟡 Média | Testar responsividade e publicar o dashboard Shiny em ambiente institucional | Infraestrutura SEPLAN/RR ou Shinyapps.io |
 | 🟡 Média | Redigir nota técnica metodológica (`notas/nota_tecnica.qmd`) | — |
 | 🟡 Média | Avaliar correlação IAET-RR × arrecadação tributária total de RR | ICMS anual SEFAZ-RR |
 | 🟢 Baixa | Revisão periódica do calendário de colheita SEADI-RR (sensibilidade alta à soja) | SEADI-RR |
@@ -65,6 +68,10 @@ A metodologia é convergente com a do **Índice de Atividade Econômica Regional
 - Pesos setoriais: participação no VAB nominal de **2020** (ano base), calculados dinamicamente das Contas Regionais IBGE
 - Desagregação trimestral: **Denton-Cholette** (`tempdisagg`) — a média dos quatro trimestres de cada ano reproduz o benchmark anual das Contas Regionais
 - Ajuste sazonal: **X-13ARIMA-SEATS** (`seasonal`)
+
+Nos subblocos, o projeto distingue dois tipos de ponderação:
+- pesos contábeis de agregação entre setores/subsetores, alinhados ao ano-base de 2020 sempre que disponíveis nas Contas Regionais;
+- pesos técnicos entre proxies de um mesmo subsetor, definidos pragmaticamente pela qualidade e disponibilidade dos dados.
 
 ### Benchmark do Denton-Cholette
 

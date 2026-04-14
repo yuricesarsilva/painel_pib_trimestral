@@ -96,6 +96,7 @@
 - [x] **D.3** Pesos Laspeyres 2020 computados dinamicamente; soma weighted average = benchmark (✓)
 - [x] **D.4** Correlação IBCR Norte: pré-reforma corr=-0,74, MAE=14 pp; pós-reforma corr=-0,24, MAE=5,2 pp — melhora significativa (reforma aproxima o índice de um indicador de volume como o IBCR); correlação ainda negativa pois RR tem AAPP=46% com ciclo descolado do Norte
 - [x] **D.5** Relatório de validação regenerado — MAE 8,8 pp vs. VAB nominal é ESPERADO (indica que o índice agora é real, não nominal)
+- [x] **D.6** Ajuste de consistência no bloco de serviços: pesos dos 7 subsetores migrados de shares hardcoded de 2023 para participações nominais dinâmicas de 2020, alinhando o nível interno do bloco ao mesmo ano-base do índice geral
 
 ---
 
@@ -119,6 +120,7 @@
 - [x] **F.4** `logs/fontes_utilizadas.csv` atualizado — adicionados "Especiais volume" e "Deflator implícito"
 - [x] **F.5** Commit em português (realizado em dois commits: B–D e E–F)
 - [x] **F.6** Push para o GitHub
+- [x] **F.7** Documentação complementar atualizada após a consolidação pós-reforma: README, plano, checklist e histórico alinhados ao estado atual; dashboard e pesos internos de serviços registrados
 
 ---
 

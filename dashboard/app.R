@@ -20,7 +20,27 @@ library(openxlsx)
 # trabalho. Execute o app com `setwd()` apontando para a raiz do projeto, ou
 # configure IAET_DATA_DIR como variável de ambiente.
 
-data_dir <- Sys.getenv("IAET_DATA_DIR", unset = file.path("..", "data", "output"))
+resolver_data_dir <- function() {
+  dir_env <- Sys.getenv("IAET_DATA_DIR", unset = "")
+  candidatos <- c(
+    if (nzchar(dir_env)) dir_env else character(0),
+    file.path("data", "output"),
+    file.path("..", "data", "output")
+  )
+
+  for (dir_cand in candidatos) {
+    if (file.exists(file.path(dir_cand, "indice_geral_rr.csv"))) {
+      return(normalizePath(dir_cand, winslash = "/", mustWork = TRUE))
+    }
+  }
+
+  stop(
+    "Diretorio de dados nao encontrado. ",
+    "Configure IAET_DATA_DIR ou execute o app a partir da raiz do projeto."
+  )
+}
+
+data_dir <- resolver_data_dir()
 
 arq_geral  <- file.path(data_dir, "indice_geral_rr.csv")
 arq_sa     <- file.path(data_dir, "indice_geral_rr_sa.csv")
@@ -133,8 +153,8 @@ ui <- page_navbar(
     version = 5,
     primary  = "#14346A",
     secondary = "#C89114",
-    base_font = font_google("Source Sans 3"),
-    heading_font = font_google("Source Sans 3", wght = 600)
+    base_font = font_collection("Segoe UI", "Arial", "sans-serif"),
+    heading_font = font_collection("Segoe UI", "Arial", "sans-serif")
   ),
   navbar_options = navbar_options(bg = "#14346A", inverse = TRUE),
 

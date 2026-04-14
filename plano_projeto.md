@@ -559,12 +559,20 @@ com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 
 - Outros serviços: CAGED I + M+N + P+Q, pesos dinâmicos por estoque de emprego 2020 — Denton
 - Informação e comunicação: CAGED J — Denton vs. CR Info/Com
 - Extrativas (0,05%): interpolação linear CR (sem proxy específico)
-- Composto final: Laspeyres com pesos % VAB 2023 (CR IBGE)
+- Composto final: Laspeyres com pesos dos subsetores calculados a partir do VAB nominal de 2020
+  (ano-base do índice geral), preservando coerência com a base do sistema
 
 **Resultado:**
 - `data/output/indice_servicos.csv` — 24 trimestres (2020T1–2025T4, base 2020=100)
 - Variações anuais: 2021 +19,0% / 2022 +7,7% / 2023 +12,0% / 2024 +11,8% / 2025 +10,8%
 - Denton âncora exatamente os 4 anos com benchmark CR (2020–2023)
+
+**Nota metodológica sobre pesos internos:**
+O bloco de serviços agora usa pesos dos subsetores derivados dinamicamente das Contas Regionais de
+2020, alinhando o nível interno do bloco ao mesmo ano-base Laspeyres do índice geral. Os pesos de
+composição entre proxies dentro de cada subsetor (por exemplo, 67/33 no Comércio ou 40/30/30 em
+Transportes) continuam sendo pesos técnicos, definidos pela qualidade e disponibilidade das fontes,
+e não pesos contábeis das Contas Regionais.
 
 ### Fase 5 — Agregação, ajuste sazonal e publicação
 
@@ -573,14 +581,14 @@ com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 
 **Script**: `R/05_agregacao.R`
 **Saída**: `data/output/indice_geral_rr.csv` (24 obs., 2020T1–2025T4, base 2020=100)
 
-**Pesos setoriais (VAB 2023, CR IBGE):**
+**Pesos setoriais efetivos do índice (Laspeyres, base 2020):**
 
-| Bloco | Pesos VAB 2023 |
+| Bloco | Peso efetivo 2020 |
 |---|---|
-| Agropecuária | 8,87% |
-| Administração Pública | 46,21% |
-| Indústria (SIUP + Const. + Transf.) | 11,60% |
-| Serviços Privados | 33,32% |
+| Agropecuária | 6,89% |
+| Administração Pública | 45,01% |
+| Indústria (SIUP + Const. + Transf.) | 11,63% |
+| Serviços Privados | 36,46% |
 
 **Tratamento de AAPP e Agropecuária para 2024–2025:**
 Os índices de AAPP e Agropecuária têm benchmark CR apenas até 2023 (CR publicado out/2025).
@@ -590,20 +598,44 @@ Para 2024–2025, o script extrapola com tendência geométrica do bieênio 2022
 
 Atualizar quando CR 2024 for publicado (previsão IBGE: out/2026).
 
-**Ancoragem Denton-Cholette:** benchmark = VAB total anual CR IBGE (2020–2023).
-Fator de ajuste no último benchmark (2023T4): 0,9888.
+**Ancoragem Denton-Cholette:** benchmark = índice de volume total de RR das Contas Regionais
+(série real agregada a partir de `contas_regionais_RR_volume.csv` com pesos nominais de 2020).
 
 **Variações anuais do índice geral (média anual, base 2020=100):**
 
 | Ano | Variação | Tipo |
 |---|---|---|
-| 2021 | +12,3% | Ancorado (CR) |
-| 2022 | +17,2% | Ancorado (CR) |
-| 2023 | +20,3% | Ancorado (CR) |
-| 2024 | +21,7% | Extrapolado |
-| 2025 | +15,7% | Extrapolado |
+| 2021 | +8,2% | Ancorado (CR) |
+| 2022 | +10,9% | Ancorado (CR) |
+| 2023 | +4,3% | Ancorado (CR) |
+| 2024 | +7,7% | Extrapolado |
+| 2025 | +9,2% | Extrapolado |
 
-**Fases 5.2–5.7** (ajuste sazonal, sensibilidade, exportação, dashboard, nota técnica): a iniciar.
+**Fase 5.2 — Sensibilidade do calendário** ✅  
+Script: `R/05b_sensibilidade_calendario.R`. Teste A/B/C executado; as médias anuais permanecem
+idênticas por construção do Denton, mas a sazonalidade intra-anual varia muito. A versão
+SEADI-RR foi mantida como padrão de produção.
+
+**Fase 5.3 — Ajuste sazonal** ✅  
+Script: `R/05c_ajuste_sazonal.R`. X-13ARIMA-SEATS aplicado ao índice geral e aos quatro blocos
+setoriais. Saídas: `indice_geral_rr_sa.csv` e `fatores_sazonais.csv`.
+
+**Fase 5.4 — Validação final** ✅  
+Script: `R/05d_validacao.R`. Validação contra Contas Regionais, IBC-Br, IBCR Norte,
+comportamento na COVID e consistência interna.
+
+**Fase 5.5 — Exportação** ✅  
+Script: `R/05e_exportacao.R`. Gera `IAET_RR_series.xlsx` e os CSVs de publicação.
+
+**Fase 5.6 — Dashboard** ✅  
+Script: `dashboard/app.R`. Dashboard Shiny implementado, com abas para índice geral,
+componentes, VAB nominal, dados e metadados. O app aceita execução pela raiz do projeto ou pela
+pasta `dashboard/`, com resolução robusta do diretório `data/output`, e usa apenas fontes locais
+no tema para evitar dependência de rede na inicialização. Pendências remanescentes: testes de
+responsividade e publicação.
+
+**Fase 5.7 — Nota técnica** ⏳  
+Ainda não iniciada. É a principal pendência documental do projeto.
 
 ---
 
@@ -624,11 +656,16 @@ PIB Trimestral - Projeto 2026/
 │   ├── 02_adm_publica.R         # Fase 2: SIAPE + folha estadual e municipal
 │   ├── 03_industria.R           # Fase 3: SIUP, Construção, Transformação
 │   ├── 04_servicos.R            # Fase 4: Comércio, Transportes, Serviços
-│   └── 05_agregacao.R           # Fase 5: índice geral agregado
+│   ├── 05_agregacao.R           # Fase 5.1: índice geral agregado
+│   ├── 05b_sensibilidade_calendario.R  # Fase 5.2: teste A/B/C do calendário agrícola
+│   ├── 05c_ajuste_sazonal.R     # Fase 5.3: X-13ARIMA-SEATS
+│   ├── 05d_validacao.R          # Fase 5.4: validação final
+│   ├── 05e_exportacao.R         # Fase 5.5: Excel e CSVs de publicação
+│   └── 05f_vab_nominal.R        # Fase 5.6 complementar: VAB nominal trimestral
 ├── dashboard/
 │   └── app.R
 ├── notas/
-│   └── nota_tecnica.qmd
+│   └──  # reservado para a futura nota_tecnica.qmd
 └── Base metodológica/
 ```
 

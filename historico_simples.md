@@ -1228,4 +1228,93 @@ A diferença entre antes e depois corresponde ao deflator implícito setorial de
 
 **Novos arquivos:** `R/05f_vab_nominal.R`, `data/processed/contas_regionais_RR_volume.csv`, `data/processed/contas_regionais_RR_deflator.csv`, `data/output/indice_nominal_rr.csv`, aba "VAB Nominal" no Excel
 
-*Última atualização: 13 de abril de 2026 — Reforma metodológica concluída: ancoragem Denton ao VAB real; VAB nominal trimestral adicionado como produto derivado*
+---
+
+### Abril de 2026 — Documentação consolidada na versão atual do projeto
+
+**O que foi consolidado:**
+
+Os arquivos de documentação foram alinhados ao estado real do projeto após a reforma metodológica.
+Isso era necessário porque parte dos textos ainda descrevia a Fase 5 como "a iniciar", embora o
+projeto já estivesse com sensibilidade, ajuste sazonal, validação, exportação, dashboard e VAB
+nominal implementados.
+
+**Estado atual correto do projeto:**
+
+- o pipeline completo está operacional de `00` a `05f`;
+- o índice geral cobre **2020T1 a 2025T4** em base 2020 = 100;
+- o crescimento anual real consolidado do IAET-RR está em **+8,2% (2021)**,
+  **+10,9% (2022)**, **+4,3% (2023)**, **+7,7% (2024, extrapolado)** e
+  **+9,2% (2025, extrapolado)**;
+- o dashboard Shiny já está funcional localmente e consome os arquivos finais de `data/output/`;
+- o principal item ainda pendente é a **nota técnica** em `notas/nota_tecnica.qmd`,
+  além dos testes finais de responsividade e da publicação do dashboard.
+
+**Arquivos documentais alinhados:**
+- `README.md`
+- `plano_projeto.md`
+- `checklist.md`
+- `historico_simples.md`
+
+---
+
+### Abril de 2026 — Ajuste de consistência metodológica nos pesos do bloco de serviços
+
+**O que foi feito:**
+
+Atendemos a uma crítica metodológica correta sobre heterogeneidade de bases de ponderação dentro do
+sistema. O índice geral já estava em formato Laspeyres base 2020 no topo, mas o bloco interno de
+serviços ainda agregava seus subsetores com pesos hardcoded de 2023.
+
+**A correção:**
+
+O script `R/04_servicos.R` passou a calcular dinamicamente os pesos dos sete subsetores do bloco
+de serviços com base no **VAB nominal de 2020** das Contas Regionais, alinhando o bloco interno ao
+mesmo ano-base do índice geral.
+
+**O que mudou conceitualmente:**
+
+- o topo do sistema continua sendo um Laspeyres base 2020;
+- o bloco de serviços agora também usa base 2020 na agregação entre subsetores;
+- os pesos entre proxies dentro de cada subsetor continuam sendo pesos técnicos e pragmáticos
+  (por exemplo, energia + emprego no comércio), porque não são pesos contábeis, e sim escolhas
+  de engenharia do indicador;
+- a agropecuária continua usando pesos médios plurianuais de VBP nas culturas, o que foi mantido
+  por estabilidade estatística e por refletir melhor a composição recente das lavouras.
+
+**Resultado institucional:**
+
+A crítica deixou de atingir o bloco de serviços. A única assimetria remanescente é a da
+agropecuária, que continua sendo uma escolha metodológica deliberada e defensável, desde que
+explicitada na nota técnica.
+
+---
+
+### Abril de 2026 — Correção operacional do dashboard Shiny
+
+**O que foi feito:**
+
+Corrigimos dois pontos no `dashboard/app.R` para tornar a abertura do painel mais robusta no uso
+real do projeto.
+
+**Correção 1 — caminho dos dados:**
+
+O app antes assumia implicitamente um único diretório de execução e montava o caminho dos dados de
+forma rígida. Isso podia falhar quando o painel era aberto a partir da raiz do projeto. O código
+passou a resolver `data/output` de forma mais robusta, aceitando:
+
+- execução pela raiz do projeto;
+- execução pela pasta `dashboard/`;
+- definição explícita por variável de ambiente `IAET_DATA_DIR`.
+
+**Correção 2 — dependência de fonte online:**
+
+O tema usava `font_google("Source Sans 3")`. Em ambientes com rede restrita, isso pode atrasar ou
+bloquear a inicialização do app. A fonte foi substituída por uma pilha local (`Segoe UI`, `Arial`,
+`sans-serif`), eliminando a dependência externa.
+
+**Resultado prático:**
+
+Depois dessas correções, o painel voltou a abrir normalmente no RStudio do projeto.
+
+*Última atualização: 13 de abril de 2026 — documentação alinhada ao estado atual do projeto; pesos internos de serviços ajustados para base 2020; dashboard corrigido para abrir localmente; nota técnica permanece pendente*

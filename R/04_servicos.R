@@ -115,18 +115,6 @@ peso_diesel_anp  <- 0.30
 peso_concessoes  <- 0.70
 peso_depositos   <- 0.30
 
-# Pesos setoriais para o índice composto de serviços (% VAB 2023, CR IBGE)
-# Fonte: Contas Regionais IBGE — RR 2023 (out/2025)
-pesos_setoriais <- c(
-  comercio     = 12.25,
-  transportes  =  1.92,
-  financeiro   =  2.78,
-  imobiliario  =  7.68,
-  outros_serv  =  7.63,
-  info_com     =  1.01,
-  extrativas   =  0.05
-)
-
 # Benchmark: anos com Contas Regionais disponíveis
 anos_cr <- 2020:2023
 
@@ -959,6 +947,35 @@ message(sprintf("Comércio: %d trimestres (energia %.0f%% + CAGED G %.0f%% — s
 cr_all  <- read_csv(arq_cr_serie,  show_col_types = FALSE)
 vol_all <- read_csv(arq_vol_serie, show_col_types = FALSE)
 
+# Pesos setoriais do bloco de serviços: participações no VAB nominal de 2020.
+# Isso alinha o bloco interno ao mesmo ano-base Laspeyres usado no índice geral.
+cr_serv_2020 <- cr_all |>
+  filter(ano == 2020)
+
+somar_vab <- function(padrao, nome) {
+  val <- sum(cr_serv_2020$vab_mi[grepl(padrao, cr_serv_2020$atividade, ignore.case = TRUE)],
+             na.rm = TRUE)
+  if (is.na(val) || val == 0) {
+    stop(sprintf("Peso setorial '%s' não encontrado nas Contas Regionais 2020.", nome))
+  }
+  val
+}
+
+pesos_setoriais <- c(
+  comercio    = somar_vab("Com.rcio e repara", "comercio"),
+  transportes = somar_vab("Transporte, armazenagem e correio", "transportes"),
+  financeiro  = somar_vab("Atividades financeiras", "financeiro"),
+  imobiliario = somar_vab("Atividades imobili", "imobiliario"),
+  outros_serv = somar_vab("^Outros servi", "outros_serv"),
+  info_com    = somar_vab("Informa", "info_com"),
+  extrativas  = somar_vab("extrativas", "extrativas")
+)
+
+message("Pesos do bloco de serviços (base 2020, % do VAB total RR):")
+for (nm in names(pesos_setoriais)) {
+  message(sprintf("  %-12s %.2f%%", nm, pesos_setoriais[[nm]]))
+}
+
 bench_comercio <- vol_all |>
   filter(grepl("Com.rcio", atividade, ignore.case = TRUE),
          ano %in% anos_cr) |>
@@ -1554,7 +1571,7 @@ message(sprintf("Extrativas — %d trimestres (interpolação linear CR)", nrow(
 
 # ============================================================
 # ETAPA 4.15 — ÍNDICE COMPOSTO DE SERVIÇOS (Laspeyres setorial)
-# Agrega os 7 subsetores com pesos % VAB 2023 (Contas Regionais)
+# Agrega os 7 subsetores com pesos de 2020 (ano-base do índice)
 # Trimestres disponíveis: 2020T1–(ano_atual)T4
 # ============================================================
 
@@ -1603,7 +1620,7 @@ indice_wide <- grade_trim |>
   left_join(select(extrativas_trim_completo, ano, trimestre, indice_extrativas),
             by = c("ano", "trimestre"))
 
-# Calcular índice composto ponderado (Laspeyres com pesos VAB 2023)
+# Calcular índice composto ponderado (Laspeyres com pesos VAB 2020)
 # Pesos normalizados apenas com o que está disponível em cada trimestre
 indice_wide <- indice_wide |>
   rowwise() |>
@@ -1618,7 +1635,7 @@ indice_wide <- indice_wide |>
         indice_infocom,
         indice_extrativas
       )
-      pesos <- pesos_setoriais  # c(comercio, transportes, financeiro, imobiliario, outros_serv, info_com, extrativas)
+      pesos <- pesos_setoriais
       ok    <- !is.na(vals)
       # Exigir que pelo menos um setor de proxy ativa (Comércio, Outros ou InfoCom)
       # tenha dado real — evitar composite baseado só em tendência extrapolada

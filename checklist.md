@@ -312,7 +312,7 @@
 
 ### 4.7 Índice composto de serviços privados
 - [x] Script `R/04_servicos.R` criado e revisado
-- [x] Laspeyres setorial com pesos % VAB 2023 (7 subsetores)
+- [x] Laspeyres setorial com pesos dos subsetores derivados do VAB 2020 (7 subsetores)
 - [x] Coluna de saída: `indice_servicos` + subíndices por setor
 - [x] **Executar** `R/04_servicos.R` e verificar outputs
 - [x] Validar: comparar variações anuais com Contas Regionais IBGE (2020–2023)
@@ -420,6 +420,9 @@
 - [x] Adicionar botão de download (CSV e XLSX) — com metadados e estilo SEPLAN no XLSX
 - [x] Aba "VAB Nominal" com gráfico de barras (benchmark vs. extrapolação) + variação anual + nota metodológica
 - [x] Aba "Sobre" com pesos setoriais (pizza interativa) + metadados do projeto
+- [x] App operacional localmente com leitura dos outputs em `data/output/`
+- [x] Corrigir inicialização do app para aceitar execução pela raiz do projeto e pela pasta `dashboard/`
+- [x] Remover dependência de `font_google()` no tema para evitar bloqueios de inicialização sem rede
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 
@@ -464,7 +467,7 @@
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | 🟢 Concluída |
-| 5 | Agregação e publicação | 🟡 Em andamento (5.1 concluída; 5.2–5.7 a iniciar) |
+| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada
