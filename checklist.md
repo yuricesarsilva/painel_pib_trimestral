@@ -433,6 +433,7 @@
 - [x] Mover legendas para fora da área útil dos gráficos
 - [x] Tornar a aba `Sobre` interativa com escolha do ano da estrutura setorial e do período de referência
 - [x] Reformular as abas finais para mostrar níveis nas séries e crescimento real abaixo, evitando leitura nominal indevida das taxas
+- [x] Corrigir títulos dinâmicos das abas finais e converter gráficos de nível para colunas empilhadas
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 

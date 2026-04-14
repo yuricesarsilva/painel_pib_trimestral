@@ -1817,3 +1817,35 @@ deve sugerir que o crescimento das séries nominais represente crescimento real 
 - o único aviso residual continuou sendo o cache local do `sass`.
 
 *Última atualização: 14 de abril de 2026 — abas finais reformuladas para separar níveis nominais e crescimento real*
+
+---
+
+### Abril de 2026 — Correção visual e explicativa das abas finais
+
+**O que foi ajustado:**
+
+Depois da reforma das abas finais do dashboard, surgiu um problema visual em que os títulos dos
+cards passavam a exibir `[object Object]`. Também havia uma descrição simplificada demais do
+`VAB nominal`, que podia induzir leitura errada da metodologia.
+
+**Correções aplicadas:**
+
+- os títulos dinâmicos dos cards passaram de `textOutput()` para `uiOutput()`, eliminando o
+  retorno visual indevido de `[object Object]`;
+- o texto metodológico do `VAB nominal` foi reescrito para deixar claro que a série:
+  - parte do `IAET-RR` em volume;
+  - usa o deflator implícito anual das Contas Regionais;
+  - desagrega o deflator para frequência trimestral com IPCA via Denton-Cholette;
+- os gráficos de nível das duas abas finais passaram a usar colunas empilhadas:
+  - na aba `IAET em nível`, os componentes aparecem em colunas empilhadas e o `IAET-RR` permanece
+    como linha de referência;
+  - na aba `PIB nominal e crescimento real`, `VAB nominal`, `ILP` e `PIB nominal` aparecem como
+    colunas empilhadas.
+
+**Validação:**
+
+- o `dashboard/app.R` voltou a passar em `parse_ok`;
+- o carregamento completo do app passou em `source_ok`;
+- o único aviso residual permaneceu restrito ao cache local do `sass`.
+
+*Última atualização: 14 de abril de 2026 — corrigido bug visual dos títulos e convertidos gráficos de nível para colunas empilhadas*
