@@ -1583,4 +1583,31 @@ Esse script baixa os dados mês a mês, filtra o ICMS corretamente e salva duas 
 - `data/raw/icms_rr_siconfi_mensal_detalhado.csv`
 - `data/raw/icms_rr_siconfi_mensal_total.csv`
 
-*Última atualização: 13 de abril de 2026 — documentação alinhada ao estado atual do projeto; pesos internos de serviços ajustados para base 2020; dashboard corrigido para abrir localmente; frente de impostos e PIB nominal planejada; rota do ICMS estadual no Siconfi identificada; nota técnica permanece pendente*
+---
+
+### Abril de 2026 — Limpeza da `.git` local e ajuste do `.gitignore`
+
+**O que foi feito:**
+
+Foi identificada uma anomalia grave no repositório local: a pasta `.git` havia crescido para
+quase 7 GB porque o Git tinha armazenado internamente blobs gigantes correspondentes a bases
+brutas locais, especialmente arquivos em `bases_baixadas_manualmente/`.
+
+**Como foi resolvido:**
+
+- a `.git` local inflada foi substituída por uma cópia limpa obtida a partir de um clone novo
+  do GitHub;
+- a `.git` voltou a ter tamanho normal, cerca de 8 MB;
+- o índice foi normalizado para eliminar falsos "arquivos modificados";
+- o `.gitignore` foi atualizado para ignorar explicitamente:
+  - `bases_baixadas_manualmente/`
+  - `teste_calendario_colheita_censo_agro_2006/`
+  - `.claude/`
+
+**Resultado prático:**
+
+O Git deixou de ser a fonte do volume excessivo no OneDrive. A única pasta ainda muito pesada no
+projeto local é `bases_baixadas_manualmente/`, que permanece no projeto por decisão deliberada,
+mas agora sem risco de ser reingerida acidentalmente pelo Git.
+
+*Última atualização: 14 de abril de 2026 — `.git` local saneada, `.gitignore` reforçado para bases e pastas locais, frente de impostos planejada e repositório estabilizado*

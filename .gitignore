@@ -27,6 +27,15 @@ dashboard/rsconnect/
 Thumbs.db
 desktop.ini
 
+# Bases locais baixadas manualmente
+bases_baixadas_manualmente/
+
+# Laboratórios e testes locais
+teste_calendario_colheita_censo_agro_2006/
+
+# Configurações locais de assistentes
+.claude/
+
 # Temporários
 *.tmp
 *.log
