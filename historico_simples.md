@@ -1702,4 +1702,38 @@ painel, que é acompanhar o `IAET` e comparar as taxas de crescimento.
 - apareceu apenas um aviso de cache do `sass` no ambiente local do terminal, mas sem impedir a
   montagem do app.
 
-*Última atualização: 14 de abril de 2026 — dashboard reformado com foco no IAET, exploração por componentes e nova aba de PIB nominal*
+---
+
+### Abril de 2026 — Segunda rodada de refinamento do dashboard
+
+**O que foi ajustado:**
+
+Depois da primeira reforma do painel, fizemos uma segunda rodada focada em linguagem, leitura e
+priorização analítica.
+
+**Melhorias aplicadas:**
+
+- deixamos de usar siglas como `NSA` e `SA` na interface visível do usuário;
+- os gráficos e tabelas passaram a falar em:
+  - `sem ajuste sazonal`;
+  - `dessazonalizado`;
+  - `taxa de crescimento anual (t/t-4)`;
+  - `taxa de crescimento trimestral`;
+- os quadrinhos do topo passaram a responder ao período escolhido pelo usuário em cada aba, em vez
+  de ficarem presos ao último trimestre da base completa;
+- a aba de componentes deixou de destacar o nível em card próprio e passou a priorizar as taxas;
+- foram criadas abas específicas para gráficos de **taxas anuais**:
+  - uma para `IAET e componentes`;
+  - outra para `VAB, impostos e PIB`.
+
+**Ajuste visual importante:**
+
+As legendas dos gráficos foram rebaixadas e receberam margem inferior maior, para reduzir o risco
+de cobrir informação da própria área útil do gráfico.
+
+**Validação:**
+
+O `dashboard/app.R` voltou a passar tanto na checagem de sintaxe quanto no carregamento completo
+do script.
+
+*Última atualização: 14 de abril de 2026 — dashboard refinado com linguagem mais clara, cards dependentes do período selecionado e novas abas de taxas anuais*

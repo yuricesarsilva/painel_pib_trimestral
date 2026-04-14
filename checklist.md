@@ -427,6 +427,8 @@
 - [x] Corrigir inicialização do app para aceitar execução pela raiz do projeto e pela pasta `dashboard/`
 - [x] Remover dependência de `font_google()` no tema para evitar bloqueios de inicialização sem rede
 - [x] Reorganizar a navegação do app para priorizar o IAET e permitir escolha de séries/componentes
+- [x] Substituir linguagem técnica do painel por rótulos mais legíveis (`sem ajuste sazonal`, `dessazonalizado`, `taxa de crescimento anual`)
+- [x] Criar abas específicas de taxas anuais para o bloco IAET e para o bloco PIB
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 

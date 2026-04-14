@@ -4,7 +4,7 @@
 # Autor   : Yuri Cesar de Lima e Silva (DIEAS/SEPLAN-RR)
 # Data    : 2026-04-14
 # Descricao: Dashboard Shiny interativo do IAET-RR, com foco no
-#            indice geral, componentes NSA/SA e bloco do PIB nominal.
+#            indice geral, componentes ajustados e bloco do PIB nominal.
 # Entrada : arquivos em data/output/
 # Saida   : aplicacao Shiny
 # Depende : shiny, bslib, dplyr, tidyr, readr, plotly, DT, openxlsx
@@ -142,26 +142,26 @@ indices_long <- bind_rows(lapply(seq_len(nrow(catalogo_series)), function(i) {
     sa = base_painel[[catalogo_series$col_sa[i]]]
   ) |>
     mutate(
-      var_interanual_nsa = calc_var(nsa, 4),
-      var_interanual_sa  = calc_var(sa, 4),
-      var_margem_nsa     = calc_var(nsa, 1),
-      var_margem_sa      = calc_var(sa, 1)
+      taxa_crescimento_anual_nsa = calc_var(nsa, 4),
+      taxa_crescimento_anual_sa  = calc_var(sa, 4),
+      taxa_crescimento_trimestral_nsa = calc_var(nsa, 1),
+      taxa_crescimento_trimestral_sa  = calc_var(sa, 1)
     )
 }))
 
 contrib <- indices_long |>
   filter(serie_id != "iaet") |>
-  mutate(contribuicao = var_interanual_nsa * peso_2020 / 100)
+  mutate(contribuicao = taxa_crescimento_anual_nsa * peso_2020 / 100)
 
 tabela_indices <- indices_long |>
-  select(periodo, serie, nsa, sa, var_interanual_nsa, var_margem_sa, peso_2020, origem) |>
+  select(periodo, serie, nsa, sa, taxa_crescimento_anual_nsa, taxa_crescimento_trimestral_sa, peso_2020, origem) |>
   rename(
     Periodo = periodo,
     Serie = serie,
-    `Indice NSA` = nsa,
-    `Indice SA` = sa,
-    `Var. interanual NSA (%)` = var_interanual_nsa,
-    `Var. margem SA (%)` = var_margem_sa,
+    `Indice sem ajuste sazonal` = nsa,
+    `Indice dessazonalizado` = sa,
+    `Taxa de crescimento anual (t/t-4)` = taxa_crescimento_anual_nsa,
+    `Taxa de crescimento trimestral` = taxa_crescimento_trimestral_sa,
     `Peso 2020 (%)` = peso_2020,
     Origem = origem
   )
@@ -175,8 +175,8 @@ tabela_pib <- serie |>
     `ICMS proxy (R$ mi)` = icms_mi,
     `ILP trimestral (R$ mi)` = ilp_nominal_mi,
     `PIB nominal (R$ mi)` = pib_nominal_mi,
-    `Var. interanual PIB (%)` = calc_var(pib_nominal_mi, 4),
-    `Var. margem PIB (%)` = calc_var(pib_nominal_mi, 1),
+    `Taxa de crescimento anual do PIB (t/t-4)` = calc_var(pib_nominal_mi, 4),
+    `Taxa de crescimento trimestral do PIB` = calc_var(pib_nominal_mi, 1),
     Benchmark = tipo_benchmark
   )
 
@@ -263,38 +263,38 @@ ui <- page_navbar(
           "modo_taxa_iaet",
           "Taxas no grafico inferior",
           choices = c(
-            "Interanual NSA" = "anual",
-            "Margem SA" = "margem",
+            "Taxa de crescimento anual (t/t-4)" = "anual",
+            "Taxa de crescimento trimestral" = "trimestral",
             "Ambas" = "ambas"
           ),
           selected = "ambas"
         ),
-        helpText("Interanual = contra o mesmo trimestre do ano anterior. Margem = contra o trimestre imediatamente anterior.")
+        helpText("O painel trabalha com series trimestrais. A taxa trimestral compara com o trimestre imediatamente anterior.")
       ),
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
-          title = "Ultimo trimestre",
-          value = textOutput("iaet_periodo"),
+          title = "Periodo de referencia",
+          value = textOutput("iaet_periodo_ref"),
           showcase = icon("calendar"),
           theme = "primary"
         ),
         value_box(
-          title = "Variacao interanual",
+          title = "Taxa de crescimento anual (t/t-4)",
           value = textOutput("iaet_var_anual"),
           showcase = icon("arrow-trend-up"),
           theme = value_box_theme(bg = cores$dourado, fg = "white")
         ),
         value_box(
-          title = "Variacao margem SA",
-          value = textOutput("iaet_var_margem"),
+          title = "Taxa de crescimento trimestral",
+          value = textOutput("iaet_var_trimestral"),
           showcase = icon("wave-square"),
           theme = value_box_theme(bg = cores$verde, fg = "white")
         )
       ),
       card(
         full_screen = TRUE,
-        card_header("IAET-RR - indice principal (NSA x SA)"),
+        card_header("IAET-RR - indice principal (sem ajuste sazonal x dessazonalizado)"),
         card_body(plotlyOutput("grafico_iaet_nivel", height = "420px"))
       ),
       card(
@@ -335,30 +335,24 @@ ui <- page_navbar(
         )
       ),
       layout_columns(
-        col_widths = c(3, 3, 3, 3),
+        col_widths = c(4, 4, 4),
         value_box(
-          title = "Nivel NSA",
-          value = textOutput("comp_nivel"),
-          showcase = icon("chart-area"),
+          title = "Periodo de referencia",
+          value = textOutput("comp_periodo_ref"),
+          showcase = icon("calendar"),
           theme = "primary"
         ),
         value_box(
-          title = "Variacao interanual",
+          title = "Taxa de crescimento anual (t/t-4)",
           value = textOutput("comp_var_anual"),
           showcase = icon("arrow-up-right-dots"),
           theme = value_box_theme(bg = cores$dourado, fg = "white")
         ),
         value_box(
-          title = "Variacao margem SA",
-          value = textOutput("comp_var_margem"),
+          title = "Taxa de crescimento trimestral",
+          value = textOutput("comp_var_trimestral"),
           showcase = icon("arrow-right-arrow-left"),
           theme = value_box_theme(bg = cores$verde, fg = "white")
-        ),
-        value_box(
-          title = "Peso no IAET",
-          value = textOutput("comp_peso"),
-          showcase = icon("weight-scale"),
-          theme = value_box_theme(bg = cores$ardosia, fg = "white")
         )
       ),
       card(
@@ -375,7 +369,7 @@ ui <- page_navbar(
         ),
         card(
           full_screen = TRUE,
-          card_header("Contribuicao dos componentes para a variacao interanual do IAET"),
+          card_header(textOutput("titulo_comp_contrib")),
           card_body(plotlyOutput("grafico_contrib", height = "300px"))
         )
       )
@@ -410,8 +404,8 @@ ui <- page_navbar(
           "modo_taxa_pib",
           "Taxa destacada",
           choices = c(
-            "Interanual" = "anual",
-            "Margem" = "margem",
+            "Taxa de crescimento anual (t/t-4)" = "anual",
+            "Taxa de crescimento trimestral" = "trimestral",
             "Ambas" = "ambas"
           ),
           selected = "ambas"
@@ -420,20 +414,20 @@ ui <- page_navbar(
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
-          title = "VAB nominal",
-          value = textOutput("pib_vab_ult"),
-          showcase = icon("building-columns"),
+          title = "Periodo de referencia",
+          value = textOutput("pib_periodo_ref"),
+          showcase = icon("calendar"),
           theme = "primary"
         ),
         value_box(
-          title = "Impostos sobre produtos",
-          value = textOutput("pib_ilp_ult"),
+          title = "Taxa de crescimento anual do PIB (t/t-4)",
+          value = textOutput("pib_var_anual"),
           showcase = icon("receipt"),
           theme = value_box_theme(bg = cores$dourado, fg = "white")
         ),
         value_box(
-          title = "PIB nominal",
-          value = textOutput("pib_total_ult"),
+          title = "Taxa de crescimento trimestral do PIB",
+          value = textOutput("pib_var_trimestral"),
           showcase = icon("sack-dollar"),
           theme = value_box_theme(bg = cores$verde, fg = "white")
         )
@@ -462,6 +456,26 @@ ui <- page_navbar(
           )
         )
       )
+    )
+  ),
+
+  nav_panel(
+    title = "Taxas IAET",
+    icon = icon("chart-column"),
+    card(
+      full_screen = TRUE,
+      card_header("Taxa de crescimento anual (t/t-4) - IAET e componentes"),
+      card_body(plotlyOutput("grafico_taxas_anuais_iaet", height = "520px"))
+    )
+  ),
+
+  nav_panel(
+    title = "Taxas PIB",
+    icon = icon("percent"),
+    card(
+      full_screen = TRUE,
+      card_header("Taxa de crescimento anual (t/t-4) - VAB, impostos e PIB"),
+      card_body(plotlyOutput("grafico_taxas_anuais_pib", height = "520px"))
     )
   ),
 
@@ -514,7 +528,7 @@ ui <- page_navbar(
           tags$ul(
             tags$li("o indice principal e o foco da experiencia;"),
             tags$li("o usuario escolhe a janela de analise e a serie componente que quer ver;"),
-            tags$li("todos os graficos de indices mostram NSA e SA em conjunto;"),
+            tags$li("todos os graficos de indices mostram a serie sem ajuste sazonal contra a dessazonalizada;"),
             tags$li("o bloco PIB aparece em aba propria, com VAB, impostos e PIB.")
           ),
           hr(),
@@ -605,59 +619,62 @@ server <- function(input, output, session) {
   dados_pib_filtrados <- reactive({
     faixa_df("range_pib", serie) |>
       mutate(
+        var_anual_vab = calc_var(vab_nominal_mi, 4),
+        var_trimestral_vab = calc_var(vab_nominal_mi, 1),
+        var_anual_ilp = calc_var(ilp_nominal_mi, 4),
+        var_trimestral_ilp = calc_var(ilp_nominal_mi, 1),
         var_interanual_pib = calc_var(pib_nominal_mi, 4),
-        var_margem_pib = calc_var(pib_nominal_mi, 1)
+        var_trimestral_pib = calc_var(pib_nominal_mi, 1)
       )
   })
 
-  output$iaet_periodo <- renderText({
-    tail(indices_long$label[indices_long$serie_id == "iaet"], 1)
+  output$iaet_periodo_ref <- renderText({
+    tail(dados_iaet()$label, 1)
   })
 
   output$iaet_var_anual <- renderText({
-    df <- indices_long |> filter(serie_id == "iaet")
-    fmt_pct(tail(df$var_interanual_nsa, 1))
+    fmt_pct(tail(dados_iaet()$taxa_crescimento_anual_nsa, 1))
   })
 
-  output$iaet_var_margem <- renderText({
-    df <- indices_long |> filter(serie_id == "iaet")
-    fmt_pct(tail(df$var_margem_sa, 1))
+  output$iaet_var_trimestral <- renderText({
+    fmt_pct(tail(dados_iaet()$taxa_crescimento_trimestral_sa, 1))
   })
 
-  output$comp_nivel <- renderText({
-    fmt_pct(tail(dados_comp()$nsa, 1), digits = 1)
+  output$comp_periodo_ref <- renderText({
+    tail(dados_comp()$label, 1)
   })
 
   output$comp_var_anual <- renderText({
-    fmt_pct(tail(dados_comp()$var_interanual_nsa, 1))
+    fmt_pct(tail(dados_comp()$taxa_crescimento_anual_nsa, 1))
   })
 
-  output$comp_var_margem <- renderText({
-    fmt_pct(tail(dados_comp()$var_margem_sa, 1))
-  })
-
-  output$comp_peso <- renderText({
-    fmt_pct(unique(dados_comp()$peso_2020), digits = 2)
+  output$comp_var_trimestral <- renderText({
+    fmt_pct(tail(dados_comp()$taxa_crescimento_trimestral_sa, 1))
   })
 
   output$titulo_comp_nivel <- renderText({
-    paste0(unique(dados_comp()$serie), " - indice (NSA x SA)")
+    paste0(unique(dados_comp()$serie), " - indice (sem ajuste sazonal x dessazonalizado)")
   })
 
   output$titulo_comp_taxas <- renderText({
     paste0(unique(dados_comp()$serie), " - taxas de crescimento")
   })
 
-  output$pib_vab_ult <- renderText({
-    fmt_bi(tail(serie$vab_nominal_mi, 1))
+  output$titulo_comp_contrib <- renderText({
+    peso_txt <- fmt_pct(unique(dados_comp()$peso_2020), digits = 2)
+    paste0("Contribuicao setorial ao IAET - ", unique(dados_comp()$serie), " (peso 2020: ", peso_txt, ")")
   })
 
-  output$pib_ilp_ult <- renderText({
-    fmt_mi(tail(serie$ilp_nominal_mi, 1))
+  output$pib_periodo_ref <- renderText({
+    tail(dados_pib_filtrados()$label, 1)
   })
 
-  output$pib_total_ult <- renderText({
-    fmt_bi(tail(serie$pib_nominal_mi, 1))
+  output$pib_var_anual <- renderText({
+    fmt_pct(tail(dados_pib_filtrados()$var_interanual_pib, 1))
+  })
+
+  output$pib_var_trimestral <- renderText({
+    fmt_pct(tail(dados_pib_filtrados()$var_trimestral_pib, 1))
   })
 
   output$grafico_iaet_nivel <- renderPlotly({
@@ -666,20 +683,21 @@ server <- function(input, output, session) {
 
     plot_ly(df, x = ~label) |>
       add_lines(
-        y = ~nsa, name = "NSA",
+        y = ~nsa, name = "Sem ajuste sazonal",
         line = list(color = cores$azul, width = 2.6),
-        hovertemplate = "NSA: %{y:.1f}<extra></extra>"
+        hovertemplate = "Sem ajuste sazonal: %{y:.1f}<extra></extra>"
       ) |>
       add_lines(
-        y = ~sa, name = "SA",
+        y = ~sa, name = "Dessazonalizado",
         line = list(color = cores$dourado, width = 2.4, dash = "dash"),
-        hovertemplate = "SA: %{y:.1f}<extra></extra>"
+        hovertemplate = "Dessazonalizado: %{y:.1f}<extra></extra>"
       ) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
         yaxis = list(title = "Indice (base 2020 = 100)", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.18),
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI"),
@@ -706,24 +724,26 @@ server <- function(input, output, session) {
     if (modo %in% c("anual", "ambas")) {
       p <- p |>
         add_bars(
-          y = ~var_interanual_nsa,
-          name = "Interanual NSA",
+          y = ~taxa_crescimento_anual_nsa,
+          name = "Taxa de crescimento anual (t/t-4)",
           marker = list(color = cores$azul_medio),
-          hovertemplate = "Interanual NSA: %{y:.1f}%<extra></extra>"
+          hovertemplate = "Taxa de crescimento anual (t/t-4): %{y:.1f}%<extra></extra>"
         )
     }
 
-    if (modo %in% c("margem", "ambas")) {
+    if (modo %in% c("trimestral", "ambas")) {
       p <- p |>
         add_lines(
-          y = ~var_margem_sa,
-          name = "Margem SA",
+          y = ~taxa_crescimento_trimestral_sa,
+          name = "Taxa de crescimento trimestral",
           line = list(color = cores$dourado, width = 2.4),
-          hovertemplate = "Margem SA: %{y:.1f}%<extra></extra>"
+          hovertemplate = "Taxa de crescimento trimestral: %{y:.1f}%<extra></extra>"
         )
     }
 
-    p
+    p |>
+      layout(legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+             margin = list(b = 95))
   })
 
   output$grafico_comp_nivel <- renderPlotly({
@@ -732,20 +752,21 @@ server <- function(input, output, session) {
 
     plot_ly(df, x = ~label) |>
       add_lines(
-        y = ~nsa, name = "NSA",
+        y = ~nsa, name = "Sem ajuste sazonal",
         line = list(color = cores$azul, width = 2.5),
-        hovertemplate = "NSA: %{y:.1f}<extra></extra>"
+        hovertemplate = "Sem ajuste sazonal: %{y:.1f}<extra></extra>"
       ) |>
       add_lines(
-        y = ~sa, name = "SA",
+        y = ~sa, name = "Dessazonalizado",
         line = list(color = cores$dourado, width = 2.2, dash = "dash"),
-        hovertemplate = "SA: %{y:.1f}<extra></extra>"
+        hovertemplate = "Dessazonalizado: %{y:.1f}<extra></extra>"
       ) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
         yaxis = list(title = "Indice (base 2020 = 100)", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.18),
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI"),
@@ -759,22 +780,23 @@ server <- function(input, output, session) {
 
     plot_ly(df, x = ~label) |>
       add_bars(
-        y = ~var_interanual_nsa,
-        name = "Interanual NSA",
+        y = ~taxa_crescimento_anual_nsa,
+        name = "Taxa de crescimento anual (t/t-4)",
         marker = list(color = cores$azul_medio),
-        hovertemplate = "Interanual NSA: %{y:.1f}%<extra></extra>"
+        hovertemplate = "Taxa de crescimento anual (t/t-4): %{y:.1f}%<extra></extra>"
       ) |>
       add_lines(
-        y = ~var_margem_sa,
-        name = "Margem SA",
+        y = ~taxa_crescimento_trimestral_sa,
+        name = "Taxa de crescimento trimestral",
         line = list(color = cores$dourado, width = 2.3),
-        hovertemplate = "Margem SA: %{y:.1f}%<extra></extra>"
+        hovertemplate = "Taxa de crescimento trimestral: %{y:.1f}%<extra></extra>"
       ) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
         yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.2),
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
@@ -791,7 +813,8 @@ server <- function(input, output, session) {
         xaxis = list(title = "", tickangle = -45),
         yaxis = list(title = "Pontos percentuais", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.22),
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
@@ -839,7 +862,8 @@ server <- function(input, output, session) {
         xaxis = list(title = "", tickangle = -45),
         yaxis = list(title = "R$ milhoes", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.2),
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI"),
@@ -867,23 +891,75 @@ server <- function(input, output, session) {
       p <- p |>
         add_bars(
           y = ~var_interanual_pib,
-          name = "PIB interanual",
+          name = "Taxa de crescimento anual do PIB (t/t-4)",
           marker = list(color = cores_pib["PIB nominal"]),
-          hovertemplate = "PIB interanual: %{y:.1f}%<extra></extra>"
+          hovertemplate = "Taxa de crescimento anual do PIB (t/t-4): %{y:.1f}%<extra></extra>"
         )
     }
 
-    if (modo %in% c("margem", "ambas")) {
+    if (modo %in% c("trimestral", "ambas")) {
       p <- p |>
         add_lines(
-          y = ~var_margem_pib,
-          name = "PIB margem",
+          y = ~var_trimestral_pib,
+          name = "Taxa de crescimento trimestral do PIB",
           line = list(color = cores$dourado, width = 2.4),
-          hovertemplate = "PIB margem: %{y:.1f}%<extra></extra>"
+          hovertemplate = "Taxa de crescimento trimestral do PIB: %{y:.1f}%<extra></extra>"
         )
     }
 
-    p
+    p |>
+      layout(legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+             margin = list(b = 95))
+  })
+
+  output$grafico_taxas_anuais_iaet <- renderPlotly({
+    df <- indices_long |>
+      filter(serie_id != "iaet") |>
+      select(label, serie, taxa_crescimento_anual_nsa) |>
+      bind_rows(
+        indices_long |>
+          filter(serie_id == "iaet") |>
+          select(label, serie, taxa_crescimento_anual_nsa)
+      )
+
+    cores_taxas_iaet <- c("IAET-RR" = cores$ardosia, cores_setores)
+
+    plot_ly(df, x = ~label, y = ~taxa_crescimento_anual_nsa, color = ~serie,
+            colors = cores_taxas_iaet, type = "scatter", mode = "lines+markers") |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Taxa de crescimento anual (t/t-4)", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI")
+      )
+  })
+
+  output$grafico_taxas_anuais_pib <- renderPlotly({
+    df <- dados_pib_filtrados() |>
+      transmute(
+        label,
+        `VAB nominal` = var_anual_vab,
+        `Impostos sobre produtos (ILP)` = var_anual_ilp,
+        `PIB nominal` = var_interanual_pib
+      ) |>
+      pivot_longer(-label, names_to = "serie", values_to = "taxa")
+
+    plot_ly(df, x = ~label, y = ~taxa, color = ~serie,
+            colors = cores_pib, type = "scatter", mode = "lines+markers") |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Taxa de crescimento anual (t/t-4)", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = list(orientation = "h", y = -0.28, x = 0, xanchor = "left"),
+        margin = list(b = 95),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI")
+      )
   })
 
   output$grafico_pesos <- renderPlotly({
