@@ -517,8 +517,41 @@ if (!is.null(folha_mun_bim) && nrow(folha_mun_bim) > 0) {
 # Componente federal: mensal → trimestral (se disponível)
 # folha_federal: colunas ano, mes, n_servidores, folha_bruta (R$)
 if (!is.null(folha_federal) && nrow(folha_federal) > 0) {
-  folha_fed_trim <- folha_federal |>
-    filter(!is.na(folha_bruta)) |>
+
+  # Preencher meses ausentes por interpolação linear (série SIAPE pode ter gaps)
+  # Ex: dez/2024 e fev/2025 ausentes → seriam somados como 0, sub-estimando o trimestre.
+  folha_federal_completo <- (function(df) {
+    df <- df[!is.na(df$folha_bruta), ]
+    df <- df[order(df$ano, df$mes), ]
+    ano_min <- min(df$ano); mes_min <- min(df$mes[df$ano == ano_min])
+    ano_max <- max(df$ano); mes_max <- max(df$mes[df$ano == ano_max])
+    # Grade completa de meses
+    grade <- data.frame(
+      t_idx = seq(
+        (ano_min - 1) * 12 + mes_min,
+        (ano_max - 1) * 12 + mes_max
+      )
+    )
+    grade$ano <- ((grade$t_idx - 1) %/% 12) + 1
+    grade$mes <- ((grade$t_idx - 1) %% 12) + 1
+    df$t_idx  <- (df$ano - 1) * 12 + df$mes
+    merged <- merge(grade, df[, c("t_idx", "folha_bruta")], by = "t_idx", all.x = TRUE)
+    merged <- merged[order(merged$t_idx), ]
+    n_gaps <- sum(is.na(merged$folha_bruta))
+    if (n_gaps > 0) {
+      merged$folha_bruta <- approx(
+        x    = which(!is.na(merged$folha_bruta)),
+        y    = merged$folha_bruta[!is.na(merged$folha_bruta)],
+        xout = seq_len(nrow(merged)),
+        method = "linear", rule = 2
+      )$y
+      message(sprintf(
+        "SIAPE: %d mês(es) interpolado(s) por lacuna na série mensal.", n_gaps))
+    }
+    merged[, c("ano", "mes", "folha_bruta")]
+  })(folha_federal)
+
+  folha_fed_trim <- folha_federal_completo |>
     mutate(trimestre = ceiling(mes / 3L)) |>
     group_by(ano, trimestre) |>
     summarise(federal = sum(folha_bruta, na.rm = TRUE), .groups = "drop")
@@ -656,19 +689,32 @@ if (nrow(vol_aapp) == 0 || !any(vol_aapp$ano == 2020)) {
 benchmark <- vol_aapp |>
   rename(bench = vab_volume_rebased)
 
-# Interseção de anos com exatamente 4 trimestres
-anos_comuns <- intersect(unique(folha_real$ano), benchmark$ano)
-contagem <- folha_real |> filter(ano %in% anos_comuns) |> count(ano)
+# Anos com 4 trimestres completos na série de proxy (folha de pagamento)
+# Não restringir ao período CR — a folha pode ter dados além de 2023
+contagem       <- folha_real |> count(ano)
 anos_completos <- contagem$ano[contagem$n == 4]
-if (length(anos_completos) < length(anos_comuns)) {
-  excluidos <- setdiff(anos_comuns, anos_completos)
+if (length(anos_completos) < nrow(contagem)) {
+  excluidos <- setdiff(contagem$ano, anos_completos)
   message("AVISO: Anos com < 4 trimestres excluídos do Denton: ", paste(excluidos, collapse=", "))
 }
-anos_comuns <- anos_completos
 
-message(sprintf("\nDenton: %d–%d (%d anos, %d trimestres)",
+ano_max_proxy <- max(anos_completos)
+
+# Estender benchmark CR por tendência geométrica para cobrir todo o período da proxy.
+# Permite que o Denton use a variação real da folha de pagamento para anos sem CR publicado.
+if (ano_max_proxy > max(benchmark$ano)) {
+  bench_ext <- estender_benchmark(benchmark$ano, benchmark$bench,
+                                  ano_max = ano_max_proxy, n_ref = 3)
+  benchmark <- data.frame(ano = bench_ext$ano, bench = bench_ext$bench)
+}
+
+anos_comuns <- intersect(anos_completos, benchmark$ano)
+
+message(sprintf("\nDenton: %d–%d (%d anos, %d trimestres — %d com CR IBGE, %d extrapolados)",
                 min(anos_comuns), max(anos_comuns),
-                length(anos_comuns), length(anos_comuns) * 4))
+                length(anos_comuns), length(anos_comuns) * 4,
+                sum(anos_comuns %in% vol_aapp$ano),
+                sum(!anos_comuns %in% vol_aapp$ano)))
 
 idx_d   <- folha_real  |> filter(ano %in% anos_comuns) |> arrange(ano, trimestre)
 bench_d <- benchmark   |> filter(ano %in% anos_comuns) |> arrange(ano)

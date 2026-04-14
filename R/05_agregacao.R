@@ -56,7 +56,8 @@ anos_cr    <- 2020:2023   # anos com benchmark CR publicado
 # Calculados dinamicamente a partir de contas_regionais_RR_serie.csv para garantir
 # consistência com o ano base do índice (2020=100).
 nom_cr_pesos <- read_csv(arq_cr, show_col_types = FALSE) |>
-  filter(ano == 2020)
+  filter(ano == 2020,
+         !grepl("^Total", atividade, ignore.case = TRUE))  # exclui linha "Total das Atividades"
 tot_vab_2020 <- sum(nom_cr_pesos$vab_mi, na.rm = TRUE)
 
 peso_agro_2020 <- sum(
@@ -166,10 +167,10 @@ n_total <- nrow(grid_completo)
 message(sprintf("Grid: %dT%d–%dT%d (%d trimestres)",
                 ano_inicio, 1, ano_fim, trim_fim, n_total))
 
-#' Extrapola série com tendência linear entre o último bieênio disponível
-#' @param df  data.frame com colunas ano, trimestre, valor (nome da coluna em col_val)
-#' @param grid  data.frame com colunas ano, trimestre (grid alvo)
-#' @param col_val  nome da coluna de valor
+#' Extrapola série usando crescimento pelo trimestre homólogo (preserva sazonalidade)
+#' @param df      data.frame com colunas ano, trimestre, valor (nome da coluna em col_val)
+#' @param grid    data.frame com colunas ano, trimestre (grid alvo)
+#' @param col_val nome da coluna de valor
 #' @return vetor numérico alinhado ao grid
 extrapolar_tendencia <- function(df, grid, col_val) {
 
@@ -178,7 +179,6 @@ extrapolar_tendencia <- function(df, grid, col_val) {
 
   vals <- df_alinhado[[col_val]]
   n    <- length(vals)
-  n_obs <- sum(!is.na(vals))
 
   if (all(!is.na(vals))) return(vals)  # nada a extrapolar
 
@@ -187,13 +187,12 @@ extrapolar_tendencia <- function(df, grid, col_val) {
   message(sprintf("  Extrapolando %s: %d trimestres após posição %d",
                   col_val, n - ultimo_idx, ultimo_idx))
 
-  # Inclinação: diferença média entre 4 trimestres homólogos do último bieênio
-  # (compara Q1 2023 vs Q1 2022, Q2 2023 vs Q2 2022, etc.)
-  n_bench <- 4  # número de obs. do último ano completo disponível
-  if (ultimo_idx >= 2 * n_bench) {
-    bloco_atual    <- vals[(ultimo_idx - n_bench + 1):ultimo_idx]
-    bloco_anterior <- vals[(ultimo_idx - 2 * n_bench + 1):(ultimo_idx - n_bench)]
-    # Taxa de crescimento anual média (geométrica) do último bieênio
+  # Taxa anual: crescimento médio entre trimestres homólogos do último bieênio
+  # (Q1_ano_t / Q1_ano_t-1, Q2_t / Q2_t-1, etc.) — preserva sazonalidade real
+  n_bench <- 4L
+  if (ultimo_idx >= 2L * n_bench) {
+    bloco_atual    <- vals[(ultimo_idx - n_bench + 1L):ultimo_idx]
+    bloco_anterior <- vals[(ultimo_idx - 2L * n_bench + 1L):(ultimo_idx - n_bench)]
     taxa_anual <- mean(bloco_atual / bloco_anterior, na.rm = TRUE) - 1
     message(sprintf("  Taxa de crescimento anual usada: %+.1f%%", taxa_anual * 100))
   } else {
@@ -201,11 +200,18 @@ extrapolar_tendencia <- function(df, grid, col_val) {
     message("  Dados insuficientes para tendência — usando nível constante.")
   }
 
-  # Extrapolar: crescimento trimestral equivalente à taxa anual
+  # Crescimento por trimestre homólogo: val[i] = val[i-4] * (1 + taxa_anual)
+  # Preserva o padrão sazonal (safra/entressafra, pico fiscal, etc.)
+  # Fallback para val[i-1] * taxa_trim apenas se o homólogo não estiver disponível.
   taxa_trim <- (1 + taxa_anual)^(1/4) - 1
 
-  for (i in (ultimo_idx + 1):n) {
-    vals[i] <- vals[i - 1] * (1 + taxa_trim)
+  for (i in (ultimo_idx + 1L):n) {
+    base_homologa <- i - 4L
+    if (base_homologa >= 1L && !is.na(vals[base_homologa])) {
+      vals[i] <- vals[base_homologa] * (1 + taxa_anual)
+    } else {
+      vals[i] <- vals[i - 1L] * (1 + taxa_trim)  # fallback (só primeiros 4 trimestres extras)
+    }
   }
 
   return(vals)

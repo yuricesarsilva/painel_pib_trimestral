@@ -263,6 +263,48 @@ ler_credencial <- function(nome_var) {
   return(val)
 }
 
+#' Estende série de benchmark anual por tendência geométrica
+#'
+#' Quando a série proxy vai além do último ano das Contas Regionais publicadas,
+#' o Denton-Cholette precisa de um benchmark para os anos extras. Esta função
+#' estima esses benchmarks por taxa de crescimento geométrico dos últimos anos
+#' disponíveis, preservando a sazonalidade real da proxy no período extrapolado.
+#'
+#' @param bench_ano  Vetor inteiro de anos do benchmark disponível (ex: 2020:2023)
+#' @param bench_val  Vetor numérico dos valores do benchmark (mesma ordem que bench_ano)
+#' @param ano_max    Último ano a cobrir, inclusive (ex: 2025)
+#' @param n_ref      Quantos anos recentes usar para calcular a taxa geométrica (padrão 3)
+#' @return list com $ano e $bench estendidos até ano_max
+estender_benchmark <- function(bench_ano, bench_val, ano_max, n_ref = 3) {
+
+  stopifnot(length(bench_ano) == length(bench_val), length(bench_ano) >= 1)
+
+  ord       <- order(bench_ano)
+  bench_ano <- bench_ano[ord]
+  bench_val <- bench_val[ord]
+
+  ultimo_ano <- max(bench_ano)
+  if (ano_max <= ultimo_ano) return(list(ano = bench_ano, bench = bench_val))
+
+  anos_extras <- seq(ultimo_ano + 1L, ano_max)
+
+  # Taxa de crescimento geométrica dos últimos n_ref anos
+  n_ref_eff <- min(n_ref, length(bench_val))
+  ref_vals  <- tail(bench_val, n_ref_eff)
+  taxa_geo  <- if (n_ref_eff >= 2)
+    (tail(ref_vals, 1) / head(ref_vals, 1))^(1 / (n_ref_eff - 1)) - 1
+  else 0
+
+  ultimo_val <- tail(bench_val, 1)
+  ext_val    <- ultimo_val * (1 + taxa_geo)^(anos_extras - ultimo_ano)
+
+  log_msg(sprintf("Benchmark estendido %d–%d (taxa geométrica %.1f%%/ano, ref. %d anos)",
+                  min(anos_extras), max(anos_extras), taxa_geo * 100, n_ref_eff))
+
+  list(ano = c(bench_ano, anos_extras), bench = c(bench_val, ext_val))
+}
+
+
 #' Agrega série mensal em trimestral por soma ou média
 #'
 #' @param valores   Vetor numérico de valores mensais (comprimento múltiplo de 3)

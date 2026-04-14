@@ -661,43 +661,44 @@ aplicar_denton <- function(df_trim, col_indice, atividade_nome, vol_serie) {
     rename(bench = vab_volume_rebased) |>
     select(ano, bench)
 
-  # Somente anos com 4 trimestres completos na série de indicadores
-  contagem <- df_trim |> count(ano)
+  # Anos com 4 trimestres completos na série de proxy
+  contagem       <- df_trim |> count(ano)
   anos_completos <- contagem$ano[contagem$n == 4]
-  anos_comuns    <- intersect(anos_completos, bench$ano)
 
-  if (length(anos_comuns) < 2) {
+  if (length(anos_completos) < 2) {
     message(sprintf("AVISO: menos de 2 anos para Denton em '%s' — usando índice bruto.", atividade_nome))
     return(df_trim |> mutate(indice_denton = .data[[col_indice]]))
   }
 
-  excluidos <- setdiff(contagem$ano, anos_comuns)
-  if (length(excluidos) > 0) {
-    message(sprintf("  '%s' — anos excluídos do Denton (sem benchmark): %s",
-                    atividade_nome, paste(excluidos, collapse = ", ")))
+  # Estender benchmark CR por tendência geométrica para cobrir todo o período da proxy.
+  # Elimina a descontinuidade de nível que ocorria quando anos extras usavam proxy bruta.
+  ano_max_proxy <- max(anos_completos)
+  if (ano_max_proxy > max(bench$ano)) {
+    bench_ext <- estender_benchmark(bench$ano, bench$bench,
+                                    ano_max = ano_max_proxy, n_ref = 3)
+    bench <- data.frame(ano = bench_ext$ano, bench = bench_ext$bench)
   }
 
-  idx_d   <- df_trim  |> filter(ano %in% anos_comuns) |> arrange(ano, trimestre)
-  bench_d <- bench    |> filter(ano %in% anos_comuns) |> arrange(ano)
+  anos_todos <- intersect(anos_completos, bench$ano)
 
-  message(sprintf("  '%s' — Denton %d–%d (%d anos, %d trimestres)",
+  message(sprintf("  '%s' — Denton %d–%d (%d anos, %d trimestres — %d CR IBGE, %d extrapol.)",
                   atividade_nome,
-                  min(anos_comuns), max(anos_comuns),
-                  length(anos_comuns), nrow(idx_d)))
+                  min(anos_todos), max(anos_todos),
+                  length(anos_todos), length(anos_todos) * 4L,
+                  sum(anos_todos %in% vol_ativ$ano),
+                  sum(!anos_todos %in% vol_ativ$ano)))
+
+  idx_d   <- df_trim |> filter(ano %in% anos_todos) |> arrange(ano, trimestre)
+  bench_d <- bench   |> filter(ano %in% anos_todos) |> arrange(ano)
 
   serie_denton <- denton(
     indicador_trim  = idx_d[[col_indice]],
     benchmark_anual = bench_d$bench,
-    ano_inicio      = min(anos_comuns),
+    ano_inicio      = min(anos_todos),
     metodo          = "denton-cholette"
   )
 
-  df_trim |>
-    mutate(indice_denton = NA_real_) |>
-    mutate(indice_denton = ifelse(ano %in% anos_comuns,
-                                  serie_denton[match(paste(ano, trimestre),
-                                                     paste(idx_d$ano, idx_d$trimestre))],
-                                  .data[[col_indice]]))
+  idx_d |> mutate(indice_denton = serie_denton)
 }
 
 # Aplicar Denton aos três subsetores

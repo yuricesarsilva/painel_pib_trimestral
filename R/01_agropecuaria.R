@@ -667,21 +667,34 @@ if (nrow(vol_agro) == 0 || !any(vol_agro$ano == 2020)) {
 benchmark <- vol_agro %>%
   rename(bench = vab_volume_rebased)
 
-anos_comuns <- intersect(unique(idx_agro$ano), benchmark$ano)
-
-# Garantir completude: exatamente 4 trimestres por ano
-contagem <- idx_agro %>% filter(ano %in% anos_comuns) %>% count(ano)
+# Anos com 4 trimestres completos na série de proxy (LSPA + PPM)
+# Não restringir ao período CR — a proxy pode ter dados além de 2023
+contagem       <- idx_agro %>% count(ano)
 anos_completos <- contagem$ano[contagem$n == 4]
-if (length(anos_completos) < length(anos_comuns)) {
-  excluidos <- setdiff(anos_comuns, anos_completos)
-  message("AVISO: Anos excluídos do Denton (< 4 trimestres): ",
+if (length(anos_completos) < nrow(contagem)) {
+  excluidos <- setdiff(contagem$ano, anos_completos)
+  message("AVISO: Anos com < 4 trimestres excluídos do Denton: ",
           paste(excluidos, collapse = ", "))
 }
-anos_comuns <- anos_completos
 
-message(sprintf("Denton: %d–%d (%d anos, %d trimestres)",
+ano_max_proxy <- max(anos_completos)
+
+# Estender benchmark CR por tendência geométrica para cobrir todo o período da proxy.
+# Isso permite que o Denton use a sazonalidade real do LSPA/PPM para anos sem CR publicado,
+# em vez de perder a sazonalidade na extrapolação linear do 05_agregacao.R.
+if (ano_max_proxy > max(benchmark$ano)) {
+  bench_ext <- estender_benchmark(benchmark$ano, benchmark$bench,
+                                  ano_max = ano_max_proxy, n_ref = 3)
+  benchmark <- data.frame(ano = bench_ext$ano, bench = bench_ext$bench)
+}
+
+anos_comuns <- intersect(anos_completos, benchmark$ano)
+
+message(sprintf("Denton: %d–%d (%d anos, %d trimestres — %d com CR IBGE, %d extrapolados)",
                 min(anos_comuns), max(anos_comuns),
-                length(anos_comuns), length(anos_comuns) * 4))
+                length(anos_comuns), length(anos_comuns) * 4,
+                sum(anos_comuns %in% vol_agro$ano),
+                sum(!anos_comuns %in% vol_agro$ano)))
 
 idx_d   <- idx_agro  %>% filter(ano %in% anos_comuns) %>% arrange(ano, trimestre)
 bench_d <- benchmark %>% filter(ano %in% anos_comuns) %>% arrange(ano)

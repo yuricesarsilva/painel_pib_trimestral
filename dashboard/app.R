@@ -80,10 +80,10 @@ componentes <- c(
 
 # Pesos 2020 (base Laspeyres — manter sincronizado com 05_agregacao.R)
 pesos_2020 <- c(
-  indice_agropecuaria = 8.87,
-  indice_aapp         = 45.98,
-  indice_industria    = 12.12,
-  indice_servicos     = 33.03
+  indice_agropecuaria = 6.89,
+  indice_aapp         = 45.01,
+  indice_industria    = 11.63,
+  indice_servicos     = 36.46
 )
 
 # Contribuição à variação anual (pontos percentuais)
@@ -136,8 +136,7 @@ ui <- page_navbar(
     base_font = font_google("Source Sans 3"),
     heading_font = font_google("Source Sans 3", wght = 600)
   ),
-  bg = "#14346A",
-  inverse = TRUE,
+  navbar_options = navbar_options(bg = "#14346A", inverse = TRUE),
 
   # ── ABA 1: Índice Geral ──────────────────────────────────────────────────
   nav_panel(
