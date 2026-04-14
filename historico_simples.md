@@ -1737,3 +1737,39 @@ O `dashboard/app.R` voltou a passar tanto na checagem de sintaxe quanto no carre
 do script.
 
 *Última atualização: 14 de abril de 2026 — dashboard refinado com linguagem mais clara, cards dependentes do período selecionado e novas abas de taxas anuais*
+
+---
+
+### Abril de 2026 — Terceira rodada de refinamento do dashboard
+
+**O que foi ajustado:**
+
+Fizemos uma terceira rodada para deixar o painel mais legível e mais controlável pelo usuário,
+especialmente nas abas de taxas e na aba `Sobre`.
+
+**Melhorias aplicadas:**
+
+- deixamos de usar a notação `t/t-4` na interface visível e passamos a falar apenas em:
+  - `taxa de crescimento anual`;
+  - `taxa de crescimento trimestral`;
+- as abas `Taxas IAET` e `Taxas PIB` passaram a permitir alternância entre:
+  - visualização `anual`, com eixo mostrando apenas os anos;
+  - visualização `trimestral`, com a série trimestral correspondente;
+- os gráficos anuais dessas abas passaram a condensar a leitura para os anos e suas taxas de
+  crescimento, em vez de repetir rótulos trimestrais;
+- o texto dinâmico dos seletores de período foi padronizado como `Período de referência`;
+- as legendas passaram a ficar fora da área útil dos gráficos principais, reduzindo sobreposição
+  sobre linhas, barras e pontos;
+- a aba `Sobre` deixou de ser estática e passou a permitir:
+  - escolha do `ano da estrutura setorial`;
+  - ajuste do `período de referência` exibido no painel;
+- a pizza de estrutura setorial deixou de ficar presa a 2020 e passou a ler diretamente
+  `data/processed/contas_regionais_RR_serie.csv`.
+
+**Validação:**
+
+- a checagem de sintaxe do `dashboard/app.R` passou com `parse_ok`;
+- o carregamento completo do app passou com `source_ok`;
+- o único aviso residual continuou sendo o cache local do `sass`, sem bloquear a montagem.
+
+*Última atualização: 14 de abril de 2026 — dashboard refinado com alternância anual/trimestral, legendas reposicionadas e aba Sobre interativa*

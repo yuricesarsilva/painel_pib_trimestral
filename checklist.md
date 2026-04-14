@@ -429,6 +429,9 @@
 - [x] Reorganizar a navegação do app para priorizar o IAET e permitir escolha de séries/componentes
 - [x] Substituir linguagem técnica do painel por rótulos mais legíveis (`sem ajuste sazonal`, `dessazonalizado`, `taxa de crescimento anual`)
 - [x] Criar abas específicas de taxas anuais para o bloco IAET e para o bloco PIB
+- [x] Permitir alternância entre leitura anual e trimestral nas abas separadas de taxas
+- [x] Mover legendas para fora da área útil dos gráficos
+- [x] Tornar a aba `Sobre` interativa com escolha do ano da estrutura setorial e do período de referência
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 
