@@ -316,6 +316,34 @@ sem antes atualizar o `checklist_reforma.md`.
 
 ---
 
+## Manutenção de documentos da reforma de impostos e PIB nominal
+
+Os arquivos abaixo documentam a frente de construção do ILP trimestral e do PIB nominal
+trimestral de Roraima. Eles devem ser mantidos atualizados sempre que houver mudanças relacionadas.
+
+### `plano_reforma_impostos.md`
+
+Atualizar sempre que:
+- A estratégia do ILP trimestral mudar (ex: deixar de usar `ICMS + ISS` como núcleo inicial)
+- Uma nova fonte relevante for incorporada ou descartada (ex: Receita Federal por UF, ITBI, IOF)
+- A composição do bloco federal for revisada
+- A fórmula de agregação do proxy trimestral for alterada
+- A política de publicação do PIB nominal trimestral mudar (ex: produto oficial, interno ou experimental)
+
+### `checklist_reforma_impostos.md`
+
+Atualizar imediatamente sempre que:
+- Uma etapa ou subetapa for concluída → marcar com `[x]`
+- Uma etapa precisar ser refeita → desmarcar e adicionar nota
+- Uma nova subetapa não prevista for identificada → adicionar ao checklist
+- O status geral ao final do arquivo mudar
+
+**Regra**: nunca encerrar uma sessão que modifique `ideia_pib.md`, `plano_reforma_impostos.md`,
+`checklist_reforma_impostos.md` ou o futuro `R/05g_pib_nominal.R` sem antes atualizar o
+`checklist_reforma_impostos.md`.
+
+---
+
 ## Protocolo de release trimestral
 
 Um **release** é a publicação oficial de um novo trimestre do indicador. O protocolo abaixo

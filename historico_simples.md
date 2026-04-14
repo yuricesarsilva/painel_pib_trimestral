@@ -1317,4 +1317,41 @@ bloquear a inicialização do app. A fonte foi substituída por uma pilha local 
 
 Depois dessas correções, o painel voltou a abrir normalmente no RStudio do projeto.
 
-*Última atualização: 13 de abril de 2026 — documentação alinhada ao estado atual do projeto; pesos internos de serviços ajustados para base 2020; dashboard corrigido para abrir localmente; nota técnica permanece pendente*
+---
+
+### Abril de 2026 — Planejamento da frente de impostos e PIB nominal trimestral
+
+**O que foi feito:**
+
+Abrimos formalmente uma nova frente documental para transformar a ideia de `PIB nominal trimestral`
+em uma trilha de implementação controlada. Até aqui, o projeto já tinha o `VAB nominal trimestral`
+como produto derivado, mas ainda não tinha um plano próprio para o componente de **impostos
+líquidos sobre produtos (ILP)**.
+
+**O que foi definido:**
+
+- foi criado `plano_reforma_impostos.md`, com a estratégia metodológica da nova frente;
+- foi criado `checklist_reforma_impostos.md`, com as etapas de mapeamento, coleta, script,
+  validação e versionamento;
+- ficou definido que a primeira versão recomendada do ILP trimestral deve começar com
+  **ICMS estadual + ISS municipal**;
+- ficou registrado que `IPI` sozinho **não é suficiente** como proxy federal;
+- a recomendação para uma versão federal ampliada passou a ser: `IPI + II + PIS/Pasep + Cofins +
+  CIDE-Combustíveis`;
+- `ITBI` ficou como candidato secundário e `IOF` como item opcional, sujeito a teste.
+
+**Por que isso importa:**
+
+Sem esse plano, a frente de impostos poderia avançar de forma difusa, misturando arrecadação total
+com o conceito mais restrito de `impostos sobre produtos` usado pelo IBGE. A nova documentação
+evita esse risco e organiza a implementação futura do `R/05g_pib_nominal.R`.
+
+**Arquivos criados:**
+- `plano_reforma_impostos.md`
+- `checklist_reforma_impostos.md`
+
+**Arquivo atualizado:**
+- `regras.md` — ganhou uma seção específica para manutenção obrigatória dos documentos da reforma
+  de impostos e do futuro `05g_pib_nominal.R`
+
+*Última atualização: 13 de abril de 2026 — documentação alinhada ao estado atual do projeto; pesos internos de serviços ajustados para base 2020; dashboard corrigido para abrir localmente; frente de impostos e PIB nominal planejada; nota técnica permanece pendente*

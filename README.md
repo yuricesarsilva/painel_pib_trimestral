@@ -45,6 +45,7 @@ Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Ro
 | 🔴 Alta | Obter ICMS por atividade econômica da SEFAZ-RR e incorporar ao bloco Comércio | SEFAZ-RR |
 | 🟡 Média | Testar responsividade e publicar o dashboard Shiny em ambiente institucional | Infraestrutura SEPLAN/RR ou Shinyapps.io |
 | 🟡 Média | Redigir nota técnica metodológica (`notas/nota_tecnica.qmd`) | — |
+| 🟡 Média | Implementar ILP trimestral e PIB nominal trimestral (`R/05g_pib_nominal.R`) | Siconfi + Receita Federal por UF |
 | 🟡 Média | Avaliar correlação IAET-RR × arrecadação tributária total de RR | ICMS anual SEFAZ-RR |
 | 🟢 Baixa | Revisão periódica do calendário de colheita SEADI-RR (sensibilidade alta à soja) | SEADI-RR |
 | 🟢 Baixa | Incorporar cimento SNIC como segunda proxy de Construção | SNIC |
@@ -136,8 +137,10 @@ O deflator implícito anual é calculado diretamente das Contas Regionais (VAB n
 │   └── fontes_utilizadas.csv     # rastreabilidade das fontes por release
 ├── plano_projeto.md              # plano metodológico detalhado
 ├── plano_reforma_indicador_real.md  # plano da reforma de ancoragem ao volume real
+├── plano_reforma_impostos.md     # plano do ILP e do PIB nominal trimestral
 ├── checklist.md                  # checklist geral do projeto
 ├── checklist_reforma.md          # checklist da reforma metodológica (abr/2026)
+├── checklist_reforma_impostos.md # checklist da frente de impostos e PIB nominal
 ├── historico_simples.md          # histórico do projeto em linguagem acessível
 └── regras.md                     # protocolo obrigatório de sessão e manutenção
 ```
