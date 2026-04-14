@@ -35,7 +35,12 @@ pipeline <- list(
   list(script = "R/02_adm_publica.R",      descricao = "Fase 2 — Administração Pública"),
   list(script = "R/03_industria.R",        descricao = "Fase 3 — Indústria"),
   list(script = "R/04_servicos.R",         descricao = "Fase 4 — Serviços Privados"),
-  list(script = "R/05_agregacao.R",        descricao = "Fase 5 — Agregação e Outputs")
+  list(script = "R/05_agregacao.R",        descricao = "Fase 5.1 — Agregação e Outputs"),
+  list(script = "R/05c_ajuste_sazonal.R",  descricao = "Fase 5.3 — Ajuste sazonal"),
+  list(script = "R/05d_validacao.R",       descricao = "Fase 5.4 — Validação final"),
+  list(script = "R/05e_exportacao.R",      descricao = "Fase 5.5 — Exportação"),
+  list(script = "R/05f_vab_nominal.R",     descricao = "Fase 5.6 — VAB Nominal Trimestral"),
+  list(script = "R/05g_pib_nominal.R",     descricao = "Fase 5.8 — PIB Nominal Trimestral")
 )
 
 # --- Funções auxiliares de log -------------------------------

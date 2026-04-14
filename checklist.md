@@ -449,10 +449,10 @@
 - [x] Registrar desenho metodológico inicial em `ideia_pib.md`
 - [x] Criar `plano_reforma_impostos.md`
 - [x] Criar `checklist_reforma_impostos.md`
-- [ ] Mapear `ICMS` estadual e `ISS` municipal no Siconfi
-- [ ] Mapear tributos federais por UF na Receita Federal
-- [ ] Criar `R/05g_pib_nominal.R`
-- [ ] Gerar `data/output/pib_nominal_rr.csv`
+- [x] Investigar `ICMS` estadual, `ISS` municipal e bloco federal como candidatos ao ILP trimestral
+- [x] Definir proxy final: `ICMS` estadual da SEFAZ-RR
+- [x] Criar `R/05g_pib_nominal.R`
+- [x] Gerar `data/output/pib_nominal_rr.csv`
 
 ---
 
@@ -479,7 +479,7 @@
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | 🟢 Concluída |
-| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6 concluídas; 5.7 e 5.8 pendentes, além da publicação/testes finais do dashboard) |
+| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6 e 5.8 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada

@@ -77,31 +77,31 @@ dados de consumo.
 
 ## Etapa E — Construção da proxy trimestral (ICMS)
 
-- [ ] Agregar série mensal de ICMS para frequência trimestral em `R/05g_pib_nominal.R`
-- [ ] Verificar sazonalidade trimestral da série (coerência intra-anual)
+- [x] Agregar série mensal de ICMS para frequência trimestral em `R/05g_pib_nominal.R`
+- [x] Verificar sazonalidade trimestral da série (coerência intra-anual)
 
 ---
 
 ## Etapa F — Script de produção
 
-- [ ] Criar `R/05g_pib_nominal.R`
-- [ ] Escalar VAB nominal trimestral para `R$ milhões`
-- [ ] Obter PIB anual RR via SIDRA (tab. 5938)
-- [ ] Calcular `ILP anual = PIB anual - VAB anual`
-- [ ] Aplicar Denton-Cholette: `ILP_trim ~ ICMS_trim`
-- [ ] Calcular `PIB nominal trimestral = VAB nominal trimestral + ILP trimestral`
-- [ ] Salvar `data/output/pib_nominal_rr.csv`
-- [ ] Integrar ao `R/05e_exportacao.R` (nova aba "PIB Nominal")
+- [x] Criar `R/05g_pib_nominal.R`
+- [x] Escalar VAB nominal trimestral para `R$ milhões`
+- [x] Obter PIB anual RR via SIDRA (tab. 5938)
+- [x] Calcular `ILP anual = PIB anual - VAB anual`
+- [x] Aplicar Denton-Cholette: `ILP_trim ~ ICMS_trim`
+- [x] Calcular `PIB nominal trimestral = VAB nominal trimestral + ILP trimestral`
+- [x] Salvar `data/output/pib_nominal_rr.csv`
+- [x] Atualizar `IAET_RR_series.xlsx` com a nova aba "PIB Nominal"
 
 ---
 
 ## Etapa G — Validação e documentação
 
-- [ ] Validar se a soma dos quatro trimestres reproduz o ILP anual (tolerância < 0,1%)
-- [ ] Verificar coerência do PIB nominal trimestral com o PIB anual do IBGE
+- [x] Validar se a soma dos quatro trimestres reproduz o ILP anual (tolerância < 0,1%)
+- [x] Verificar coerência do PIB nominal trimestral com o PIB anual do IBGE
 - [ ] Documentar metodologia e limitações na nota técnica
-- [ ] Registrar no `historico_simples.md`
-- [ ] Atualizar `README.md` e `checklist.md`
+- [x] Registrar no `historico_simples.md`
+- [x] Atualizar `README.md` e `checklist.md`
 
 ---
 
@@ -121,7 +121,7 @@ dados de consumo.
 | B — ICMS estadual (SEFAZ-RR) | 🟢 Concluída | Série completa jan/2020–mar/2026; CSV gerado |
 | C — ISS municipal | 🟢 Descartado | Artefato de sazonalidade no Siconfi; documentado |
 | D — Bloco federal | 🟢 Descartado | Cobertura insuficiente + problema territorial; documentado |
-| E — Proxy trimestral | ⚪ Não iniciada | Depende de F |
-| F — Script de produção | ⚪ Não iniciada | `R/05g_pib_nominal.R` ainda não criado |
-| G — Validação e documentação | ⚪ Não iniciada | Depende de F |
+| E — Proxy trimestral | 🟢 Concluída | ICMS trimestral agregado e usado no Denton |
+| F — Script de produção | 🟢 Concluída | `R/05g_pib_nominal.R` implementado e rodado com sucesso |
+| G — Validação e documentação | 🟡 Em andamento | Nota técnica ainda pendente |
 | H — Versionamento | 🟡 Em andamento | Commit final pendente |

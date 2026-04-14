@@ -242,7 +242,7 @@ vs. média de R$ 20 mi) — não afeta ICMS, mas confirma que as demais colunas 
 
 ---
 
-## Script a criar
+## Script implementado
 
 ### `R/05g_pib_nominal.R`
 
@@ -250,19 +250,27 @@ Escopo:
 
 1. Ler `data/processed/icms_sefaz_rr_mensal.csv`;
 2. Agregar ICMS para frequência trimestral;
-3. Carregar `indice_nominal_rr.csv` e escalar VAB nominal para R$ milhões;
+3. Carregar `vab_nominal_rr_reais.csv` como base do VAB nominal trimestral em R$ milhões;
 4. Obter PIB anual RR via SIDRA (tab. 5938) → calcular ILP anual;
 5. Aplicar Denton-Cholette: `ILP_trim ~ ICMS_trim`;
 6. Calcular `PIB_nom_trim = VAB_nom_trim + ILP_trim`;
 7. Salvar `data/output/pib_nominal_rr.csv`;
-8. Integrar ao `R/05e_exportacao.R` (nova aba "PIB Nominal").
+8. Atualizar diretamente o `IAET_RR_series.xlsx` com a aba "PIB Nominal".
+
+**Estado atual da implementação (2026-04-14):**
+
+- o script já gera `data/output/ilp_rr_trimestral.csv` e `data/output/pib_nominal_rr.csv`;
+- o PIB anual do SIDRA é convertido de `Mil Reais` para `R$ milhões` antes do cálculo do ILP;
+- o ILP anual de 2024–2025 é extrapolado pela taxa anual do ICMS da SEFAZ-RR;
+- o Denton-Cholette é aplicado com `conversion = "sum"` para preservar a soma anual do ILP;
+- a aba "PIB Nominal" já é adicionada ao `IAET_RR_series.xlsx`.
 
 ---
 
 ## Critério de pronta-implementação
 
-**Condição já atendida:** a série de ICMS está disponível e processada. A implementação de
-`R/05g_pib_nominal.R` pode começar imediatamente.
+**Condição atendida e concluída:** a série de ICMS estava disponível e processada, e a
+implementação de `R/05g_pib_nominal.R` foi concluída em 2026-04-14.
 
 ---
 

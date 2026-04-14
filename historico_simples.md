@@ -1610,4 +1610,49 @@ O Git deixou de ser a fonte do volume excessivo no OneDrive. A única pasta aind
 projeto local é `bases_baixadas_manualmente/`, que permanece no projeto por decisão deliberada,
 mas agora sem risco de ser reingerida acidentalmente pelo Git.
 
-*Última atualização: 14 de abril de 2026 — `.git` local saneada, `.gitignore` reforçado para bases e pastas locais, frente de impostos planejada e repositório estabilizado*
+---
+
+### Abril de 2026 — Implementação do PIB nominal trimestral via proxy de ICMS
+
+**O que foi feito:**
+
+Concluímos a primeira versão operacional do `PIB nominal trimestral` de Roraima, fechando a frente
+da reforma de impostos no código. O novo script `R/05g_pib_nominal.R` passou a:
+
+- ler o `VAB nominal trimestral` já escalado em `R$ milhões`;
+- usar a série mensal de `ICMS` da SEFAZ-RR como proxy trimestral do `ILP`;
+- buscar o `PIB anual` de Roraima no SIDRA/IBGE (Tabela 5938);
+- calcular `ILP anual = PIB anual - VAB anual`;
+- extrapolar o ILP anual de `2024` e `2025` pela taxa anual do ICMS;
+- distribuir o ILP anual pelos trimestres via `Denton-Cholette`;
+- gerar `data/output/ilp_rr_trimestral.csv` e `data/output/pib_nominal_rr.csv`;
+- adicionar a aba **"PIB Nominal"** ao `IAET_RR_series.xlsx`.
+
+**Correções importantes durante a implementação:**
+
+Na primeira execução, o script falhou por dois motivos:
+
+- o PIB do SIDRA veio em `Mil Reais`, e precisou ser convertido para `R$ milhões` para ficar na
+  mesma unidade do VAB;
+- a chamada do Denton precisava usar séries `ts` explícitas para evitar que o `tempdisagg`
+  entrasse em modo numérico.
+
+Após esses ajustes, a rotina fechou normalmente.
+
+**Validação obtida:**
+
+- o `ICMS/ILP` anual ficou em linha com o diagnóstico do plano:
+  - `2020`: 82,7%
+  - `2021`: 82,9%
+  - `2022`: 80,7%
+  - `2023`: 80,5%
+- a soma dos quatro trimestres reproduziu exatamente o benchmark anual do ILP em todos os anos de
+  `2020` a `2025`, com desvio numérico residual desprezível;
+- o produto final passou a cobrir `2020T1–2025T4`.
+
+**Situação em que o projeto fica agora:**
+
+Além do `IAET-RR real` e do `VAB nominal trimestral`, o projeto passa a ter também uma série de
+`PIB nominal trimestral` pronta para análise interna e eventual incorporação ao dashboard.
+
+*Última atualização: 14 de abril de 2026 — `.git` local saneada, `05g_pib_nominal.R` implementado, PIB nominal trimestral gerado e documentação da reforma de impostos atualizada*
