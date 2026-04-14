@@ -167,16 +167,18 @@
 - [x] Salvar em `data/raw/folha_municipal_rr.csv`
 
 ### 2.4 Série de volume e benchmarking
-- [x] Combinar folhas estadual + municipal (federal=0 enquanto SIAPE pendente)
+- [x] Combinar folhas estadual + municipal + federal SIAPE (73 ZIPs mensais processados)
+  → **REFORMA 2026-04-13**: SIAPE integrado com download manual dos ZIPs mensais do Portal da Transparência; meses ausentes (abr/2021, dez/2024, fev/2025 — ZIPs com Remuneracao.csv vazio) interpolados por aproximação linear
 - [x] Deflacionar pelo IPCA nacional (SIDRA tab 1737, índice encadeado base jan/2020=1)
 - [x] Agregar em trimestres
 - [x] Calcular índice de volume (base 2020 = 100)
 - [x] Aplicar Denton-Cholette contra VAB AAPP anual das Contas Regionais (2020–2023)
-- [x] Validar: variação anual coincide exatamente com Contas Regionais
-  - [x] 2021: +9,7% (índice) vs. +9,7% (IBGE) ✓
-  - [x] 2022: +25,6% vs. +25,6% ✓
-  - [x] 2023: +18,0% vs. +18,0% ✓
-- [x] Salvar em `data/output/indice_adm_publica.csv` (16 obs., 2020T1–2023T4)
+  → **REFORMA 2026-04-13**: benchmark substituído por índice de **volume** (Especiais IBGE `tab05.xls`); estendido geometricamente (+3,2%/ano) para 2024–2025
+- [x] Validar: variação anual coincide exatamente com Contas Regionais (volume real, pós-reforma)
+  - [x] 2021: +3,2% (índice) vs. +3,2% (IBGE volume) ✓
+  - [x] 2022: +4,1% vs. +4,1% ✓
+  - [x] 2023: +2,4% vs. +2,4% ✓
+- [x] Salvar em `data/output/indice_adm_publica.csv` (24 obs., 2020T1–2025T4)
 - [x] Atualizar `historico_simples.md` com conclusão da Fase 2
 
 ---
@@ -330,11 +332,12 @@
 ### 5.1 Índice geral agregado
 - [x] Importar índices setoriais: agropecuária, AAPP, indústria, serviços
 - [x] Aplicar pesos das Contas Regionais (participação no VAB total)
-  → **REFORMA 2026-04-13**: pesos agora calculados dinamicamente do VAB nominal de 2020 (base correta do Laspeyres) — antes hardcoded com valores de 2023
+  → **REFORMA 2026-04-13**: pesos calculados dinamicamente do VAB nominal de 2020 (base correta do Laspeyres); bug corrigido — linha "Total das Atividades" excluída do denominador (duplicava a soma). Pesos corretos: Agro=6,89% | AAPP=45,01% | Ind=11,63% | Serv=36,46%
 - [x] Calcular índice geral trimestral encadeado (base 2020 = 100)
 - [x] Aplicar Denton-Cholette final contra VAB total de RR das Contas Regionais
   → **REFORMA 2026-04-13**: benchmark substituído — agora usa índice de **volume** (Especiais IBGE, `tab05.xls`, série encadeada 2002–2023), não VAB nominal (Tabela 5). Ver `plano_reforma_indicador_real.md`.
 - [x] Salvar em `data/output/indice_geral_rr.csv`
+  → **CORREÇÃO 2026-04-14**: `extrapolar_tendencia()` corrigida para crescer pelo trimestre homólogo do ano anterior (preserva sazonalidade); todos os scripts setoriais (01–04) passaram a usar Denton sobre o período completo das proxies com benchmark estendido via `estender_benchmark()` em `utils.R` — elimina extrapolação plana que destruía a sazonalidade em 2024–2025
 
 ### 5.2 Teste de sensibilidade (versão A vs. versão B vs. versão C)
 

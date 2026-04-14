@@ -1258,6 +1258,188 @@ nominal implementados.
 
 ---
 
+### Abril de 2026 — SIAPE integrado: folha federal incluída com dados reais
+
+**Situação anterior:**
+
+O componente federal do índice de Administração Pública (AAPP) era baseado apenas nas folhas
+estadual e municipal. A folha dos servidores federais em Roraima (SIAPE) não estava incluída
+porque a API do Portal da Transparência retorna HTTP 403 para qualquer consulta de remuneração.
+O índice compensava via Denton-Cholette, que ancora ao VAB IBGE (que inclui o federal implicitamente),
+mas a proxy intra-anual ficava subrepresentada.
+
+**O que foi feito:**
+
+Os 73 ZIPs mensais do Portal da Transparência foram baixados manualmente
+(`bases_baixadas_manualmente/dados_siape_portal_transparencia/`) e o script `02_adm_publica.R`
+foi atualizado para processá-los automaticamente, extraindo e filtrando os registros de
+servidores com lotação em Roraima (UF_EXERCICIO = "RR" ou órgão com "RORAIMA" no nome).
+
+Resultado: **8.000–9.700 servidores federais por mês** identificados em RR, com folha bruta
+entre R$ 4,7 bi e R$ 6,0 bi/mês — componente agora incluído no cálculo trimestral da AAPP.
+
+**Problema de qualidade de dados identificado:**
+
+Três meses têm o arquivo `Remuneracao.csv` essencialmente vazio dentro do ZIP (apenas cabeçalho):
+- **Abril/2021**: 96 bytes
+- **Dezembro/2024**: 585 KB (vs. ~170 MB dos demais meses)
+- **Fevereiro/2025**: 1.609 bytes
+
+Esses ZIPs foram publicados pelo Portal da Transparência antes de os dados de remuneração serem
+consolidados. O script detecta automaticamente os meses ausentes (comparando a grade completa
+com os meses presentes no cache) e os preenche por **interpolação linear** entre os meses
+vizinhos, com log explícito dos meses afetados.
+
+**Impacto:**
+
+Antes da integração do SIAPE, os trimestres com meses ausentes mostravam queda artificial de
+~33% na folha federal (apenas 2 meses somados em vez de 3). O índice AAPP caía de ~123 para
+~88 em 2024T4 e ~85 em 2025T1. Após a correção: 2024T4 = 115, 2025T1 = 113 — valores estáveis
+e coerentes com a trajetória crescente do funcionalismo.
+
+---
+
+### Abril de 2026 — Dashboard Shiny: painel interativo do IAET-RR
+
+**O que foi feito:**
+
+Criamos o dashboard interativo do projeto em `dashboard/app.R`, usando as bibliotecas `bslib`
+(tema visual institucional), `plotly` (gráficos interativos) e `DT` (tabela filtrável).
+
+**Estrutura do dashboard (5 abas):**
+
+| Aba | Conteúdo |
+|---|---|
+| Índice Geral | 3 caixas de indicadores + gráfico NSA/SA com slider de período + linha separando benchmark de extrapolação |
+| Componentes | Barras empilhadas de contribuição setorial (p.p.) + linhas dos índices setoriais |
+| VAB Nominal | Barras em R$ milhões (azul escuro = CR IBGE, azul claro = extrapolação) + variação anual + nota metodológica |
+| Dados | Tabela filtrável com `var_trim`, `var_anual`, `var_trim_sa` + botão de download CSV/XLSX |
+| Sobre | Pizza interativa dos pesos setoriais 2020 + ficha técnica do projeto |
+
+**Detalhe técnico:**
+
+O app lê os arquivos de `data/output/` via variável de ambiente `IAET_DATA_DIR`, o que permite
+rodá-lo tanto pelo RStudio (com caminho relativo ao projeto) quanto via script externo (com
+caminho absoluto). Os pesos setoriais Laspeyres 2020 são definidos como constante no app e
+precisam ser atualizados manualmente quando o pipeline for rerodado com novos benchmarks.
+
+Para rodar localmente: executar `/tmp/run_shiny.R` (ou equivalente) com `IAET_DATA_DIR` apontando
+para a pasta de outputs.
+
+---
+
+### Abril de 2026 — Correção crítica: proxies reais para 2024–2025 em todos os setores
+
+**Problema identificado:**
+
+O índice geral mostrava contribuições agrícolas absurdas em 2024 — agropecuária contribuindo
++116 pp em um único trimestre, quando o normal é ±5 pp. A causa era que, para 2024–2025 (além
+do benchmark CR IBGE 2023), o sistema estava usando **extrapolação plana de tendência**
+em vez dos dados reais das proxies.
+
+**Raiz do problema:**
+
+A função `extrapolar_tendencia()` em `05_agregacao.R` crescia trimestre a trimestre a partir
+do último valor disponível — que era o T4 2023 (pico de colheita, agro ≈ 259). Assim, T1 2024
+saía como 255 ao invés de ~25 (entressafra). A sazonalidade era completamente destruída.
+
+O mesmo problema existia nos scripts setoriais (01 a 04): quando a proxy (LSPA, folha de
+pagamento, CAGED, etc.) cobria períodos além do benchmark CR IBGE, o código truncava a série
+ao período com benchmark — descartando dados reais de 2024–2025.
+
+**Correções aplicadas:**
+
+1. **`R/utils.R`**: adicionada função `estender_benchmark()`, que estende o benchmark CR IBGE
+   de 2023 para 2024–2025 por crescimento geométrico baseado nos últimos 3 anos da série de
+   volume real — permitindo que o Denton rode sobre o período completo das proxies.
+
+2. **`R/01_agropecuaria.R`**: Denton agora cobre o período completo da LSPA (2020–2025), com
+   benchmark estendido. A sazonalidade agrícola é preservada integralmente pelo Denton.
+
+3. **`R/02_adm_publica.R`**: mesma lógica para a folha de pagamento.
+
+4. **`R/03_industria.R`**: `aplicar_denton()` usa série completa de proxy sem fallback para
+   tendência linear — elimina a descontinuidade de nível na transição 2023→2024.
+
+5. **`R/05_agregacao.R`**: `extrapolar_tendencia()` corrigida para crescer pelo trimestre
+   homólogo do ano anterior (T1 2024 = T1 2023 × taxa), e não pelo trimestre imediatamente
+   anterior. Isso preserva o padrão sazonal.
+
+**Resultado após correções:**
+
+| Período | Agropecuária (antes) | Agropecuária (depois) |
+|---|---|---|
+| 2024T1 | ~255 (crescendo do pico T4) | ~25 (entressafra ✓) |
+| 2024T2 | ~262 | ~20 (mínimo anual ✓) |
+| 2024T3 | ~268 | ~557 (colheita ✓) |
+| 2024T4 | ~274 | ~319 (pós-colheita ✓) |
+
+O índice geral em 2024–2025 passou a refletir ciclos reais, com as proxies como LSPA, folha
+de pagamento, CAGED e energia elétrica determinando o comportamento intra-anual.
+
+---
+
+### Abril de 2026 — Correção do cálculo de pesos Laspeyres
+
+**Problema identificado:**
+
+Os pesos setoriais do índice geral estavam com valores errados — Agropecuária com 3,45%
+em vez de 6,89%, AAPP com 22,5% em vez de 45%. Todos os pesos estavam exatamente na metade
+do valor correto.
+
+**Causa:**
+
+O arquivo `contas_regionais_RR_serie.csv` contém, além das 12 atividades econômicas, uma linha
+chamada "Total das Atividades" com o VAB somado de todas as demais (R$ 14.524 M em 2020).
+Quando o script somava todas as linhas para calcular o denominador dos pesos, incluía essa linha
+e dobrava o total — resultando em 29.048 M em vez de 14.524 M — e todos os pesos caíam à metade.
+
+**Correção:**
+
+Adicionado filtro `!grepl("^Total", atividade, ignore.case = TRUE)` antes de calcular o
+denominador em `05_agregacao.R`. Os pesos corretos para o Laspeyres 2020 são:
+
+| Setor | Peso correto |
+|---|---|
+| Agropecuária | 6,89% |
+| Adm. Pública (AAPP) | 45,01% |
+| Indústria | 11,63% |
+| Serviços Privados | 36,46% |
+
+O mesmo ajuste foi propagado para o `dashboard/app.R`, onde os pesos estavam hardcoded.
+
+## Onde estamos agora (abril de 2026)
+
+| Componente | Status | Cobertura |
+|---|---|---|
+| Agropecuária | ✅ Concluído | 2020T1–2025T4 |
+| Adm. Pública (AAPP) | ✅ Concluído (incl. SIAPE federal) | 2020T1–2025T4 |
+| Indústria | ✅ Concluído | 2020T1–2025T4 |
+| Serviços Privados | ✅ Concluído | 2020T1–2025T4 |
+| Índice Geral | ✅ Concluído | 2020T1–2025T4 |
+| Ajuste Sazonal | ✅ Concluído | 2020T1–2025T4 |
+| VAB Nominal | ✅ Concluído | 2020T1–2025T4 |
+| Dashboard Shiny | ✅ Operacional localmente | — |
+| Nota Técnica | ⏳ Não iniciada | — |
+
+**Taxas de crescimento real do IAET-RR (base 2020 = 100):**
+
+| Ano | IAET-RR real |
+|---|---|
+| 2021 | +8,2% |
+| 2022 | +10,9% |
+| 2023 | +4,3% |
+| 2024 | +7,7% *(extrapolado — CR IBGE 2024 prevista para out/2026)* |
+| 2025 | +9,2% *(extrapolado)* |
+
+**Próximas prioridades:**
+1. Nota técnica metodológica (`notas/nota_tecnica.qmd`)
+2. ICMS por atividade econômica da SEFAZ-RR para o bloco Comércio
+3. Publicação do dashboard em servidor institucional ou Shinyapps.io
+4. Incorporar CR IBGE 2024 quando publicada (outubro de 2026)
+
+---
+
 ### Abril de 2026 — Ajuste de consistência metodológica nos pesos do bloco de serviços
 
 **O que foi feito:**
