@@ -518,40 +518,43 @@ if (!is.null(folha_mun_bim) && nrow(folha_mun_bim) > 0) {
 # folha_federal: colunas ano, mes, n_servidores, folha_bruta (R$)
 if (!is.null(folha_federal) && nrow(folha_federal) > 0) {
 
-  # Preencher meses ausentes por interpolação linear (série SIAPE pode ter gaps)
-  # Ex: dez/2024 e fev/2025 ausentes → seriam somados como 0, sub-estimando o trimestre.
-  folha_federal_completo <- (function(df) {
+  # Preencher meses ausentes por interpolação linear.
+  # O Portal da Transparência publica ZIPs com Remuneracao.csv vazio para alguns meses
+  # (ex: dez/2024 e fev/2025 tinham apenas cabeçalho). Sem preenchimento, a soma trimestral
+  # ficaria com apenas 2 meses de folha federal, sub-estimando o trimestre em ~33%.
+  folha_federal <- (function(df) {
     df <- df[!is.na(df$folha_bruta), ]
     df <- df[order(df$ano, df$mes), ]
     ano_min <- min(df$ano); mes_min <- min(df$mes[df$ano == ano_min])
     ano_max <- max(df$ano); mes_max <- max(df$mes[df$ano == ano_max])
-    # Grade completa de meses
     grade <- data.frame(
-      t_idx = seq(
-        (ano_min - 1) * 12 + mes_min,
-        (ano_max - 1) * 12 + mes_max
-      )
+      t_idx = seq((ano_min - 1L) * 12L + mes_min,
+                  (ano_max - 1L) * 12L + mes_max)
     )
-    grade$ano <- ((grade$t_idx - 1) %/% 12) + 1
-    grade$mes <- ((grade$t_idx - 1) %% 12) + 1
-    df$t_idx  <- (df$ano - 1) * 12 + df$mes
+    grade$ano <- ((grade$t_idx - 1L) %/% 12L) + 1L
+    grade$mes <- ((grade$t_idx - 1L) %% 12L) + 1L
+    df$t_idx  <- (df$ano - 1L) * 12L + df$mes
     merged <- merge(grade, df[, c("t_idx", "folha_bruta")], by = "t_idx", all.x = TRUE)
     merged <- merged[order(merged$t_idx), ]
     n_gaps <- sum(is.na(merged$folha_bruta))
     if (n_gaps > 0) {
+      meses_falt <- paste(
+        sprintf("%dM%02d", merged$ano[is.na(merged$folha_bruta)],
+                           merged$mes[is.na(merged$folha_bruta)]),
+        collapse = ", ")
       merged$folha_bruta <- approx(
-        x    = which(!is.na(merged$folha_bruta)),
-        y    = merged$folha_bruta[!is.na(merged$folha_bruta)],
-        xout = seq_len(nrow(merged)),
-        method = "linear", rule = 2
+        x = which(!is.na(merged$folha_bruta)),
+        y = merged$folha_bruta[!is.na(merged$folha_bruta)],
+        xout = seq_len(nrow(merged)), method = "linear", rule = 2
       )$y
       message(sprintf(
-        "SIAPE: %d mês(es) interpolado(s) por lacuna na série mensal.", n_gaps))
+        "SIAPE: %d mês(es) ausente(s) interpolado(s) — %s (ZIP sem dados no Portal).",
+        n_gaps, meses_falt))
     }
     merged[, c("ano", "mes", "folha_bruta")]
   })(folha_federal)
 
-  folha_fed_trim <- folha_federal_completo |>
+  folha_fed_trim <- folha_federal |>
     mutate(trimestre = ceiling(mes / 3L)) |>
     group_by(ano, trimestre) |>
     summarise(federal = sum(folha_bruta, na.rm = TRUE), .groups = "drop")
