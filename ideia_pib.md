@@ -1,6 +1,21 @@
 # Ideia: PIB Nominal Trimestral de RR
 
-> Registrado em 2026-04-13. Implementar após obter ICMS da SEFAZ-RR.
+> **Este documento foi supersedido por [`plano_reforma_impostos.md`](plano_reforma_impostos.md).**
+>
+> Registrado em 2026-04-13. Mantido apenas como referência histórica e pela tabela de ILP anual.
+>
+> Atualizações relevantes em relação ao que estava planejado aqui:
+> - **Opção A (ICMS CONFAZ)** substituída pela SEFAZ-RR como fonte primária: série completa
+>   jan/2020–mar/2026, sem lacunas, sem necessidade de scraping.
+> - **Opção B (ratio fixo)** não adotada — Denton-Cholette com proxy ICMS é superior.
+> - **ISS** investigado e descartado como proxy mensal: artefato de lançamento em lote no
+>   Siconfi concentra 54% do ISS anual em janeiro.
+> - **Bloco federal** investigado e descartado: dados por UF só até mai/2022; problema de
+>   imputação territorial (domicílio do contribuinte ≠ local de consumo).
+> - **Gatilho de implementação já atingido:** ICMS disponível e processado em
+>   `data/processed/icms_sefaz_rr_mensal.csv`.
+
+> Registrado em 2026-04-13.
 
 ## O que queremos gerar
 

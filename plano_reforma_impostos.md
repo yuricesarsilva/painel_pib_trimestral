@@ -15,18 +15,28 @@ O script-alvo desta etapa é `R/05g_pib_nominal.R`.
 
 ## Ponto de partida já existente
 
-O projeto já dispõe de três insumos críticos:
+O projeto já dispõe de quatro insumos críticos:
 
 - `data/output/indice_nominal_rr.csv` — índice trimestral do VAB nominal, base 2020 = 100;
 - `data/processed/contas_regionais_RR_serie.csv` — VAB nominal anual por atividade;
-- `ideia_pib.md` — registro inicial da proposta de evolução para ILP e PIB nominal.
+- `data/processed/icms_sefaz_rr_mensal.csv` — série mensal de ICMS, jan/2020–mar/2026 (**já disponível**);
+- `ideia_pib.md` — registro inicial da proposta (supersedido por este plano).
 
-Além disso, o benchmark anual do PIB nominal de Roraima pode ser obtido no SIDRA/IBGE, e o ILP
-anual é calculado diretamente como:
+O benchmark anual do PIB nominal de Roraima é obtido no SIDRA/IBGE (Tabela 5938), e o ILP anual
+é calculado diretamente como:
 
 ```text
 ILP anual = PIB anual - VAB anual
 ```
+
+Valores de referência (CR IBGE):
+
+| Ano | PIB (R$ mi) | VAB (R$ mi) | ILP (R$ mi) | ICMS (R$ mi) | ICMS/ILP |
+|-----|-------------|-------------|-------------|--------------|----------|
+| 2020 | 16.024 | 14.524 | 1.500 | 1.240 | 82,7% |
+| 2021 | 18.203 | 16.310 | 1.893 | 1.569 | 82,9% |
+| 2022 | 21.095 | 19.117 | 1.978 | 1.597 | 80,7% |
+| 2023 | 25.125 | 23.003 | 2.122 | 1.707 | 80,5% |
 
 ---
 
@@ -42,189 +52,144 @@ PIB = VAB + impostos líquidos sobre produtos
 
 Portanto:
 
-- tributos sobre renda, folha, patrimônio ou lucro **não entram automaticamente** só por serem
-  arrecadação tributária;
+- tributos sobre renda, folha, patrimônio ou lucro **não entram** neste proxy;
 - a seleção das proxies deve priorizar tributos que incidam sobre produção, circulação, vendas,
   importação ou disponibilização de bens e serviços;
 - a sazonalidade trimestral importa mais do que a aderência perfeita em nível mensal.
 
 ---
 
-## Recomendação central
+## Decisão: proxy único com ICMS
 
-### Versão inicial recomendada (MVP)
+Após investigação empírica das três fontes candidatas (ICMS, ISS e bloco federal), a decisão é
+usar **exclusivamente o ICMS estadual** como proxy trimestral do ILP.
 
-Construir o ILP trimestral com dois blocos:
+O ICMS explica **80–83% do ILP anual** nos anos com benchmark disponível. A parcela restante
+(~17–20%) é tratada como resíduo anual distribuído pelo Denton-Cholette usando o próprio ICMS
+como indicador de movimento — o que é metodologicamente aceitável para uma primeira versão.
 
-1. **Bloco subnacional observado**
-   - `ICMS` do Estado de Roraima;
-   - `ISS` agregado dos municípios de Roraima.
+### Por que ISS não foi incluído
 
-2. **Bloco residual anual**
-   - parcela do ILP anual não explicada por `ICMS + ISS`;
-   - desagregada por Denton-Cholette usando como proxy o próprio bloco observado.
+O ISS municipal de Roraima foi investigado via Siconfi MSC para todos os 15 municípios em 2023.
 
-Essa é a melhor relação entre qualidade, custo e prazo para a primeira versão do `PIB nominal
-trimestral`.
+**Achados:**
+- Total ISS 2023 (15 municípios): R$ 162,6 mi — coerente com ~7,7% do ILP.
+- Rota de extração confirmada: MSC MSCC, `natureza_receita LIKE '1112%'`,
+  `natureza_conta = 'C'`.
 
-### Versão ampliada recomendada
+**Motivo da exclusão:**
+Boa Vista concentrou **54% do ISS anual em janeiro/2023** (R$ 77 mi em janeiro vs. média de
+R$ 4–6 mi nos meses seguintes), e apresentou um segundo pico atípico em junho (R$ 19,7 mi).
+Isso é um artefato de lançamento em lote no Siconfi, não sazonalidade econômica real. Usar essa
+série como proxy mensal no Denton inflaria artificialmente o Q1. Sem suavização prévia, o ISS
+via Siconfi não serve como indicador de movimento intra-anual.
 
-Após o MVP, incorporar um bloco federal por UF com os tributos mais próximos do conceito de
-impostos sobre produtos:
+**Condição de reabertura:** o ISS pode ser reincorporado na versão ampliada se for obtido por
+fonte alternativa com distribuição mensal uniforme (ex.: SEFAZ municipal, nota fiscal de
+serviços eletrônica ou suavização explícita da série Siconfi com filtro de Hodrick-Prescott).
 
-- `IPI`
-- `II` (Imposto de Importação)
-- `PIS/Pasep`
-- `Cofins`
-- `CIDE-Combustíveis`
+### Por que o bloco federal não foi incluído
 
-`IOF` entra como item opcional e só deve ser incorporado após teste empírico de aderência.
+Os tributos federais sobre produtos (IPI, II, PIS/Pasep, Cofins, CIDE) foram investigados via
+Receita Federal — "Arrecadação por Estado".
 
-### Recomendação explícita
+**Achados para RR (amostra: dez/2021):**
 
-**Não usar apenas IPI como proxy federal.**  
-O `IPI` sozinho é insuficiente para representar o componente federal do ILP, especialmente em um
-estado pequeno como Roraima, onde ele pode ser baixo e volátil. `PIS/Cofins` tendem a carregar
-parte mais relevante da arrecadação ligada ao consumo e à circulação.
+| Tributo | Valor/mês | Relevância |
+|---------|-----------|------------|
+| PIS/Pasep | R$ 11,2 mi | Média |
+| Cofins | R$ 17,1 mi | Média |
+| IPI | R$ 60 mil | **Negligenciável** |
+| II | R$ 25 mil | **Negligenciável** |
+| CIDE-Combustíveis | R$ 0 | **Não aplicável a RR** |
 
----
+**Motivos da exclusão:**
 
-## Fontes recomendadas
+1. **Cobertura insuficiente.** Os arquivos por estado da Receita Federal cobrem apenas
+   jan/2000–mai/2022. Para jun/2022 em diante não há dado por UF publicado. O arquivo de série
+   histórica nacional (1994–2025) não tem desagregação por estado.
 
-### 1. Subnacional — núcleo do MVP
+2. **Problema metodológico de imputação territorial.** PIS/Cofins é registrado no domicílio
+   fiscal do contribuinte (onde a empresa tem sede e paga o tributo), não no local de consumo.
+   Roraima importa a maior parte dos bens tributados de outros estados (AM, SP, etc.) — logo a
+   arrecadação de PIS/Cofins atribuída a RR subestima sistematicamente a carga federal real
+   sobre a economia local. Usar esse dado como proxy criaria um viés estrutural.
 
-#### Estado de Roraima
+3. **Magnitude pequena relativa.** IPI e II somam menos de R$ 1 mi/ano para RR — abaixo do
+   nível de ruído do proxy.
 
-**Fonte prioritária:** Siconfi / MSC / RREO  
-Uso pretendido:
+4. **CIDE-Combustíveis = zero para RR.** Roraima não possui refinaria nem distribuidora-base
+   que justifique CIDE coletada no estado.
 
-- arrecadação de `ICMS`;
-- eventual abertura complementar de `IPVA`, `ITCMD` e outras receitas, apenas para inspeção.
-
-**Regra metodológica:** para o ILP, o tributo estadual principal é o `ICMS`. Os demais tributos
-estaduais só entram se houver justificativa conceitual forte e ganho mensurável.
-
-**Extração B.1 já validada para o Estado de Roraima:**
-
-- endpoint: `https://apidatalake.tesouro.gov.br/ords/siconfi/tt/msc_orcamentaria`
-- identificador do ente: `id_ente = 14` (Estado de Roraima)
-- parâmetros centrais:
-  - `co_tipo_matriz = MSCC`
-  - `classe_conta = 6`
-  - `id_tv = period_change`
-- filtro contábil obrigatório: `conta_contabil = 621200000`
-  - este filtro isola a **receita realizada**
-  - somar todas as contas da classe 6 superestima o ICMS, especialmente em janeiro, por misturar
-    previsão, realização e ajustes/deduções
-- filtro de natureza de receita:
-  - classificador novo observado em RR: `11145011` (principal) e `11145013` (dívida ativa)
-  - classificador legado observado em parte da série: `11180211` e `11180213`
-  - monitoramento preventivo recomendado também para multas e juros de ambos os conjuntos
-    (`11145015` a `11145018` e `11180215` a `11180218`)
-
-**Implicação metodológica:**
-O caminho mais limpo para o proxy estadual não é “qualquer linha com ICMS na MSC”, e sim a
-receita **realizada** do ICMS nas naturezas detalhadas da série `1114501x`.
-
-**Ponto de atenção já identificado:**
-Há quebra de classificação e/ou comportamento contábil na série histórica. A rota limpa de
-extração foi validada, mas a harmonização completa de `2020–presente` ainda exige tratamento da
-transição entre códigos legados (`1118021x`) e códigos novos (`1114501x`), com atenção especial a
-2022.
-
-Na primeira execução exploratória do script, a cobertura limpa obtida foi de **59 observações
-mensais**, de `2020-01` a `2026-02`, com lacuna em `2022-01` a `2023-03`.
-
-#### Municípios de Roraima
-
-**Fonte prioritária:** Siconfi / MSC / RREO  
-Uso pretendido:
-
-- arrecadação de `ISS`;
-- `ITBI` como candidato secundário, a ser testado em etapa posterior.
-
-**Regra metodológica:** para o ILP municipal, o núcleo é o `ISS`. `ITBI` pode ser testado como
-complemento, mas não é necessário para a primeira versão.
-
-### 2. Federal — bloco ampliado
-
-**Fonte prioritária:** Receita Federal, dados abertos de arrecadação por estado.  
-Tributos-alvo:
-
-- `IPI`
-- `II`
-- `PIS/Pasep`
-- `Cofins`
-- `CIDE-Combustíveis`
-
-**Uso pretendido:** construir um agregado mensal federal por UF e, depois, trimestralizar/ancorar
-ao ILP anual de RR.
+**Condição de reabertura:** o bloco federal pode ser reincorporado se a Receita Federal
+publicar dados por UF para 2022 em diante, ou se for desenvolvida uma metodologia de imputação
+territorial baseada em dados de consumo (ex.: matriz insumo-produto regional).
 
 ---
 
-## Estrutura metodológica proposta
+## Fonte do ICMS: SEFAZ-RR (não Siconfi)
+
+A fonte do ICMS foi revisada. O Siconfi/MSC havia sido validado como rota de extração, mas
+apresentou **lacuna de 15 meses (jan/2022–mar/2023)** por transição de classificadores
+contábeis — exatamente no período com benchmark CR IBGE disponível.
+
+**Fonte adotada:** arquivos Excel mensais do **Portal de Arrecadação da SEFAZ-RR**
+(`https://www.sefaz.rr.gov.br/m-arrecadacao-mensal`), baixados manualmente.
+
+**Características da série:**
+- Cobertura: jan/2020–mar/2026 (**75 observações mensais, sem lacunas**).
+- Colunas disponíveis: Mês, Ano, ICMS, IPVA, ITCD, IRRF, Taxas, Outras Receitas, Total.
+- Unidade: R$ 1,00 (convertida para R$ milhões no script).
+- Armazenamento: `bases_baixadas_manualmente/dados_arrecadacao_rr_2020.1_2026.3/`
+- Série processada: `data/processed/icms_sefaz_rr_mensal.csv`
+- Script de leitura: `R/exploratorio/icms_sefaz_rr.R`
+
+**Nenhum outlier detectado** (z-score > 2,5) na série mensal de ICMS. A sazonalidade é
+coerente: picos em agosto–dezembro, baixa em fevereiro–março.
+
+**Limitação:** a série depende de atualização manual. A SEFAZ-RR atualiza o portal com defasagem
+de 1–2 meses. Não há API pública disponível — a tentativa de acesso programático retornou
+apenas o esqueleto HTML (conteúdo JavaScript dinâmico).
+
+---
+
+## Estrutura metodológica adotada
 
 ### Etapa 1 — Escalar o VAB nominal trimestral para R$ milhões
 
 Partir de `indice_nominal_rr.csv` e escalar pelo VAB nominal anual de 2020:
 
 ```text
-VAB_nom_trim_R$ = indice_nominal_trim / 100 × VAB_nominal_médio_2020
+VAB_nom_trim_R$ = indice_nominal_trim / 100 × (VAB_nominal_2020 / 4)
 ```
-
-Onde:
-
-- `VAB_nominal_médio_2020 = VAB nominal anual 2020 / 4`.
 
 ### Etapa 2 — Construir o ILP anual
 
-Obter:
-
-- `PIB nominal anual RR` via SIDRA/IBGE;
-- `VAB nominal anual RR` via Contas Regionais já processadas.
-
-Calcular:
-
 ```text
-ILP_anual = PIB_anual - VAB_anual
+ILP_anual = PIB_anual (SIDRA tab. 5938) - VAB_anual (CR IBGE já processado)
 ```
 
 ### Etapa 3 — Construir a proxy trimestral do ILP
 
-#### Opção operacional A — MVP recomendado
+Agregar a série mensal de ICMS para frequência trimestral:
 
 ```text
-proxy_ilp_trim = w1 × ICMS_trim + w2 × ISS_trim
+ICMS_trim = soma dos três meses de cada trimestre
+proxy_ILP_trim = ICMS_trim  (normalizado para média = 1 ou em nível, conforme td())
 ```
 
-Pesos iniciais recomendados:
-
-- `w1 = 0,85`
-- `w2 = 0,15`
-
-Esses pesos são heurísticos de partida e devem ser revistos depois de inspecionar a participação
-relativa das arrecadações anualizadas.
-
-#### Opção operacional B — versão ampliada
-
-```text
-proxy_ilp_trim = w_subnac × (ICMS + ISS) + w_fed × (IPI + II + PIS + Cofins + CIDE)
-```
-
-Regra recomendada:
-
-- não fixar pesos arbitrários permanentes antes de ver a escala relativa dos dados;
-- preferir normalizar cada bloco e calibrar os pesos com base nas participações médias observadas
-  no período com benchmark anual;
-- manter uma versão simplificada comparável ao MVP para teste de sensibilidade.
+O ICMS captura 80–83% do ILP anual e tem sazonalidade coerente. O resíduo (~17–20%) não é
+observável mensalmente e será distribuído pelo próprio Denton de forma proporcional ao ICMS.
 
 ### Etapa 4 — Desagregar o ILP anual via Denton-Cholette
 
-Usar `tempdisagg::td()` com:
+```r
+td(ILP_anual ~ ICMS_trim, method = "denton-cholette", conversion = "sum")
+```
 
-- `y` = ILP anual;
-- `x` = proxy trimestral do ILP;
-- método compatível com a lógica já usada no projeto.
+- `y` = vetor do ILP anual (2020–2023 com benchmark; extrapolado para 2024–2025);
+- `x` = série trimestral do ICMS (2020T1–2026T1);
+- A média dos quatro trimestres de cada ano reproduz o ILP anual.
 
 ### Etapa 5 — Fechar o PIB nominal trimestral
 
@@ -232,90 +197,48 @@ Usar `tempdisagg::td()` com:
 PIB_nom_trim = VAB_nom_trim + ILP_trim
 ```
 
-Outputs esperados:
-
+**Outputs esperados:**
 - `data/output/pib_nominal_rr.csv`
-- nova aba no Excel final;
-- eventual aba própria no dashboard, se o produto for adotado oficialmente.
+- nova aba "PIB Nominal" no `IAET_RR_series.xlsx`;
+- eventual aba no dashboard se o produto for adotado oficialmente.
 
 ---
 
-## Estratégia recomendada de implementação
+## Decisões metodológicas registradas
 
-### Fase A — MVP com ICMS + ISS
-
-Esta é a fase recomendada para começar.
-
-**Por quê:**
-
-- alta chance de disponibilidade no Siconfi;
-- aderência conceitual boa ao ILP;
-- custo baixo de coleta;
-- permite publicar uma primeira versão do PIB nominal trimestral sem depender de uma solução
-  federal completa.
-
-**Resultado esperado:** primeira série trimestral utilizável de `ILP` e `PIB nominal`.
-
-**Status atual desta fase:**
-O componente estadual do MVP já tem rota de extração identificada no Siconfi/MSC. O próximo passo
-é replicar a mesma lógica para o `ISS` municipal agregado dos 15 municípios de Roraima.
-
-### Fase B — Federal por UF
-
-Implementar depois da Fase A estabilizada.
-
-**Por quê:**
-
-- aumenta a aderência conceitual do ILP;
-- reduz o risco de o componente federal ficar “escondido” no residual anual;
-- melhora a narrativa metodológica da nota técnica.
-
-### Fase C — Refino e validação
-
-- testar inclusão de `ITBI`;
-- testar `IOF` como opcional;
-- comparar versões `MVP` vs. `ampliada`;
-- documentar sensibilidade e estabilidade das variações trimestrais.
-
----
-
-## Decisões metodológicas já recomendadas
-
-1. O núcleo inicial do ILP trimestral deve usar `ICMS + ISS`.
-2. `IPI` sozinho não deve ser usado como representante do bloco federal.
-3. O bloco federal ampliado deve priorizar `IPI + II + PIS + Cofins + CIDE`.
-4. `ITBI` é opcional e secundário; não bloqueia a primeira versão.
-5. `IOF` só entra após teste empírico de aderência.
-6. Se a fonte federal por UF atrasar, o projeto pode publicar um PIB nominal trimestral com
-   `ICMS + ISS + residual anual ancorado`, desde que isso seja explicitado na nota técnica.
+| # | Decisão | Justificativa |
+|---|---------|---------------|
+| 1 | Proxy = ICMS exclusivamente | Cobre 80–83% do ILP; série limpa e completa (75 obs.) |
+| 2 | ISS excluído da proxy | Artefato de lançamento em lote no Siconfi (54% do ISS em janeiro); não representa sazonalidade real |
+| 3 | Bloco federal excluído | Dados por UF só até mai/2022; imputação territorial inadequada para RR; IPI+II+CIDE negligenciáveis |
+| 4 | Fonte do ICMS = SEFAZ-RR | Siconfi MSC tinha lacuna 15 meses (jan/2022–mar/2023); SEFAZ-RR tem série completa |
+| 5 | Resíduo tratado pelo Denton | Parcela não coberta pelo ICMS (~17–20%) distribuída proporcionalmente via Denton-Cholette |
+| 6 | Pesos futuros calibrados por dados | Qualquer versão ampliada deve usar participações observadas, não pesos heurísticos fixos |
 
 ---
 
 ## Riscos e cuidados
 
-### 1. Siconfi não resolve sozinho o bloco federal
+### 1. Atualização manual do ICMS
 
-O Siconfi é excelente para `estado + municípios`, mas não substitui uma fonte federal territorial
-adequada por UF.
+A série depende de download manual do portal SEFAZ-RR. Não há automação disponível. Risco de
+defasagem se o portal não for atualizado ou se a estrutura do Excel mudar.
 
-### 2. Receita tributária total não é o mesmo que ILP
+### 2. Extrapolação do ILP pós-2023
 
-Evitar misturar no mesmo agregado:
+O benchmark CR IBGE cobre até 2023. Para 2024–2025, o ILP anual será extrapolado pela mesma
+lógica geométrica usada no índice real — e portanto carrega a mesma incerteza dos anos sem CR.
 
-- IR,
-- taxas diversas,
-- contribuições sem aderência ao conceito de produto,
-- receitas patrimoniais ou transferências.
+### 3. Quebras na série ICMS
 
-### 3. Quebras institucionais e contábeis
+Reformas tributárias (ex.: reforma do ICMS em curso) podem alterar a base de cálculo e produzir
+quebra estrutural na série a partir de 2026. Monitorar.
 
-Mudanças de classificação contábil, parcelamentos ou eventos atípicos podem produzir picos
-artificiais. Isso exige inspeção de outliers, como já ocorre com as demais proxies do projeto.
+### 4. Receita tributária total ≠ ILP
 
-### 4. Sazonalidade municipal
-
-O `ISS` municipal pode ter ruído elevado em municípios pequenos. Agregar os 15 municípios de RR
-antes da trimestralização é preferível a modelar cada um separadamente.
+Os arquivos SEFAZ-RR incluem IRRF, IPVA, ITCD e outras receitas. Para o proxy de ILP, usar
+**exclusivamente a coluna ICMS**. IRRF em abril/2021 apresentou pico extraordinário (R$ 256 mi
+vs. média de R$ 20 mi) — não afeta ICMS, mas confirma que as demais colunas têm ruído elevado.
 
 ---
 
@@ -323,28 +246,23 @@ antes da trimestralização é preferível a modelar cada um separadamente.
 
 ### `R/05g_pib_nominal.R`
 
-Escopo previsto:
+Escopo:
 
-1. carregar `indice_nominal_rr.csv`;
-2. escalar VAB nominal trimestral para `R$ milhões`;
-3. obter PIB anual RR via SIDRA;
-4. calcular ILP anual;
-5. ler e tratar proxies trimestrais (`ICMS`, `ISS` e, depois, bloco federal);
-6. aplicar Denton-Cholette no ILP;
-7. calcular `PIB nominal trimestral`;
-8. salvar outputs e atualizar exportação.
+1. Ler `data/processed/icms_sefaz_rr_mensal.csv`;
+2. Agregar ICMS para frequência trimestral;
+3. Carregar `indice_nominal_rr.csv` e escalar VAB nominal para R$ milhões;
+4. Obter PIB anual RR via SIDRA (tab. 5938) → calcular ILP anual;
+5. Aplicar Denton-Cholette: `ILP_trim ~ ICMS_trim`;
+6. Calcular `PIB_nom_trim = VAB_nom_trim + ILP_trim`;
+7. Salvar `data/output/pib_nominal_rr.csv`;
+8. Integrar ao `R/05e_exportacao.R` (nova aba "PIB Nominal").
 
 ---
 
 ## Critério de pronta-implementação
 
-Esta reforma pode começar oficialmente quando pelo menos uma das condições abaixo for atendida:
-
-- `ICMS estadual` e `ISS municipal agregado` estiverem acessíveis de forma reproduzível;
-- houver decisão institucional de publicar o `PIB nominal trimestral` mesmo com bloco federal
-  ainda residual;
-- a fonte federal por UF estiver identificada e testada para `IPI`, `II`, `PIS`, `Cofins` e
-  `CIDE`.
+**Condição já atendida:** a série de ICMS está disponível e processada. A implementação de
+`R/05g_pib_nominal.R` pode começar imediatamente.
 
 ---
 
@@ -352,6 +270,6 @@ Esta reforma pode começar oficialmente quando pelo menos uma das condições ab
 
 Ao final desta frente, o projeto passa a ter três camadas complementares:
 
-- **IAET-RR real** — indicador principal de atividade;
-- **VAB nominal trimestral** — já implementado;
-- **PIB nominal trimestral** — novo produto derivado, construído com ILP trimestral explícito.
+- **IAET-RR real** — indicador principal de atividade econômica trimestral;
+- **VAB nominal trimestral** — já implementado em `R/05f_vab_nominal.R`;
+- **PIB nominal trimestral** — novo produto derivado, construído com ILP trimestral explícito via proxy ICMS.
