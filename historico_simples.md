@@ -1655,4 +1655,51 @@ Após esses ajustes, a rotina fechou normalmente.
 Além do `IAET-RR real` e do `VAB nominal trimestral`, o projeto passa a ter também uma série de
 `PIB nominal trimestral` pronta para análise interna e eventual incorporação ao dashboard.
 
-*Última atualização: 14 de abril de 2026 — `.git` local saneada, `05g_pib_nominal.R` implementado, PIB nominal trimestral gerado e documentação da reforma de impostos atualizada*
+---
+
+### Abril de 2026 — Reforma do dashboard: IAET no centro, exploração por escolha do usuário
+
+**O que foi feito:**
+
+O dashboard em `dashboard/app.R` foi redesenhado para ficar menos estático e mais exploratório.
+Antes, o painel tinha pouca escolha para o usuário: a maior parte dos gráficos era fixa, os
+componentes apareciam sem contraposição sistemática entre NSA e SA, e o bloco nominal mostrava só
+o `VAB`, mesmo depois de o projeto já ter passado a gerar `ILP` e `PIB nominal trimestral`.
+
+**O que mudou no painel:**
+
+- a navegação passou a ser organizada em quatro frentes mais claras:
+  - `IAET`: foco no índice principal;
+  - `Componentes`: leitura individual dos blocos setoriais;
+  - `PIB`: lógica contábil do nominal com `VAB + impostos + PIB`;
+  - `Dados`: tabela e download da base escolhida pelo usuário;
+- o usuário agora pode escolher a janela de análise em cada aba;
+- o índice principal passou a destacar explicitamente:
+  - nível do IAET;
+  - variação interanual;
+  - variação de margem dessazonalizada;
+- os gráficos de índice passaram a mostrar sempre `NSA x SA` juntos, tanto para o `IAET` quanto
+  para o componente escolhido;
+- os componentes deixaram de ser apenas um gráfico fixo com todas as linhas ao mesmo tempo e
+  passaram a ter leitura orientada por seleção do usuário;
+- foi criada uma aba própria do `PIB nominal`, com:
+  - `VAB nominal`;
+  - `ILP trimestral`;
+  - `PIB nominal`;
+  - taxas de crescimento do PIB nominal.
+
+**Crítica que motivou a reforma:**
+
+O painel anterior era bom como vitrine, mas ainda fraco como ferramenta de análise. Ele mostrava
+o que o projeto produzia, mas não deixava o usuário escolher com facilidade o que queria explorar.
+Também misturava prioridades: dava muito espaço ao `VAB nominal` e pouco ao uso mais natural do
+painel, que é acompanhar o `IAET` e comparar as taxas de crescimento.
+
+**Validação feita nesta etapa:**
+
+- o arquivo novo do dashboard passou na checagem de sintaxe;
+- o carregamento completo do `app.R` também passou;
+- apareceu apenas um aviso de cache do `sass` no ambiente local do terminal, mas sem impedir a
+  montagem do app.
+
+*Última atualização: 14 de abril de 2026 — dashboard reformado com foco no IAET, exploração por componentes e nova aba de PIB nominal*

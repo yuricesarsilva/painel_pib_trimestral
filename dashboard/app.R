@@ -1,8 +1,14 @@
-# =============================================================================
-# IAET-RR — Indicador de Atividade Econômica Trimestral de Roraima
-# Dashboard Shiny interativo
-# SEPLAN/RR — CGEES/DIEAS
-# =============================================================================
+# ============================================================
+# Projeto : Indicador de Atividade Economica Trimestral - RR
+# Script  : dashboard/app.R
+# Autor   : Yuri Cesar de Lima e Silva (DIEAS/SEPLAN-RR)
+# Data    : 2026-04-14
+# Descricao: Dashboard Shiny interativo do IAET-RR, com foco no
+#            indice geral, componentes NSA/SA e bloco do PIB nominal.
+# Entrada : arquivos em data/output/
+# Saida   : aplicacao Shiny
+# Depende : shiny, bslib, dplyr, tidyr, readr, plotly, DT, openxlsx
+# ============================================================
 
 library(shiny)
 library(bslib)
@@ -16,9 +22,6 @@ library(openxlsx)
 # ---------------------------------------------------------------------------
 # 1. CAMINHOS DE DADOS
 # ---------------------------------------------------------------------------
-# O dashboard procura os dados em `data/output/` relativo ao diretório de
-# trabalho. Execute o app com `setwd()` apontando para a raiz do projeto, ou
-# configure IAET_DATA_DIR como variável de ambiente.
 
 resolver_data_dir <- function() {
   dir_env <- Sys.getenv("IAET_DATA_DIR", unset = "")
@@ -29,7 +32,7 @@ resolver_data_dir <- function() {
   )
 
   for (dir_cand in candidatos) {
-    if (file.exists(file.path(dir_cand, "indice_geral_rr.csv"))) {
+    if (file.exists(file.path(dir_cand, "indice_geral_rr_sa.csv"))) {
       return(normalizePath(dir_cand, winslash = "/", mustWork = TRUE))
     }
   }
@@ -42,275 +45,484 @@ resolver_data_dir <- function() {
 
 data_dir <- resolver_data_dir()
 
-arq_geral  <- file.path(data_dir, "indice_geral_rr.csv")
-arq_sa     <- file.path(data_dir, "indice_geral_rr_sa.csv")
-arq_nominal <- file.path(data_dir, "vab_nominal_rr_reais.csv")
+arq_indices <- file.path(data_dir, "indice_geral_rr_sa.csv")
+arq_pib     <- file.path(data_dir, "pib_nominal_rr.csv")
+arq_ilp     <- file.path(data_dir, "ilp_rr_trimestral.csv")
 
 # ---------------------------------------------------------------------------
-# 2. LEITURA E PRÉ-PROCESSAMENTO
+# 2. LEITURA E PRE-PROCESSAMENTO
 # ---------------------------------------------------------------------------
-geral <- read_csv(arq_geral,  show_col_types = FALSE)
-sa    <- read_csv(arq_sa,     show_col_types = FALSE)
-nom   <- read_csv(arq_nominal, show_col_types = FALSE)
 
-# Série principal: une NSA e SA
-serie <- geral |>
-  left_join(sa |> select(periodo, indice_geral_sa), by = "periodo") |>
-  left_join(nom |> select(periodo, vab_nominal_mi), by = "periodo") |>
-  arrange(periodo)
+ultimo_benchmark <- 2023L
 
-# Rótulo de período (eixo X)
-serie <- serie |>
-  mutate(label = paste0(ano, "T", trimestre))
+calc_var <- function(x, lag) {
+  round((x / dplyr::lag(x, lag) - 1) * 100, 2)
+}
 
-# Variações ---------------------------------------------------------------
-calc_var <- function(x, lag) round((x / dplyr::lag(x, lag) - 1) * 100, 2)
+fmt_pct <- function(x, digits = 1) {
+  if (is.na(x)) return("-")
+  paste0(ifelse(x > 0, "+", ""), format(round(x, digits), decimal.mark = ","), "%")
+}
 
-tabela_var <- serie |>
+fmt_mi <- function(x, digits = 1) {
+  if (is.na(x)) return("-")
+  paste0("R$ ", format(round(x, digits), big.mark = ".", decimal.mark = ","), " mi")
+}
+
+fmt_bi <- function(x, digits = 2) {
+  if (is.na(x)) return("-")
+  paste0("R$ ", format(round(x / 1000, digits), big.mark = ".", decimal.mark = ","), " bi")
+}
+
+marcas_extrapolacao <- function(df, ano_benchmark = ultimo_benchmark) {
+  if (!any(df$ano > ano_benchmark)) return(list(shapes = NULL, annotations = NULL))
+
+  x_inicio <- df$label[match(min(df$label[df$ano > ano_benchmark]), df$label)]
+  x_linha  <- paste0(ano_benchmark, "T4")
+
+  list(
+    shapes = list(
+      list(
+        type = "line",
+        x0 = x_linha, x1 = x_linha,
+        y0 = 0, y1 = 1, yref = "paper",
+        line = list(color = "#9aa4b2", dash = "dot", width = 1.3)
+      )
+    ),
+    annotations = list(
+      list(
+        x = x_inicio, y = 1, yref = "paper", xanchor = "left",
+        text = "<- extrapolacao", showarrow = FALSE,
+        font = list(size = 10, color = "#6b7280")
+      )
+    )
+  )
+}
+
+dados_indices <- read_csv(arq_indices, show_col_types = FALSE) |>
+  arrange(ano, trimestre) |>
   mutate(
-    var_trim    = calc_var(indice_geral, 1),   # t/t-1
-    var_anual   = calc_var(indice_geral, 4),   # t/t-4
-    var_trim_sa = calc_var(indice_geral_sa, 1),
-    vab_mi_fmt  = round(vab_nominal_mi, 1)
-  ) |>
-  select(
-    Período   = periodo,
-    `Índice (NSA)` = indice_geral,
-    `Índice (SA)`  = indice_geral_sa,
-    `Var. trim. %` = var_trim,
-    `Var. anual %` = var_anual,
-    `Var. trim. SA %` = var_trim_sa,
-    `VAB Nominal (R$ mi)` = vab_mi_fmt,
-    `Agropecuária` = indice_agropecuaria,
-    `Adm. Pública` = indice_aapp,
-    `Indústria`    = indice_industria,
-    `Serviços Privados` = indice_servicos
+    label = paste0(ano, "T", trimestre),
+    origem = ifelse(ano <= ultimo_benchmark, "Benchmark CR IBGE", "Extrapolacao")
   )
 
-# Período mais recente com dado não extrapolado
-ultimo_benchmark <- 2023  # CR IBGE disponível até 2023
+dados_pib <- read_csv(arq_pib, show_col_types = FALSE) |>
+  arrange(ano, trimestre) |>
+  select(periodo, vab_nominal_mi, icms_mi, ilp_nominal_mi, pib_nominal_mi, tipo_benchmark)
 
-# Rótulos legíveis para componentes
-componentes <- c(
-  "indice_agropecuaria" = "Agropecuária",
-  "indice_aapp"         = "Adm. Pública",
-  "indice_industria"    = "Indústria",
-  "indice_servicos"     = "Serviços Privados"
+dados_ilp <- read_csv(arq_ilp, show_col_types = FALSE) |>
+  arrange(ano, trimestre) |>
+  select(periodo, ilp_anual_mi)
+
+serie <- dados_indices |>
+  left_join(dados_pib, by = "periodo") |>
+  left_join(dados_ilp, by = "periodo")
+
+catalogo_series <- tibble::tibble(
+  serie_id = c("iaet", "agro", "aapp", "industria", "servicos"),
+  serie = c("IAET-RR", "Agropecuaria", "Adm. Publica", "Industria", "Servicos Privados"),
+  col_nsa = c("indice_geral", "indice_agropecuaria", "indice_aapp", "indice_industria", "indice_servicos"),
+  col_sa  = c("indice_geral_sa", "indice_agropecuaria_sa", "indice_aapp_sa", "indice_industria_sa", "indice_servicos_sa"),
+  peso_2020 = c(NA_real_, 6.89, 45.01, 11.63, 36.46)
 )
 
-# Pesos 2020 (base Laspeyres — manter sincronizado com 05_agregacao.R)
-pesos_2020 <- c(
-  indice_agropecuaria = 6.89,
-  indice_aapp         = 45.01,
-  indice_industria    = 11.63,
-  indice_servicos     = 36.46
-)
+base_painel <- serie
 
-# Contribuição à variação anual (pontos percentuais)
-contrib <- serie |>
-  mutate(across(all_of(names(pesos_2020)), ~ calc_var(.x, 4), .names = "var_{.col}")) |>
-  mutate(across(
-    starts_with("var_indice"),
-    ~ .x * pesos_2020[sub("var_", "", cur_column())] / 100,
-    .names = "contrib_{.col}"
-  )) |>
-  select(periodo, label, ano, trimestre,
-         starts_with("contrib_var_")) |>
-  rename_with(~ sub("contrib_var_", "", .x), starts_with("contrib_var_")) |>
-  pivot_longer(all_of(names(pesos_2020)),
-               names_to = "setor", values_to = "contribuicao") |>
-  mutate(setor = componentes[setor])
+indices_long <- bind_rows(lapply(seq_len(nrow(catalogo_series)), function(i) {
+  tibble::tibble(
+    periodo = base_painel$periodo,
+    ano = base_painel$ano,
+    trimestre = base_painel$trimestre,
+    label = base_painel$label,
+    origem = base_painel$origem,
+    serie_id = catalogo_series$serie_id[i],
+    serie = catalogo_series$serie[i],
+    peso_2020 = catalogo_series$peso_2020[i],
+    nsa = base_painel[[catalogo_series$col_nsa[i]]],
+    sa = base_painel[[catalogo_series$col_sa[i]]]
+  ) |>
+    mutate(
+      var_interanual_nsa = calc_var(nsa, 4),
+      var_interanual_sa  = calc_var(sa, 4),
+      var_margem_nsa     = calc_var(nsa, 1),
+      var_margem_sa      = calc_var(sa, 1)
+    )
+}))
+
+contrib <- indices_long |>
+  filter(serie_id != "iaet") |>
+  mutate(contribuicao = var_interanual_nsa * peso_2020 / 100)
+
+tabela_indices <- indices_long |>
+  select(periodo, serie, nsa, sa, var_interanual_nsa, var_margem_sa, peso_2020, origem) |>
+  rename(
+    Periodo = periodo,
+    Serie = serie,
+    `Indice NSA` = nsa,
+    `Indice SA` = sa,
+    `Var. interanual NSA (%)` = var_interanual_nsa,
+    `Var. margem SA (%)` = var_margem_sa,
+    `Peso 2020 (%)` = peso_2020,
+    Origem = origem
+  )
+
+tabela_pib <- serie |>
+  transmute(
+    Periodo = periodo,
+    Ano = ano,
+    Trimestre = trimestre,
+    `VAB nominal (R$ mi)` = vab_nominal_mi,
+    `ICMS proxy (R$ mi)` = icms_mi,
+    `ILP trimestral (R$ mi)` = ilp_nominal_mi,
+    `PIB nominal (R$ mi)` = pib_nominal_mi,
+    `Var. interanual PIB (%)` = calc_var(pib_nominal_mi, 4),
+    `Var. margem PIB (%)` = calc_var(pib_nominal_mi, 1),
+    Benchmark = tipo_benchmark
+  )
 
 # ---------------------------------------------------------------------------
-# 3. PALETA DE CORES
+# 3. PALETA
 # ---------------------------------------------------------------------------
+
 cores <- list(
-  azul    = "#14346A",
-  dourado = "#C89114",
-  verde   = "#2E7D32",
-  vermelho = "#C62828",
-  cinza   = "#607D8B",
-  azul_claro = "#1976D2"
+  azul = "#123B72",
+  azul_medio = "#2A6DB0",
+  dourado = "#C68A18",
+  verde = "#2F7A45",
+  vermelho = "#C54A43",
+  ardosia = "#5D6B7A"
 )
 
 cores_setores <- c(
-  "Agropecuária"      = "#2E7D32",
-  "Adm. Pública"      = "#14346A",
-  "Indústria"         = "#C89114",
-  "Serviços Privados" = "#1976D2"
+  "Agropecuaria" = "#2F7A45",
+  "Adm. Publica" = "#123B72",
+  "Industria" = "#C68A18",
+  "Servicos Privados" = "#2A6DB0"
+)
+
+cores_pib <- c(
+  "VAB nominal" = "#123B72",
+  "Impostos sobre produtos (ILP)" = "#C68A18",
+  "PIB nominal" = "#2F7A45"
 )
 
 # ---------------------------------------------------------------------------
 # 4. UI
 # ---------------------------------------------------------------------------
+
 ui <- page_navbar(
   title = div(
-    img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Bras%C3%A3o_de_Roraima.svg/60px-Bras%C3%A3o_de_Roraima.svg.png",
-        height = "32px", style = "margin-right: 8px;"),
-    "IAET-RR"
+    style = "display:flex; align-items:center; gap:10px;",
+    span(
+      style = paste(
+        "display:inline-flex; align-items:center; justify-content:center;",
+        "width:38px; height:38px; border-radius:10px;",
+        "background:#C68A18; color:white; font-weight:700;"
+      ),
+      "RR"
+    ),
+    div(
+      tags$div(style = "font-weight:700; line-height:1;", "IAET-RR"),
+      tags$div(style = "font-size:11px; opacity:.8; line-height:1.2;", "Atividade economica trimestral")
+    )
   ),
   theme = bs_theme(
     version = 5,
-    primary  = "#14346A",
-    secondary = "#C89114",
+    primary = cores$azul,
+    secondary = cores$dourado,
+    bg = "#EEF2F6",
+    fg = "#1E293B",
     base_font = font_collection("Segoe UI", "Arial", "sans-serif"),
     heading_font = font_collection("Segoe UI", "Arial", "sans-serif")
   ),
-  navbar_options = navbar_options(bg = "#14346A", inverse = TRUE),
+  header = tags$style(HTML(" 
+    .bslib-value-box .value-box-value { font-size: 1.7rem; }
+    .bslib-value-box .value-box-title { font-weight: 600; }
+    .card { border: 0; box-shadow: 0 10px 30px rgba(18,59,114,.08); }
+    .nav-link { font-weight: 600; }
+    .sidebar { background: #F8FAFC; }
+  ")),
 
-  # ── ABA 1: Índice Geral ──────────────────────────────────────────────────
   nav_panel(
-    title = "Índice Geral",
-    icon  = icon("chart-line"),
-    layout_columns(
-      fill = FALSE,
-      col_widths = c(4, 4, 4),
-
-      value_box(
-        title = "Último trimestre disponível",
-        value = textOutput("ultimo_periodo"),
-        showcase = icon("calendar"),
-        theme = "primary"
-      ),
-      value_box(
-        title = "Variação anual (t/t-4)",
-        value = textOutput("var_anual_ult"),
-        showcase = icon("arrow-trend-up"),
-        theme = value_box_theme(bg = "#C89114", fg = "white")
-      ),
-      value_box(
-        title = "VAB nominal estimado",
-        value = textOutput("vab_ult"),
-        showcase = icon("dollar-sign"),
-        theme = value_box_theme(bg = "#2E7D32", fg = "white")
-      )
-    ),
-
-    card(
-      card_header("Série histórica — Índice IAET-RR (base 2020 = 100)"),
-      card_body(
-        checkboxGroupInput(
-          "series_exibir",
-          label = NULL,
-          choices  = c("Sem ajuste sazonal (NSA)" = "nsa",
-                       "Dessazonalizado (SA)"      = "sa"),
-          selected = c("nsa", "sa"),
-          inline   = TRUE
-        ),
+    title = "IAET",
+    icon = icon("chart-line"),
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 320,
+        h5("Explorar o IAET"),
+        p(class = "text-muted small",
+          "O painel principal privilegia o indice geral e compara sempre a serie sem ajuste sazonal com a dessazonalizada."),
         sliderInput(
-          "range_periodos",
-          label    = NULL,
-          min      = 1L,
-          max      = nrow(serie),
-          value    = c(1L, nrow(serie)),
-          step     = 1L,
-          ticks    = FALSE,
-          width    = "100%"
+          "range_iaet",
+          "Janela de analise",
+          min = 1L, max = nrow(serie),
+          value = c(1L, nrow(serie)),
+          step = 1L, ticks = FALSE
         ),
-        plotlyOutput("grafico_geral", height = "420px")
+        radioButtons(
+          "modo_taxa_iaet",
+          "Taxas no grafico inferior",
+          choices = c(
+            "Interanual NSA" = "anual",
+            "Margem SA" = "margem",
+            "Ambas" = "ambas"
+          ),
+          selected = "ambas"
+        ),
+        helpText("Interanual = contra o mesmo trimestre do ano anterior. Margem = contra o trimestre imediatamente anterior.")
+      ),
+      layout_columns(
+        col_widths = c(4, 4, 4),
+        value_box(
+          title = "Ultimo trimestre",
+          value = textOutput("iaet_periodo"),
+          showcase = icon("calendar"),
+          theme = "primary"
+        ),
+        value_box(
+          title = "Variacao interanual",
+          value = textOutput("iaet_var_anual"),
+          showcase = icon("arrow-trend-up"),
+          theme = value_box_theme(bg = cores$dourado, fg = "white")
+        ),
+        value_box(
+          title = "Variacao margem SA",
+          value = textOutput("iaet_var_margem"),
+          showcase = icon("wave-square"),
+          theme = value_box_theme(bg = cores$verde, fg = "white")
+        )
+      ),
+      card(
+        full_screen = TRUE,
+        card_header("IAET-RR - indice principal (NSA x SA)"),
+        card_body(plotlyOutput("grafico_iaet_nivel", height = "420px"))
+      ),
+      card(
+        full_screen = TRUE,
+        card_header("IAET-RR - taxas de crescimento"),
+        card_body(plotlyOutput("grafico_iaet_taxas", height = "320px"))
       )
     )
   ),
 
-  # ── ABA 2: Componentes ──────────────────────────────────────────────────
   nav_panel(
     title = "Componentes",
-    icon  = icon("chart-bar"),
-
-    card(
-      card_header("Contribuição setorial à variação anual (p.p.)"),
-      card_body(plotlyOutput("grafico_contrib", height = "440px"))
-    ),
-
-    card(
-      card_header("Índices setoriais (base 2020 = 100)"),
-      card_body(plotlyOutput("grafico_setores", height = "420px"))
-    )
-  ),
-
-  # ── ABA 3: VAB Nominal ──────────────────────────────────────────────────
-  nav_panel(
-    title = "VAB Nominal",
-    icon  = icon("coins"),
-
-    card(
-      card_header("VAB Nominal Trimestral — Roraima (R$ milhões, preços correntes)"),
-      card_body(plotlyOutput("grafico_nominal", height = "420px"))
-    ),
-
-    layout_columns(
-      col_widths = c(6, 6),
-      card(
-        card_header("Variação nominal anual (%)"),
-        card_body(plotlyOutput("grafico_var_nominal", height = "300px"))
+    icon = icon("sliders"),
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 320,
+        h5("Escolha o componente"),
+        selectInput(
+          "serie_comp",
+          "Serie",
+          choices = setNames(catalogo_series$serie_id[catalogo_series$serie_id != "iaet"],
+                             catalogo_series$serie[catalogo_series$serie_id != "iaet"]),
+          selected = "agro"
+        ),
+        sliderInput(
+          "range_comp",
+          "Janela de analise",
+          min = 1L, max = nrow(serie),
+          value = c(1L, nrow(serie)),
+          step = 1L, ticks = FALSE
+        ),
+        checkboxGroupInput(
+          "comp_contrib",
+          "Setores na contribuicao",
+          choices = setNames(catalogo_series$serie_id[catalogo_series$serie_id != "iaet"],
+                             catalogo_series$serie[catalogo_series$serie_id != "iaet"]),
+          selected = catalogo_series$serie_id[catalogo_series$serie_id != "iaet"]
+        )
+      ),
+      layout_columns(
+        col_widths = c(3, 3, 3, 3),
+        value_box(
+          title = "Nivel NSA",
+          value = textOutput("comp_nivel"),
+          showcase = icon("chart-area"),
+          theme = "primary"
+        ),
+        value_box(
+          title = "Variacao interanual",
+          value = textOutput("comp_var_anual"),
+          showcase = icon("arrow-up-right-dots"),
+          theme = value_box_theme(bg = cores$dourado, fg = "white")
+        ),
+        value_box(
+          title = "Variacao margem SA",
+          value = textOutput("comp_var_margem"),
+          showcase = icon("arrow-right-arrow-left"),
+          theme = value_box_theme(bg = cores$verde, fg = "white")
+        ),
+        value_box(
+          title = "Peso no IAET",
+          value = textOutput("comp_peso"),
+          showcase = icon("weight-scale"),
+          theme = value_box_theme(bg = cores$ardosia, fg = "white")
+        )
       ),
       card(
-        card_header("Nota metodológica"),
-        card_body(
-          p(strong("Fonte:"), "SEPLAN/RR — CGEES/DIEAS, a partir de IBGE Contas Regionais."),
-          p(strong("Método:"), "VAB nominal = índice real × deflator implícito / 100."),
-          p(strong("Deflator:"), "Derivado das Contas Regionais (VAB nominal / VAB real),",
-            "desagregado trimestralmente via Denton-Cholette com IPCA como proxy."),
-          p(strong("Base de escala:"), "VAB nominal anual de 2020 (R$ 14.524 mi ÷ 4 = R$ 3.631 mi/trimestre)."),
-          p(class = "text-muted small",
-            "Os valores de 2024–2025 são estimados por extrapolação de tendência.",
-            "Serão revisados com a publicação das CR IBGE 2024 (previsão: out/2026).")
+        full_screen = TRUE,
+        card_header(textOutput("titulo_comp_nivel")),
+        card_body(plotlyOutput("grafico_comp_nivel", height = "410px"))
+      ),
+      layout_columns(
+        col_widths = c(6, 6),
+        card(
+          full_screen = TRUE,
+          card_header(textOutput("titulo_comp_taxas")),
+          card_body(plotlyOutput("grafico_comp_taxas", height = "300px"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Contribuicao dos componentes para a variacao interanual do IAET"),
+          card_body(plotlyOutput("grafico_contrib", height = "300px"))
         )
       )
     )
   ),
 
-  # ── ABA 4: Tabela e Download ─────────────────────────────────────────────
   nav_panel(
-    title = "Dados",
-    icon  = icon("table"),
-
-    card(
-      card_header(
-        div(
-          style = "display: flex; justify-content: space-between; align-items: center;",
-          span("Série completa — IAET-RR"),
-          div(
-            downloadButton("dl_csv",  "CSV",  class = "btn-sm btn-outline-primary me-1"),
-            downloadButton("dl_xlsx", "XLSX", class = "btn-sm btn-primary")
+    title = "PIB",
+    icon = icon("coins"),
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 320,
+        h5("Logica do PIB nominal"),
+        checkboxGroupInput(
+          "series_pib",
+          "Series no grafico principal",
+          choices = c(
+            "VAB nominal" = "vab_nominal_mi",
+            "Impostos sobre produtos (ILP)" = "ilp_nominal_mi",
+            "PIB nominal" = "pib_nominal_mi"
+          ),
+          selected = c("vab_nominal_mi", "ilp_nominal_mi", "pib_nominal_mi")
+        ),
+        sliderInput(
+          "range_pib",
+          "Janela de analise",
+          min = 1L, max = nrow(serie),
+          value = c(1L, nrow(serie)),
+          step = 1L, ticks = FALSE
+        ),
+        radioButtons(
+          "modo_taxa_pib",
+          "Taxa destacada",
+          choices = c(
+            "Interanual" = "anual",
+            "Margem" = "margem",
+            "Ambas" = "ambas"
+          ),
+          selected = "ambas"
+        )
+      ),
+      layout_columns(
+        col_widths = c(4, 4, 4),
+        value_box(
+          title = "VAB nominal",
+          value = textOutput("pib_vab_ult"),
+          showcase = icon("building-columns"),
+          theme = "primary"
+        ),
+        value_box(
+          title = "Impostos sobre produtos",
+          value = textOutput("pib_ilp_ult"),
+          showcase = icon("receipt"),
+          theme = value_box_theme(bg = cores$dourado, fg = "white")
+        ),
+        value_box(
+          title = "PIB nominal",
+          value = textOutput("pib_total_ult"),
+          showcase = icon("sack-dollar"),
+          theme = value_box_theme(bg = cores$verde, fg = "white")
+        )
+      ),
+      card(
+        full_screen = TRUE,
+        card_header("Composicao do PIB nominal trimestral"),
+        card_body(plotlyOutput("grafico_pib_nivel", height = "420px"))
+      ),
+      layout_columns(
+        col_widths = c(7, 5),
+        card(
+          full_screen = TRUE,
+          card_header("Taxas de crescimento do PIB nominal"),
+          card_body(plotlyOutput("grafico_pib_taxas", height = "300px"))
+        ),
+        card(
+          card_header("Como ler esta aba"),
+          card_body(
+            p(strong("Identidade contabil:"), " PIB = VAB + impostos liquidos sobre produtos."),
+            p(strong("VAB nominal:"), " serie trimestral derivada do indice nominal do projeto."),
+            p(strong("ILP trimestral:"), " benchmark anual do IBGE distribuido por Denton-Cholette com ICMS da SEFAZ-RR como proxy."),
+            p(strong("PIB nominal:"), " soma trimestral entre VAB nominal e ILP."),
+            p(class = "text-muted small",
+              "Os anos de 2024 e 2025 ainda dependem de extrapolacao do benchmark anual e devem ser lidos como estimativas.")
           )
         )
-      ),
-      card_body(
-        DTOutput("tabela_principal")
       )
     )
   ),
 
-  # ── ABA 5: Sobre ─────────────────────────────────────────────────────────
+  nav_panel(
+    title = "Dados",
+    icon = icon("table"),
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 280,
+        selectInput(
+          "base_tabela",
+          "Base exibida",
+          choices = c(
+            "Indices e componentes" = "indices",
+            "PIB nominal" = "pib"
+          ),
+          selected = "indices"
+        ),
+        p(class = "text-muted small",
+          "A mesma base selecionada aqui e usada no download.")
+      ),
+      card(
+        card_header(
+          div(
+            style = "display:flex; justify-content:space-between; align-items:center;",
+            span("Tabela exploratoria"),
+            div(
+              downloadButton("dl_csv", "CSV", class = "btn-sm btn-outline-primary me-1"),
+              downloadButton("dl_xlsx", "XLSX", class = "btn-sm btn-primary")
+            )
+          )
+        ),
+        card_body(DTOutput("tabela_principal"))
+      )
+    )
+  ),
+
   nav_panel(
     title = "Sobre",
-    icon  = icon("info-circle"),
-
+    icon = icon("info-circle"),
     layout_columns(
       col_widths = c(7, 5),
       card(
-        card_header("Sobre o IAET-RR"),
+        card_header("Sobre o painel"),
         card_body(
-          h5("Indicador de Atividade Econômica Trimestral de Roraima"),
-          p("O IAET-RR é um proxy do PIB estadual trimestral desenvolvido pela",
-            strong("SEPLAN/RR"), "para acompanhamento da conjuntura econômica de",
-            "Roraima em tempo próximo ao real."),
+          h5("IAET-RR"),
+          p("Painel interativo do indicador trimestral de atividade economica de Roraima, com navegacao separada entre indice principal, componentes e bloco do PIB nominal."),
           hr(),
-          h6("Metodologia"),
+          h6("Principios desta versao"),
           tags$ul(
-            tags$li(strong("Índice:"), "Laspeyres encadeado por volume — padrão das Contas Nacionais IBGE"),
-            tags$li(strong("Base:"), "Média de 2020 = 100"),
-            tags$li(strong("Pesos:"), "Participação no VAB nominal de 2020 (Contas Regionais IBGE)"),
-            tags$li(strong("Desagregação:"), "Denton-Cholette — benchmark: índice de volume real (CR IBGE)"),
-            tags$li(strong("Ajuste sazonal:"), "X-13ARIMA-SEATS")
+            tags$li("o indice principal e o foco da experiencia;"),
+            tags$li("o usuario escolhe a janela de analise e a serie componente que quer ver;"),
+            tags$li("todos os graficos de indices mostram NSA e SA em conjunto;"),
+            tags$li("o bloco PIB aparece em aba propria, com VAB, impostos e PIB.")
           ),
           hr(),
           h6("Cobertura"),
           tags$ul(
-            tags$li("2020T1 a 2023T4 — âncora CR IBGE 2023 (dados definitivos)"),
-            tags$li("2024T1 a 2025T4 — extrapolação de tendência geométrica"),
-            tags$li("Será atualizado com CR IBGE 2024 (previsão IBGE: out/2026)")
+            tags$li("2020T1 a 2023T4 - benchmark anual das Contas Regionais do IBGE"),
+            tags$li("2024T1 a 2025T4 - extrapolacao de tendencia/benchmark estendido"),
+            tags$li("revisao esperada quando o IBGE divulgar as Contas Regionais 2024")
           )
         )
       ),
@@ -319,12 +531,16 @@ ui <- page_navbar(
         card_body(
           plotlyOutput("grafico_pesos", height = "280px"),
           hr(),
-          h6("Instituição"),
-          p(strong("Secretaria de Estado do Planejamento e Desenvolvimento de Roraima"),
-            br(), "Coordenação-Geral de Estudos Econômicos e Sociais — CGEES",
-            br(), "Divisão de Estudos e Análises Sociais — DIEAS"),
-          p(em("Yuri Cesar de Lima e Silva"),
-            br(), "Coordenador da Equipe do PIB do Estado de Roraima")
+          h6("Instituicao"),
+          p(
+            strong("Secretaria de Estado do Planejamento e Desenvolvimento de Roraima"),
+            br(), "Coordenacao-Geral de Estudos Economicos e Sociais - CGEES",
+            br(), "Divisao de Estudos e Analises Sociais - DIEAS"
+          ),
+          p(
+            em("Yuri Cesar de Lima e Silva"),
+            br(), "Coordenador da Equipe do PIB do Estado de Roraima"
+          )
         )
       )
     )
@@ -333,10 +549,10 @@ ui <- page_navbar(
   nav_spacer(),
   nav_item(
     tags$a(
-      icon("github"), "Código-fonte",
-      href   = "https://github.com/yuricesarsilva/painel_pib_trimestral",
+      icon("github"), "Codigo-fonte",
+      href = "https://github.com/yuricesarsilva/painel_pib_trimestral",
       target = "_blank",
-      class  = "nav-link"
+      class = "nav-link"
     )
   )
 )
@@ -344,302 +560,424 @@ ui <- page_navbar(
 # ---------------------------------------------------------------------------
 # 5. SERVER
 # ---------------------------------------------------------------------------
+
 server <- function(input, output, session) {
 
-  # -- Reativo: janela de períodos selecionada --------------------------------
-  serie_filtrada <- reactive({
-    r <- input$range_periodos
-    serie[r[1]:r[2], ]
+  atualizar_slider <- function(id_input) {
+    observe({
+      r <- input[[id_input]]
+      if (is.null(r)) return()
+      updateSliderInput(
+        session, id_input,
+        label = paste("Periodo:", serie$label[r[1]], "->", serie$label[r[2]])
+      )
+    })
+  }
+
+  atualizar_slider("range_iaet")
+  atualizar_slider("range_comp")
+  atualizar_slider("range_pib")
+
+  faixa_df <- function(id_input, df = serie) {
+    r <- input[[id_input]]
+    if (is.null(r)) return(df)
+    df[r[1]:r[2], ]
+  }
+
+  dados_iaet <- reactive({
+    indices_long |>
+      filter(serie_id == "iaet", periodo %in% faixa_df("range_iaet")$periodo)
   })
 
-  # -- Atualizar labels do slider conforme seleção ---------------------------
-  observe({
-    r  <- input$range_periodos
-    lb <- serie$label[r[1]]
-    ub <- serie$label[r[2]]
-    updateSliderInput(session, "range_periodos",
-                      label = paste("Período:", lb, "→", ub))
+  dados_comp <- reactive({
+    indices_long |>
+      filter(serie_id == input$serie_comp, periodo %in% faixa_df("range_comp")$periodo)
   })
 
-  # -- Value boxes -----------------------------------------------------------
-  output$ultimo_periodo <- renderText({
-    tail(serie$label, 1)
+  dados_contrib <- reactive({
+    contrib |>
+      filter(
+        serie_id %in% input$comp_contrib,
+        periodo %in% faixa_df("range_comp")$periodo
+      )
   })
 
-  output$var_anual_ult <- renderText({
-    n    <- nrow(serie)
-    vvar <- round((serie$indice_geral[n] / serie$indice_geral[n - 4] - 1) * 100, 1)
-    paste0(ifelse(vvar >= 0, "+", ""), vvar, "%")
+  dados_pib_filtrados <- reactive({
+    faixa_df("range_pib", serie) |>
+      mutate(
+        var_interanual_pib = calc_var(pib_nominal_mi, 4),
+        var_margem_pib = calc_var(pib_nominal_mi, 1)
+      )
   })
 
-  output$vab_ult <- renderText({
-    v <- tail(serie$vab_nominal_mi, 1)
-    paste0("R$ ", format(round(v / 1e3, 2), big.mark = ".", decimal.mark = ","), " bi")
+  output$iaet_periodo <- renderText({
+    tail(indices_long$label[indices_long$serie_id == "iaet"], 1)
   })
 
-  # -- Gráfico: série geral NSA/SA -------------------------------------------
-  output$grafico_geral <- renderPlotly({
-    df <- serie_filtrada()
+  output$iaet_var_anual <- renderText({
+    df <- indices_long |> filter(serie_id == "iaet")
+    fmt_pct(tail(df$var_interanual_nsa, 1))
+  })
+
+  output$iaet_var_margem <- renderText({
+    df <- indices_long |> filter(serie_id == "iaet")
+    fmt_pct(tail(df$var_margem_sa, 1))
+  })
+
+  output$comp_nivel <- renderText({
+    fmt_pct(tail(dados_comp()$nsa, 1), digits = 1)
+  })
+
+  output$comp_var_anual <- renderText({
+    fmt_pct(tail(dados_comp()$var_interanual_nsa, 1))
+  })
+
+  output$comp_var_margem <- renderText({
+    fmt_pct(tail(dados_comp()$var_margem_sa, 1))
+  })
+
+  output$comp_peso <- renderText({
+    fmt_pct(unique(dados_comp()$peso_2020), digits = 2)
+  })
+
+  output$titulo_comp_nivel <- renderText({
+    paste0(unique(dados_comp()$serie), " - indice (NSA x SA)")
+  })
+
+  output$titulo_comp_taxas <- renderText({
+    paste0(unique(dados_comp()$serie), " - taxas de crescimento")
+  })
+
+  output$pib_vab_ult <- renderText({
+    fmt_bi(tail(serie$vab_nominal_mi, 1))
+  })
+
+  output$pib_ilp_ult <- renderText({
+    fmt_mi(tail(serie$ilp_nominal_mi, 1))
+  })
+
+  output$pib_total_ult <- renderText({
+    fmt_bi(tail(serie$pib_nominal_mi, 1))
+  })
+
+  output$grafico_iaet_nivel <- renderPlotly({
+    df <- dados_iaet()
+    marcas <- marcas_extrapolacao(df)
+
+    plot_ly(df, x = ~label) |>
+      add_lines(
+        y = ~nsa, name = "NSA",
+        line = list(color = cores$azul, width = 2.6),
+        hovertemplate = "NSA: %{y:.1f}<extra></extra>"
+      ) |>
+      add_lines(
+        y = ~sa, name = "SA",
+        line = list(color = cores$dourado, width = 2.4, dash = "dash"),
+        hovertemplate = "SA: %{y:.1f}<extra></extra>"
+      ) |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Indice (base 2020 = 100)", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = list(orientation = "h", y = -0.18),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI"),
+        shapes = marcas$shapes,
+        annotations = marcas$annotations
+      )
+  })
+
+  output$grafico_iaet_taxas <- renderPlotly({
+    df <- dados_iaet()
+    modo <- input$modo_taxa_iaet
 
     p <- plot_ly(df, x = ~label) |>
       layout(
-        xaxis = list(title = "", tickangle = -45, tickfont = list(size = 10)),
-        yaxis = list(title = "Índice (base 2020 = 100)", gridcolor = "#e8e8e8"),
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.18),
-        plot_bgcolor  = "white",
+        legend = list(orientation = "h", y = -0.2),
+        plot_bgcolor = "white",
         paper_bgcolor = "white",
-        font = list(family = "Source Sans 3"),
-        shapes = list(
-          list(type = "line",
-               x0 = "2023T4", x1 = "2023T4",
-               y0 = 0, y1 = 1, yref = "paper",
-               line = list(color = "#999", dash = "dot", width = 1.5))
-        ),
-        annotations = list(
-          list(x = "2024T1", y = 1, yref = "paper", xanchor = "left",
-               text = "← extrapolação", showarrow = FALSE,
-               font = list(size = 10, color = "#999"))
-        )
+        font = list(family = "Segoe UI")
       )
 
-    if ("nsa" %in% input$series_exibir) {
-      p <- p |> add_trace(
-        y    = ~indice_geral,
-        name = "NSA",
-        type = "scatter", mode = "lines+markers",
-        line    = list(color = cores$azul, width = 2),
-        marker  = list(color = cores$azul, size = 5),
-        hovertemplate = "NSA: %{y:.1f}<extra></extra>"
-      )
+    if (modo %in% c("anual", "ambas")) {
+      p <- p |>
+        add_bars(
+          y = ~var_interanual_nsa,
+          name = "Interanual NSA",
+          marker = list(color = cores$azul_medio),
+          hovertemplate = "Interanual NSA: %{y:.1f}%<extra></extra>"
+        )
     }
 
-    if ("sa" %in% input$series_exibir) {
-      p <- p |> add_trace(
-        y    = ~indice_geral_sa,
-        name = "SA (dessazonalizado)",
-        type = "scatter", mode = "lines",
-        line    = list(color = cores$dourado, width = 2, dash = "dash"),
-        hovertemplate = "SA: %{y:.1f}<extra></extra>"
-      )
+    if (modo %in% c("margem", "ambas")) {
+      p <- p |>
+        add_lines(
+          y = ~var_margem_sa,
+          name = "Margem SA",
+          line = list(color = cores$dourado, width = 2.4),
+          hovertemplate = "Margem SA: %{y:.1f}%<extra></extra>"
+        )
     }
 
     p
   })
 
-  # -- Gráfico: contribuição setorial ----------------------------------------
-  output$grafico_contrib <- renderPlotly({
-    df_c <- contrib |>
-      filter(!is.na(contribuicao)) |>
-      mutate(cor = cores_setores[setor])
+  output$grafico_comp_nivel <- renderPlotly({
+    df <- dados_comp()
+    marcas <- marcas_extrapolacao(df)
 
-    plot_ly(df_c, x = ~periodo, y = ~contribuicao, color = ~setor,
+    plot_ly(df, x = ~label) |>
+      add_lines(
+        y = ~nsa, name = "NSA",
+        line = list(color = cores$azul, width = 2.5),
+        hovertemplate = "NSA: %{y:.1f}<extra></extra>"
+      ) |>
+      add_lines(
+        y = ~sa, name = "SA",
+        line = list(color = cores$dourado, width = 2.2, dash = "dash"),
+        hovertemplate = "SA: %{y:.1f}<extra></extra>"
+      ) |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Indice (base 2020 = 100)", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = list(orientation = "h", y = -0.18),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI"),
+        shapes = marcas$shapes,
+        annotations = marcas$annotations
+      )
+  })
+
+  output$grafico_comp_taxas <- renderPlotly({
+    df <- dados_comp()
+
+    plot_ly(df, x = ~label) |>
+      add_bars(
+        y = ~var_interanual_nsa,
+        name = "Interanual NSA",
+        marker = list(color = cores$azul_medio),
+        hovertemplate = "Interanual NSA: %{y:.1f}%<extra></extra>"
+      ) |>
+      add_lines(
+        y = ~var_margem_sa,
+        name = "Margem SA",
+        line = list(color = cores$dourado, width = 2.3),
+        hovertemplate = "Margem SA: %{y:.1f}%<extra></extra>"
+      ) |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
+        hovermode = "x unified",
+        legend = list(orientation = "h", y = -0.2),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI")
+      )
+  })
+
+  output$grafico_contrib <- renderPlotly({
+    df <- dados_contrib()
+
+    plot_ly(df, x = ~label, y = ~contribuicao, color = ~serie,
             colors = cores_setores, type = "bar") |>
       layout(
         barmode = "stack",
-        xaxis = list(title = "", tickangle = -45, tickfont = list(size = 9)),
-        yaxis = list(title = "Pontos percentuais (p.p.)", gridcolor = "#e8e8e8",
-                     zeroline = TRUE, zerolinecolor = "#555"),
-        legend = list(orientation = "h", y = -0.22),
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Pontos percentuais", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
-        plot_bgcolor  = "white",
+        legend = list(orientation = "h", y = -0.22),
+        plot_bgcolor = "white",
         paper_bgcolor = "white",
-        font = list(family = "Source Sans 3"),
-        shapes = list(
-          list(type = "line",
-               x0 = "2024T1", x1 = "2024T1",
-               y0 = 0, y1 = 1, yref = "paper",
-               line = list(color = "#999", dash = "dot", width = 1.5))
+        font = list(family = "Segoe UI")
+      )
+  })
+
+  output$grafico_pib_nivel <- renderPlotly({
+    df <- dados_pib_filtrados()
+    marcas <- marcas_extrapolacao(df)
+    p <- plot_ly(df, x = ~label)
+
+    if ("vab_nominal_mi" %in% input$series_pib) {
+      p <- p |>
+        add_bars(
+          y = ~vab_nominal_mi,
+          name = "VAB nominal",
+          marker = list(color = cores_pib["VAB nominal"]),
+          hovertemplate = "VAB: R$ %{y:,.1f} mi<extra></extra>"
         )
-      )
-  })
+    }
 
-  # -- Gráfico: índices setoriais --------------------------------------------
-  output$grafico_setores <- renderPlotly({
-    df <- serie |>
-      select(label, all_of(names(pesos_2020))) |>
-      pivot_longer(-label, names_to = "setor", values_to = "indice") |>
-      mutate(setor = componentes[setor])
+    if ("ilp_nominal_mi" %in% input$series_pib) {
+      p <- p |>
+        add_bars(
+          y = ~ilp_nominal_mi,
+          name = "Impostos sobre produtos (ILP)",
+          marker = list(color = cores_pib["Impostos sobre produtos (ILP)"]),
+          hovertemplate = "ILP: R$ %{y:,.1f} mi<extra></extra>"
+        )
+    }
 
-    plot_ly(df, x = ~label, y = ~indice, color = ~setor,
-            colors = cores_setores, type = "scatter", mode = "lines") |>
-      add_segments(x = "2023T4", xend = "2023T4", y = 0, yend = 400,
-                   line = list(color = "#999", dash = "dot", width = 1),
-                   showlegend = FALSE, inherit = FALSE) |>
-      layout(
-        xaxis = list(title = "", tickangle = -45, tickfont = list(size = 9)),
-        yaxis = list(title = "Índice (base 2020 = 100)", gridcolor = "#e8e8e8"),
-        hovermode = "x unified",
-        legend = list(orientation = "h", y = -0.22),
-        plot_bgcolor  = "white",
-        paper_bgcolor = "white",
-        font = list(family = "Source Sans 3")
-      )
-  })
+    if ("pib_nominal_mi" %in% input$series_pib) {
+      p <- p |>
+        add_lines(
+          y = ~pib_nominal_mi,
+          name = "PIB nominal",
+          line = list(color = cores_pib["PIB nominal"], width = 2.8),
+          hovertemplate = "PIB: R$ %{y:,.1f} mi<extra></extra>"
+        )
+    }
 
-  # -- Gráfico: VAB nominal em R$ milhões ------------------------------------
-  output$grafico_nominal <- renderPlotly({
-    df <- serie |> filter(!is.na(vab_nominal_mi))
-
-    # Separar benchmark e extrapolado
-    df_bench <- df |> filter(ano <= ultimo_benchmark)
-    df_extrap <- df |> filter(ano > ultimo_benchmark)
-
-    plot_ly() |>
-      add_bars(
-        data = df_bench,
-        x = ~label, y = ~vab_nominal_mi,
-        name = "Dados CR IBGE 2023",
-        marker = list(color = cores$azul),
-        hovertemplate = "R$ %{y:,.1f} mi<extra></extra>"
-      ) |>
-      add_bars(
-        data = df_extrap,
-        x = ~label, y = ~vab_nominal_mi,
-        name = "Extrapolação (2024–2025)",
-        marker = list(color = cores$azul_claro, opacity = 0.7),
-        hovertemplate = "R$ %{y:,.1f} mi (est.)<extra></extra>"
-      ) |>
+    p |>
       layout(
         barmode = "stack",
-        xaxis = list(title = "", tickangle = -45, tickfont = list(size = 9)),
-        yaxis = list(title = "R$ milhões", gridcolor = "#e8e8e8",
-                     tickformat = ",.0f"),
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "R$ milhoes", gridcolor = "#dbe3ec"),
+        hovermode = "x unified",
+        legend = list(orientation = "h", y = -0.2),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        font = list(family = "Segoe UI"),
+        shapes = marcas$shapes,
+        annotations = marcas$annotations
+      )
+  })
+
+  output$grafico_pib_taxas <- renderPlotly({
+    df <- dados_pib_filtrados()
+    modo <- input$modo_taxa_pib
+
+    p <- plot_ly(df, x = ~label) |>
+      layout(
+        xaxis = list(title = "", tickangle = -45),
+        yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
         legend = list(orientation = "h", y = -0.22),
-        plot_bgcolor  = "white",
+        plot_bgcolor = "white",
         paper_bgcolor = "white",
-        font = list(family = "Source Sans 3")
+        font = list(family = "Segoe UI")
       )
+
+    if (modo %in% c("anual", "ambas")) {
+      p <- p |>
+        add_bars(
+          y = ~var_interanual_pib,
+          name = "PIB interanual",
+          marker = list(color = cores_pib["PIB nominal"]),
+          hovertemplate = "PIB interanual: %{y:.1f}%<extra></extra>"
+        )
+    }
+
+    if (modo %in% c("margem", "ambas")) {
+      p <- p |>
+        add_lines(
+          y = ~var_margem_pib,
+          name = "PIB margem",
+          line = list(color = cores$dourado, width = 2.4),
+          hovertemplate = "PIB margem: %{y:.1f}%<extra></extra>"
+        )
+    }
+
+    p
   })
 
-  # -- Gráfico: variação nominal anual ---------------------------------------
-  output$grafico_var_nominal <- renderPlotly({
-    df <- serie |>
-      filter(!is.na(vab_nominal_mi)) |>
-      mutate(var = round((vab_nominal_mi / lag(vab_nominal_mi, 4) - 1) * 100, 1)) |>
-      filter(!is.na(var))
-
-    plot_ly(df, x = ~label, y = ~var,
-            type = "bar",
-            marker = list(
-              color = ifelse(df$var >= 0, cores$verde, cores$vermelho)
-            ),
-            hovertemplate = "%{y:.1f}%<extra></extra>") |>
-      layout(
-        xaxis = list(title = "", tickangle = -45, tickfont = list(size = 9)),
-        yaxis = list(title = "%", gridcolor = "#e8e8e8",
-                     zeroline = TRUE, zerolinecolor = "#555"),
-        plot_bgcolor  = "white",
-        paper_bgcolor = "white",
-        font = list(family = "Source Sans 3"),
-        showlegend = FALSE
-      )
-  })
-
-  # -- Gráfico: pesos setoriais (pizza) --------------------------------------
   output$grafico_pesos <- renderPlotly({
-    df_pesos <- data.frame(
-      setor = names(pesos_2020),
-      peso  = as.numeric(pesos_2020)
-    ) |> mutate(setor = componentes[setor])
+    df_pesos <- catalogo_series |>
+      filter(serie_id != "iaet") |>
+      transmute(serie, peso = peso_2020)
 
-    plot_ly(df_pesos, labels = ~setor, values = ~peso,
-            type = "pie",
-            marker = list(colors = unname(cores_setores[df_pesos$setor])),
-            textinfo = "label+percent",
-            hovertemplate = "%{label}: %{value:.1f}%<extra></extra>") |>
+    plot_ly(
+      df_pesos,
+      labels = ~serie,
+      values = ~peso,
+      type = "pie",
+      marker = list(colors = unname(cores_setores[df_pesos$serie])),
+      textinfo = "label+percent",
+      hovertemplate = "%{label}: %{value:.2f}%<extra></extra>"
+    ) |>
       layout(
         showlegend = FALSE,
         margin = list(t = 20, b = 20, l = 10, r = 10),
-        font = list(family = "Source Sans 3", size = 11)
+        font = list(family = "Segoe UI")
       )
   })
 
-  # -- Tabela principal ------------------------------------------------------
+  tabela_reativa <- reactive({
+    if (identical(input$base_tabela, "pib")) {
+      tabela_pib
+    } else {
+      tabela_indices
+    }
+  })
+
   output$tabela_principal <- renderDT({
-    df <- tabela_var |>
+    df <- tabela_reativa() |>
       mutate(across(where(is.numeric), ~ round(.x, 2)))
 
     datatable(
       df,
-      rownames  = FALSE,
-      filter    = "top",
-      class     = "table table-striped table-hover table-sm",
-      options   = list(
-        pageLength = 24,
-        scrollX    = TRUE,
-        dom        = "lrtip",
-        language   = list(
-          search      = "Buscar:",
-          lengthMenu  = "Mostrar _MENU_ linhas",
-          info        = "Mostrando _START_–_END_ de _TOTAL_ registros",
-          paginate    = list(previous = "Anterior", `next` = "Próximo")
+      rownames = FALSE,
+      filter = "top",
+      class = "table table-striped table-hover table-sm",
+      options = list(
+        pageLength = 18,
+        scrollX = TRUE,
+        dom = "lrtip",
+        language = list(
+          search = "Buscar:",
+          lengthMenu = "Mostrar _MENU_ linhas",
+          info = "Mostrando _START_-_END_ de _TOTAL_ registros",
+          paginate = list(previous = "Anterior", `next` = "Proximo")
         )
       )
-    ) |>
-      formatStyle(
-        "Var. anual %",
-        color = styleInterval(0, c("#C62828", "#2E7D32")),
-        fontWeight = "bold"
-      ) |>
-      formatStyle(
-        "Var. trim. %",
-        color = styleInterval(0, c("#C62828", "#2E7D32"))
-      )
-  })
-
-  # -- Downloads -------------------------------------------------------------
-  df_download <- reactive({
-    tabela_var |>
-      mutate(
-        Fonte     = "SEPLAN/RR — CGEES/DIEAS",
-        Benchmark = ifelse(as.integer(substr(Período, 1, 4)) <= ultimo_benchmark,
-                           "CR IBGE 2023 (definitivo)",
-                           "Extrapolação de tendência")
-      )
+    )
   })
 
   output$dl_csv <- downloadHandler(
     filename = function() {
-      paste0("IAET_RR_", format(Sys.Date(), "%Y%m%d"), ".csv")
+      prefixo <- if (identical(input$base_tabela, "pib")) "PIB_nominal_RR" else "IAET_RR_indices"
+      paste0(prefixo, "_", format(Sys.Date(), "%Y%m%d"), ".csv")
     },
     content = function(file) {
-      write_csv(df_download(), file)
+      write_csv(tabela_reativa(), file)
     }
   )
 
   output$dl_xlsx <- downloadHandler(
     filename = function() {
-      paste0("IAET_RR_", format(Sys.Date(), "%Y%m%d"), ".xlsx")
+      prefixo <- if (identical(input$base_tabela, "pib")) "PIB_nominal_RR" else "IAET_RR_indices"
+      paste0(prefixo, "_", format(Sys.Date(), "%Y%m%d"), ".xlsx")
     },
     content = function(file) {
       wb <- createWorkbook()
-      addWorksheet(wb, "IAET-RR")
-      writeData(wb, "IAET-RR", df_download(), startRow = 3)
+      nome_aba <- if (identical(input$base_tabela, "pib")) "PIB Nominal" else "Indices"
+      df <- tabela_reativa()
 
-      # Cabeçalho com metadados
-      writeData(wb, "IAET-RR",
-                data.frame(x = "IAET-RR — Indicador de Atividade Econômica Trimestral de Roraima"),
-                startRow = 1, colNames = FALSE)
-      writeData(wb, "IAET-RR",
-                data.frame(x = paste("Gerado em:", format(Sys.time(), "%d/%m/%Y %H:%M"), "| SEPLAN/RR — CGEES/DIEAS")),
-                startRow = 2, colNames = FALSE)
+      addWorksheet(wb, nome_aba)
+      writeData(wb, nome_aba, df, startRow = 3)
+      writeData(wb, nome_aba, "SEPLAN/RR - CGEES/DIEAS", startRow = 1, colNames = FALSE)
+      writeData(wb, nome_aba, paste("Gerado em", format(Sys.time(), "%d/%m/%Y %H:%M")), startRow = 2, colNames = FALSE)
 
-      # Estilo de cabeçalho
       estilo_cab <- createStyle(
-        fgFill = "#14346A", fontColour = "#FFFFFF",
-        textDecoration = "bold", halign = "center",
+        fgFill = cores$azul,
+        fontColour = "#FFFFFF",
+        textDecoration = "bold",
+        halign = "center",
         border = "TopBottomLeftRight"
       )
-      addStyle(wb, "IAET-RR",
-               style = estilo_cab,
-               rows = 3, cols = 1:ncol(df_download()),
-               gridExpand = TRUE)
 
-      setColWidths(wb, "IAET-RR", cols = 1:ncol(df_download()),
-                   widths = "auto")
-
+      addStyle(
+        wb, nome_aba,
+        style = estilo_cab,
+        rows = 3, cols = 1:ncol(df),
+        gridExpand = TRUE
+      )
+      setColWidths(wb, nome_aba, cols = 1:ncol(df), widths = "auto")
       saveWorkbook(wb, file, overwrite = TRUE)
     }
   )
@@ -648,4 +986,6 @@ server <- function(input, output, session) {
 # ---------------------------------------------------------------------------
 # 6. RUN
 # ---------------------------------------------------------------------------
+
 shinyApp(ui = ui, server = server)
+

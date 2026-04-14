@@ -421,11 +421,12 @@
 - [x] Implementar gráfico de contribuição setorial — barras empilhadas (p.p.) + índices setoriais
 - [x] Implementar tabela de variações (trimestre/trimestre e ano/ano) — `var_trim`, `var_anual`, `var_trim_sa`
 - [x] Adicionar botão de download (CSV e XLSX) — com metadados e estilo SEPLAN no XLSX
-- [x] Aba "VAB Nominal" com gráfico de barras (benchmark vs. extrapolação) + variação anual + nota metodológica
+- [x] Aba específica do PIB com VAB nominal, ILP e PIB nominal trimestral
 - [x] Aba "Sobre" com pesos setoriais (pizza interativa) + metadados do projeto
 - [x] App operacional localmente com leitura dos outputs em `data/output/`
 - [x] Corrigir inicialização do app para aceitar execução pela raiz do projeto e pela pasta `dashboard/`
 - [x] Remover dependência de `font_google()` no tema para evitar bloqueios de inicialização sem rede
+- [x] Reorganizar a navegação do app para priorizar o IAET e permitir escolha de séries/componentes
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Publicar (Shinyapps.io ou servidor SEPLAN)
 

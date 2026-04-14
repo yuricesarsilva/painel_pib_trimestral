@@ -46,7 +46,7 @@ Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Ro
 | 🔴 Alta | Obter ICMS por atividade econômica da SEFAZ-RR e incorporar ao bloco Comércio | SEFAZ-RR |
 | 🟡 Média | Testar responsividade e publicar o dashboard Shiny em ambiente institucional | Infraestrutura SEPLAN/RR ou Shinyapps.io |
 | 🟡 Média | Redigir nota técnica metodológica (`notas/nota_tecnica.qmd`) | — |
-| 🟡 Média | Incorporar a nova série de PIB nominal trimestral ao dashboard | Decisão de publicação |
+| 🟡 Média | Testar a nova navegação do dashboard e publicar o app em ambiente institucional | Infraestrutura SEPLAN/RR ou Shinyapps.io |
 | 🟡 Média | Avaliar correlação IAET-RR × arrecadação tributária total de RR | ICMS anual SEFAZ-RR |
 | 🟢 Baixa | Revisão periódica do calendário de colheita SEADI-RR (sensibilidade alta à soja) | SEADI-RR |
 | 🟢 Baixa | Incorporar cimento SNIC como segunda proxy de Construção | SNIC |
