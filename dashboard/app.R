@@ -168,6 +168,35 @@ serie <- dados_indices |>
   left_join(dados_pib, by = "periodo") |>
   left_join(dados_ilp, by = "periodo")
 
+# Extende contas_regionais para 2020-2025 (2024-2025 estimados pela proporcao de 2023)
+vab_total_anual_proj <- serie |>
+  filter(ano %in% c(2024, 2025)) |>
+  group_by(ano) |>
+  summarise(vab_total = sum(vab_nominal_mi, na.rm = TRUE), .groups = "drop")
+
+prop_2023 <- contas_regionais |>
+  filter(ano == 2023) |>
+  select(bloco, participacao_pct)
+
+contas_regionais_2024_2025 <- expand.grid(
+    ano   = c(2024L, 2025L),
+    bloco = unique(prop_2023$bloco),
+    stringsAsFactors = FALSE
+  ) |>
+  dplyr::left_join(vab_total_anual_proj, by = "ano") |>
+  dplyr::left_join(prop_2023, by = "bloco") |>
+  mutate(vab_mi = vab_total * participacao_pct / 100) |>
+  group_by(ano) |>
+  mutate(participacao_pct = 100 * vab_mi / sum(vab_mi, na.rm = TRUE)) |>
+  ungroup() |>
+  select(ano, bloco, vab_mi, participacao_pct)
+
+contas_regionais_ext <- bind_rows(
+  contas_regionais |> filter(ano >= 2020),
+  contas_regionais_2024_2025
+) |>
+  arrange(ano, bloco)
+
 catalogo_series <- tibble::tibble(
   serie_id = c("iaet", "agro", "aapp", "industria", "servicos"),
   serie = c("IAET-RR", "Agropecuaria", "Adm. Publica", "Industria", "Servicos Privados"),
@@ -564,7 +593,7 @@ ui <- page_navbar(
     ),
     card(
       full_screen = TRUE,
-      card_header("Crescimento real da atividade economica — taxa anual (IAET-RR)"),
+      card_header("PIB real \u2014 taxa de crescimento anual"),
       card_body(plotlyOutput("grafico_pib_anual_real", height = "330px"))
     )
   ),
@@ -579,7 +608,7 @@ ui <- page_navbar(
     ),
     card(
       full_screen = TRUE,
-      card_header("VAB real por atividade — indice de volume anual (base 2020 = 100)"),
+      card_header("Crescimento real do VAB por atividade \u2014 taxas anuais (%)"),
       card_body(plotlyOutput("grafico_vab_real_anual", height = "330px"))
     )
   ),
@@ -626,17 +655,11 @@ ui <- page_navbar(
         width = 320,
         selectInput(
           "ano_estrutura",
-          "Ano da estrutura setorial",
-          choices = sort(unique(contas_regionais$ano), decreasing = TRUE),
-          selected = 2020
+          "Ano de referencia",
+          choices = 2020:2025,
+          selected = 2023
         ),
-        sliderInput(
-          "range_sobre",
-          "Periodo de referencia",
-          min = 1L, max = nrow(serie),
-          value = c(1L, nrow(serie)),
-          step = 1L, ticks = FALSE
-        )
+        helpText("2020-2023: Contas Regionais do IBGE. 2024-2025: proporcoes de 2023 aplicadas ao VAB nominal estimado.")
       ),
       layout_columns(
         col_widths = c(7, 5),
@@ -755,8 +778,8 @@ server <- function(input, output, session) {
   })
 
   dados_estrutura <- reactive({
-    contas_regionais |>
-      filter(ano == input$ano_estrutura)
+    contas_regionais_ext |>
+      filter(ano == as.integer(input$ano_estrutura))
   })
 
   output$iaet_periodo_ref <- renderText({
