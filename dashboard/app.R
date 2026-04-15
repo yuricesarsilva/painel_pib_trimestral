@@ -168,34 +168,26 @@ serie <- dados_indices |>
   left_join(dados_pib, by = "periodo") |>
   left_join(dados_ilp, by = "periodo")
 
-# Extende contas_regionais para 2020-2025 (2024-2025 estimados pela proporcao de 2023)
-vab_total_anual_proj <- serie |>
-  filter(ano %in% c(2024, 2025)) |>
+# VAB nominal por atividade (2020-2025): distribui VAB nominal total proporcionalmente
+# ao VAB real de cada setor (IAET), usando 2020 como ano-base de pesos
+vab_2020_setores <- contas_regionais |>
+  filter(ano == 2020) |>
+  select(bloco, vab_2020 = vab_mi)
+
+iaet_anual_setores <- serie |>
+  group_by(ano) |>
+  summarise(
+    Agropecuaria        = mean(indice_agropecuaria, na.rm = TRUE),
+    `Adm. Publica`      = mean(indice_aapp,         na.rm = TRUE),
+    Industria           = mean(indice_industria,    na.rm = TRUE),
+    `Servicos Privados` = mean(indice_servicos,     na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  pivot_longer(-ano, names_to = "bloco", values_to = "indice")
+
+vab_nominal_total_anual <- serie |>
   group_by(ano) |>
   summarise(vab_total = sum(vab_nominal_mi, na.rm = TRUE), .groups = "drop")
-
-prop_2023 <- contas_regionais |>
-  filter(ano == 2023) |>
-  select(bloco, participacao_pct)
-
-contas_regionais_2024_2025 <- expand.grid(
-    ano   = c(2024L, 2025L),
-    bloco = unique(prop_2023$bloco),
-    stringsAsFactors = FALSE
-  ) |>
-  dplyr::left_join(vab_total_anual_proj, by = "ano") |>
-  dplyr::left_join(prop_2023, by = "bloco") |>
-  mutate(vab_mi = vab_total * participacao_pct / 100) |>
-  group_by(ano) |>
-  mutate(participacao_pct = 100 * vab_mi / sum(vab_mi, na.rm = TRUE)) |>
-  ungroup() |>
-  select(ano, bloco, vab_mi, participacao_pct)
-
-contas_regionais_ext <- bind_rows(
-  contas_regionais |> filter(ano >= 2020),
-  contas_regionais_2024_2025
-) |>
-  arrange(ano, bloco)
 
 catalogo_series <- tibble::tibble(
   serie_id = c("iaet", "agro", "aapp", "industria", "servicos"),
@@ -296,7 +288,14 @@ pib_real_anual_taxa <- serie |>
   mutate(taxa_anual = calc_var(pib_real_mi, 1)) |>
   filter(!is.na(taxa_anual))
 
-vab_nominal_anual <- contas_regionais |>
+vab_nominal_anual <- iaet_anual_setores |>
+  left_join(vab_2020_setores, by = "bloco") |>
+  mutate(vab_real = (indice / 100) * vab_2020) |>
+  group_by(ano) |>
+  mutate(share_real = vab_real / sum(vab_real, na.rm = TRUE)) |>
+  ungroup() |>
+  left_join(vab_nominal_total_anual, by = "ano") |>
+  mutate(vab_mi = share_real * vab_total) |>
   select(ano, bloco, vab_mi)
 
 # Taxas de crescimento anuais reais por setor (para grafico de colunas agrupadas)
@@ -599,7 +598,7 @@ ui <- page_navbar(
   ),
 
   nav_panel(
-    title = "IAET em nivel",
+    title = "VAB por atividade",
     icon = icon("chart-column"),
     card(
       full_screen = TRUE,
@@ -657,7 +656,7 @@ ui <- page_navbar(
           "ano_estrutura",
           "Ano de referencia",
           choices = 2020:2025,
-          selected = 2023
+          selected = 2025
         ),
         helpText("2020-2023: Contas Regionais do IBGE. 2024-2025: proporcoes de 2023 aplicadas ao VAB nominal estimado.")
       ),
@@ -777,10 +776,6 @@ server <- function(input, output, session) {
       )
   })
 
-  dados_estrutura <- reactive({
-    contas_regionais_ext |>
-      filter(ano == as.integer(input$ano_estrutura))
-  })
 
   output$iaet_periodo_ref <- renderText({
     tail(dados_iaet()$label, 1)
@@ -1177,8 +1172,12 @@ server <- function(input, output, session) {
   })
 
   output$grafico_pesos <- renderPlotly({
-    df_pesos <- dados_estrutura() |>
-      transmute(serie = bloco, peso = participacao_pct)
+    df_pesos <- vab_nominal_anual |>
+      filter(ano == as.integer(input$ano_estrutura)) |>
+      group_by(bloco) |>
+      summarise(vab_mi = sum(vab_mi, na.rm = TRUE), .groups = "drop") |>
+      mutate(peso = 100 * vab_mi / sum(vab_mi, na.rm = TRUE)) |>
+      transmute(serie = bloco, peso)
 
     cores_pizza <- setNames(
       unname(cores_setores[df_pesos$serie]),
