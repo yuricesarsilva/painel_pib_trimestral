@@ -416,6 +416,8 @@
 - [x] Gerar arquivo CSV para cada série
 - [x] Salvar em `data/output/`
       `IAET_RR_series.xlsx` | `IAET_RR_geral.csv` | `IAET_RR_componentes.csv` | `IAET_RR_dessazonalizado.csv` | `indice_nominal_rr.csv`
+- [x] Corrigir o `05f_vab_nominal.R` para o fechamento anual do VAB nominal bater exatamente com o IBGE
+      → **CORREÇÃO 2026-04-14**: deflator total deixou de ser média ponderada de deflatores setoriais e passou a usar o deflator implícito direto do total anual do IBGE; trimestralização via Denton mantida com IPCA. O `VAB nominal` anual agora fecha exatamente com as Contas Regionais em `2020–2023`, e o `PIB nominal` herdou esse fechamento nos anos benchmark.
 
 ### 5.6 Dashboard interativo
 - [x] Criar estrutura do app (`dashboard/app.R`) — `bslib` v5 + `plotly` + `DT`

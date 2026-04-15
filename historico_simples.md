@@ -1942,3 +1942,41 @@ Não houve mudança no cálculo do índice nesta etapa. A correção foi documen
 porque a documentação do próprio script é parte da governança metodológica do projeto.
 
 *Última atualização: 14 de abril de 2026 — agregação geral documentada com pesos 2020 e extrapolação homóloga*
+
+---
+
+### Abril de 2026 — VAB nominal e PIB nominal passam a fechar exatamente com o benchmark anual
+
+**O que foi corrigido:**
+
+Ao comparar as séries do projeto com as Contas Regionais do IBGE, encontramos um desvio no
+`VAB nominal total` de `2020–2023`. O problema não estava no bloco real, que já batia com o
+benchmark, mas no `05f_vab_nominal.R`.
+
+**Diagnóstico:**
+
+O script estava construindo o deflator total como média ponderada de deflatores setoriais.
+Essa rota é plausível, mas não reproduz exatamente o deflator implícito do `VAB total` do IBGE.
+Por isso o `índice nominal` anual ficava levemente acima do benchmark.
+
+**Correção aplicada:**
+
+- o `05f_vab_nominal.R` passou a usar o deflator implícito direto do total anual do IBGE:
+  `índice nominal total / índice real total`;
+- a trimestralização do deflator continuou via Denton-Cholette com IPCA como proxy;
+- o `VAB nominal` trimestral passou a ter reconciliação anual explícita nos anos com benchmark;
+- o `05g_pib_nominal.R` deixou de arredondar precocemente `ILP` e `PIB`, preservando o fechamento.
+
+**Resultado:**
+
+Depois da correção, os anos com benchmark passaram a fechar exatamente:
+
+- `VAB nominal total` vs. Contas Regionais (`2020–2023`): desvio residual numérico ≈ `0`;
+- `PIB nominal` vs. benchmark implícito (`PIB anual - VAB anual`): desvio residual numérico ≈ `0`.
+
+**Leitura metodológica:**
+
+O lado real do sistema já estava correto. O ganho desta etapa foi alinhar também o lado nominal
+ao benchmark anual oficial, eliminando um desvio pequeno, mas conceitualmente importante.
+
+*Última atualização: 14 de abril de 2026 — VAB nominal e PIB nominal reconciliados exatamente ao benchmark anual em 2020–2023*

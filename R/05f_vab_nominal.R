@@ -13,7 +13,8 @@
 #   Metodologia:
 #     1. Deflator anual: P_t/P_2020 = (VAB_nom_t/VAB_nom_2020)/(Q_t/100)
 #        onde Q_t = índice encadeado de volume (base 2020=100)
-#     2. Deflator agregado: média ponderada Laspeyres (pesos VAB 2020)
+#     2. Deflator total anual: implícito direto do VAB total do IBGE
+#        (índice nominal total / índice real total)
 #     3. Deflator trimestral: Denton-Cholette(deflator_anual, IPCA_trim)
 #     4. VAB nominal trimestral = indice_real × deflator / 100
 #
@@ -101,21 +102,40 @@ if (desvio_2020 < 0.1) {
   warning(sprintf("Deflator 2020≠100: desvio máximo = %.4f — verificar.", desvio_2020))
 }
 
-# Taxas anuais do deflator total (agregado Laspeyres com pesos 2020)
+# Deflator total anual: derivado diretamente do VAB total nominal do IBGE
+# e do índice anual de volume total já usado no benchmark real.
 pesos_2020 <- cr |>
-  filter(ano == 2020) |>
+  filter(ano == 2020, atividade != "Total das Atividades") |>
   select(atividade, vab_mi) |>
   mutate(peso = vab_mi / sum(vab_mi, na.rm = TRUE))
 
-deflator_total <- deflator |>
+vol_total <- vol |>
   filter(ano %in% anos_cr) |>
   left_join(pesos_2020 |> select(atividade, peso), by = "atividade") |>
+  filter(!is.na(peso)) |>
   group_by(ano) |>
-  summarise(defl_total = sum(deflator_rebased * peso, na.rm = TRUE), .groups = "drop") |>
-  arrange(ano) |>
-  mutate(var_defl = (defl_total / lag(defl_total) - 1) * 100)
+  summarise(vol_total = sum(vab_volume_rebased * peso, na.rm = TRUE), .groups = "drop") |>
+  arrange(ano)
 
-message("Deflator implícito total RR (Laspeyres, base 2020=100):")
+vab_total_nom <- cr |>
+  filter(atividade == "Total das Atividades", ano %in% anos_cr) |>
+  select(ano, vab_total_mi = vab_mi) |>
+  arrange(ano)
+
+vab_total_2020 <- vab_total_nom |>
+  filter(ano == 2020) |>
+  pull(vab_total_mi)
+
+deflator_total <- vab_total_nom |>
+  left_join(vol_total, by = "ano") |>
+  mutate(
+    idx_nom_total = vab_total_mi / vab_total_2020 * 100,
+    defl_total    = idx_nom_total / (vol_total / 100),
+    var_defl      = (defl_total / lag(defl_total) - 1) * 100
+  ) |>
+  select(ano, vab_total_mi, vol_total, idx_nom_total, defl_total, var_defl)
+
+message("Deflator implícito total RR (direto do total, base 2020=100):")
 for (i in seq_len(nrow(deflator_total))) {
   var_str <- if (!is.na(deflator_total$var_defl[i])) {
     sprintf(" [%+.1f%%]", deflator_total$var_defl[i])
@@ -337,9 +357,27 @@ if (length(vab_nom_2020_anual) == 0 || is.na(vab_nom_2020_anual)) {
 message(sprintf("VAB nominal RR 2020 (escala): R$ %.0f milhões anuais / R$ %.0f mi/trim. médio",
                 vab_nom_2020_anual, vab_nom_2020_anual / 4))
 
+vab_benchmark_anual <- cr |>
+  filter(atividade == "Total das Atividades", ano %in% anos_cr) |>
+  select(ano, vab_benchmark_mi = vab_mi)
+
 vab_reais <- resultado_nominal |>
   mutate(
-    vab_nominal_mi = round(indice_nominal / 100 * (vab_nom_2020_anual / 4), 1)
+    vab_nominal_mi = indice_nominal / 100 * (vab_nom_2020_anual / 4)
+  ) |>
+  left_join(vab_benchmark_anual, by = "ano") |>
+  group_by(ano) |>
+  mutate(
+    fator_ajuste_anual = if_else(
+      !is.na(first(vab_benchmark_mi)),
+      first(vab_benchmark_mi) / sum(vab_nominal_mi, na.rm = TRUE),
+      1
+    ),
+    vab_nominal_mi = vab_nominal_mi * fator_ajuste_anual
+  ) |>
+  ungroup() |>
+  mutate(
+    vab_nominal_mi = round(vab_nominal_mi, 6)
   ) |>
   select(periodo, ano, trimestre, indice_nominal, vab_nominal_mi)
 

@@ -635,6 +635,13 @@ responsividade e publicação.
 **Fase 5.7 — Nota técnica** ⏳  
 Ainda não iniciada. É a principal pendência documental do projeto.
 
+**Ajuste metodológico recente no produto nominal:**  
+O `05f_vab_nominal.R` deixou de agregar o deflator total por média ponderada de deflatores
+setoriais e passou a usar o deflator implícito direto do `VAB total` das Contas Regionais
+(`índice nominal total / índice real total`). Com isso, o `VAB nominal` anual do projeto passou
+a fechar exatamente com o benchmark anual do IBGE em `2020–2023`, e o `PIB nominal` do `05g`
+passou a herdar esse fechamento nos anos com benchmark.
+
 ---
 
 ## Estrutura de pastas do projeto

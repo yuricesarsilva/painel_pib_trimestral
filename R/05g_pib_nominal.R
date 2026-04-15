@@ -277,7 +277,7 @@ message("\n=== ETAPA 5.8.5: PIB nominal trimestral ===\n")
 
 ilp_trim <- grade_trim |>
   mutate(
-    ilp_nominal_mi = round(ilp_trim_vals, 1)
+    ilp_nominal_mi = round(ilp_trim_vals, 6)
   ) |>
   left_join(
     ilp_anual |> select(ano, ilp_anual_mi = ilp_mi, tipo_benchmark = tipo),
@@ -292,7 +292,7 @@ resultado_pib <- vab_trim |>
   left_join(ilp_trim |> select(periodo, ano, trimestre, ilp_nominal_mi, icms_mi, tipo_benchmark),
             by = c("periodo", "ano", "trimestre")) |>
   mutate(
-    pib_nominal_mi = round(vab_nominal_mi + ilp_nominal_mi, 1)
+    pib_nominal_mi = round(vab_nominal_mi + ilp_nominal_mi, 6)
   ) |>
   select(periodo, ano, trimestre, indice_nominal, vab_nominal_mi,
          icms_mi, ilp_nominal_mi, pib_nominal_mi, tipo_benchmark)

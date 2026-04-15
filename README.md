@@ -109,7 +109,10 @@ O script `R/05f_vab_nominal.R` gera um índice do VAB nominal trimestral (preço
 Índice nominal = Índice real × Deflator implícito / 100
 ```
 
-O deflator implícito anual é calculado diretamente das Contas Regionais (VAB nominal / VAB real) e desagregado para frequência trimestral via Denton-Cholette com o IPCA como proxy.
+O deflator implícito anual do total é calculado diretamente das Contas Regionais do IBGE
+(`índice nominal total / índice real total`) e desagregado para frequência trimestral via
+Denton-Cholette com o IPCA como proxy. Nos anos com benchmark publicado (`2020–2023`), o
+`VAB nominal` anual fecha exatamente com o total das Contas Regionais.
 
 ---
 
