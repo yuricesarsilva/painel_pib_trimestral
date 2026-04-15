@@ -466,6 +466,15 @@
 - [x] Criar `R/05g_pib_nominal.R`
 - [x] Gerar `data/output/pib_nominal_rr.csv`
 
+### 5.9 VAB nominal setorial trimestral
+- [x] Criar `R/05h_vab_nominal_setorial.R`
+- [x] Gerar `data/output/vab_nominal_setorial_rr.csv`
+- [x] Gerar `data/output/vab_nominal_setorial_anual_rr.csv`
+- [x] Validar fechamento anual dos 4 blocos contra as Contas Regionais
+      → **IMPLEMENTAÇÃO 2026-04-14**: `Agropecuária`, `AAPP`, `Indústria` e `Serviços`
+      passaram a ter série trimestral nominal própria para `2020–2023`, construída com
+      benchmark nominal anual das CR, deflator anual por bloco e Denton-Cholette.
+
 ---
 
 ## Fase 6 — Manutenção e atualização trimestral
@@ -491,7 +500,7 @@
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | 🟢 Concluída |
-| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6 e 5.8 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
+| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6, 5.8 e 5.9 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada

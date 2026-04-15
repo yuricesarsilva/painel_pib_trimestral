@@ -40,7 +40,9 @@ pipeline <- list(
   list(script = "R/05d_validacao.R",       descricao = "Fase 5.4 — Validação final"),
   list(script = "R/05e_exportacao.R",      descricao = "Fase 5.5 — Exportação"),
   list(script = "R/05f_vab_nominal.R",     descricao = "Fase 5.6 — VAB Nominal Trimestral"),
-  list(script = "R/05g_pib_nominal.R",     descricao = "Fase 5.8 — PIB Nominal Trimestral")
+  list(script = "R/05g_pib_nominal.R",     descricao = "Fase 5.8 — PIB Nominal Trimestral"),
+  list(script = "R/05h_vab_nominal_setorial.R",
+       descricao = "Fase 5.9 — VAB Nominal Setorial Trimestral")
 )
 
 # --- Funções auxiliares de log -------------------------------

@@ -635,6 +635,21 @@ responsividade e publicação.
 **Fase 5.7 — Nota técnica** ⏳  
 Ainda não iniciada. É a principal pendência documental do projeto.
 
+**Fase 5.9 — VAB nominal setorial trimestral** ✅  
+Script: `R/05h_vab_nominal_setorial.R`. O projeto passa a gerar a trimestralização do
+`VAB nominal` dos quatro blocos analíticos (`Agropecuária`, `AAPP`, `Indústria` e `Serviços`)
+para os anos com benchmark das Contas Regionais (`2020–2023`). O procedimento usa:
+
+- benchmark nominal anual por bloco, obtido pela soma das atividades correspondentes nas CR;
+- índice anual de volume por bloco, agregado com pesos de 2020 dentro de cada bloco;
+- deflator anual por bloco, calculado como `índice nominal / índice real`;
+- Denton-Cholette com `conversion = "mean"` para o deflator trimestral, usando IPCA como proxy;
+- Denton-Cholette com `conversion = "sum"` para distribuir o `VAB nominal` anual em R$ milhões
+  a partir do indicador nominal trimestral (`índice real × deflator trimestral / 100`).
+
+Essa etapa fecha a comparação nominal por bloco com o IBGE sem depender apenas do
+`VAB nominal total`.
+
 **Ajuste metodológico recente no produto nominal:**  
 O `05f_vab_nominal.R` deixou de agregar o deflator total por média ponderada de deflatores
 setoriais e passou a usar o deflator implícito direto do `VAB total` das Contas Regionais
@@ -666,7 +681,9 @@ PIB Trimestral - Projeto 2026/
 │   ├── 05c_ajuste_sazonal.R     # Fase 5.3: X-13ARIMA-SEATS
 │   ├── 05d_validacao.R          # Fase 5.4: validação final
 │   ├── 05e_exportacao.R         # Fase 5.5: Excel e CSVs de publicação
-│   └── 05f_vab_nominal.R        # Fase 5.6 complementar: VAB nominal trimestral
+│   ├── 05f_vab_nominal.R        # Fase 5.6 complementar: VAB nominal trimestral
+│   ├── 05g_pib_nominal.R        # Fase 5.8: PIB nominal trimestral
+│   └── 05h_vab_nominal_setorial.R # Fase 5.9: VAB nominal setorial trimestral
 ├── dashboard/
 │   └── app.R
 ├── notas/

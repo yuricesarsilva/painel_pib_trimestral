@@ -1980,3 +1980,39 @@ O lado real do sistema já estava correto. O ganho desta etapa foi alinhar tamb�
 ao benchmark anual oficial, eliminando um desvio pequeno, mas conceitualmente importante.
 
 *Última atualização: 14 de abril de 2026 — VAB nominal e PIB nominal reconciliados exatamente ao benchmark anual em 2020–2023*
+
+---
+
+### Abril de 2026 — VAB nominal setorial trimestral passa a existir para os 4 blocos
+
+**O que foi feito:**
+
+Foi criado o script `R/05h_vab_nominal_setorial.R`, que gera a série trimestral do `VAB nominal`
+dos quatro blocos do projeto:
+
+- `Agropecuária`
+- `Administração pública`
+- `Indústria`
+- `Serviços`
+
+**Como a série é construída:**
+
+- o valor anual nominal de cada bloco vem das Contas Regionais do IBGE;
+- o lado real vem dos índices trimestrais já existentes no projeto;
+- o deflator anual de cada bloco é calculado a partir da relação entre o nominal anual e o índice
+  anual de volume;
+- esse deflator é distribuído no trimestre com Denton-Cholette, usando o IPCA como proxy;
+- depois o `VAB nominal` anual é distribuído no trimestre com base no indicador nominal do bloco.
+
+**Resultado:**
+
+O projeto passa a ter duas novas saídas locais:
+
+- `data/output/vab_nominal_setorial_rr.csv`
+- `data/output/vab_nominal_setorial_anual_rr.csv`
+
+O fechamento anual dos quatro blocos ficou exato contra o benchmark das Contas Regionais em
+`2020–2023`. Isso permite montar comparações mais completas entre o projeto e o IBGE no lado
+nominal, não só no total.
+
+*Última atualização: 14 de abril de 2026 — VAB nominal setorial trimestral criado para Agro, AAPP, Indústria e Serviços*
