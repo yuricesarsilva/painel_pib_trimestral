@@ -2016,3 +2016,29 @@ O fechamento anual dos quatro blocos ficou exato contra o benchmark das Contas R
 nominal, não só no total.
 
 *Última atualização: 14 de abril de 2026 — VAB nominal setorial trimestral criado para Agro, AAPP, Indústria e Serviços*
+
+---
+
+### Abril de 2026 — Relatório rápido de comparação com as Contas Regionais
+
+**O que foi feito:**
+
+Foi criada a nota `notas/relatorio_comparacao_projeto_vs_cr.md`, reunindo em um texto curto a
+comparação entre as séries do projeto e as Contas Regionais do IBGE.
+
+**O que entrou no relatório:**
+
+- `VAB nominal total`
+- `VAB nominal por bloco setorial`
+- `PIB nominal`
+- `taxas de crescimento real do VAB total`
+- `taxas de crescimento real do VAB por bloco`
+
+**Resultado principal:**
+
+- o lado nominal ficou fechado no total e nos quatro blocos do projeto;
+- o `PIB nominal` anual também ficou reconciliado;
+- o lado real ficou muito bem alinhado por bloco;
+- a principal lacuna comparativa restante continua sendo uma rotina local formal para `PIB real`.
+
+*Última atualização: 14 de abril de 2026 — relatório rápido de comparação projeto x Contas Regionais adicionado em `notas/`*

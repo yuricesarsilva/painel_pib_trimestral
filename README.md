@@ -155,6 +155,8 @@ trimestralização via Denton-Cholette com IPCA como proxy do perfil intra-anual
 ├── checklist_reforma.md          # checklist da reforma metodológica (abr/2026)
 ├── checklist_reforma_impostos.md # checklist da frente de impostos e PIB nominal
 ├── historico_simples.md          # histórico do projeto em linguagem acessível
+├── notas/
+│   └── relatorio_comparacao_projeto_vs_cr.md # comparação rápida do projeto com as CR
 └── regras.md                     # protocolo obrigatório de sessão e manutenção
 ```
 
@@ -175,6 +177,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 | `vab_nominal_setorial_rr.csv` | VAB nominal trimestral dos 4 blocos do projeto (2020–2023) |
 | `vab_nominal_setorial_anual_rr.csv` | Fechamento anual do VAB nominal setorial vs. benchmark das CR |
 | `validacao_relatorio.csv` | Relatório de validação (4 eixos) |
+| `notas/relatorio_comparacao_projeto_vs_cr.md` | Relatório rápido comparando projeto e Contas Regionais |
 
 ---
 

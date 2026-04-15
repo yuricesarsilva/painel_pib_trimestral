@@ -396,6 +396,8 @@
 - [x] Verificar comportamento em 2020 (queda COVID) vs. estados vizinhos
       Queda T2 (-9,8% vs T1); recuperação em T3 por colheita e AAPP estável
 - [x] Documentar e justificar eventuais divergências
+- [x] Montar relatório rápido `projeto x Contas Regionais` com nominal total, nominal setorial, PIB nominal e crescimento real do VAB
+      → **RELATÓRIO 2026-04-14**: nota criada em `notas/relatorio_comparacao_projeto_vs_cr.md`; comparação nominal fechada no total e nos 4 blocos, com nota explícita sobre a lacuna atual de `PIB real`.
 
 **Resultado do teste (rerrodado após reforma 2026-04-13):**
 - Crescimento RR 2021–2023 (real): **+8,2%, +10,9%, +4,3%** — antes era +12,3%, +17,2%, +20,3% nominal
