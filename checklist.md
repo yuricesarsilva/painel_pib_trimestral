@@ -477,18 +477,25 @@
       passaram a ter série trimestral nominal própria para `2020–2023`, construída com
       benchmark nominal anual das CR, deflator anual por bloco e Denton-Cholette.
 
+### 5.10 PIB Real anual
+- [x] Criar `R/05i_pib_real.R`
+- [x] Gerar `data/output/pib_real_anual_rr.csv` (PIB real anual em R$ 2020 + taxa de crescimento)
+- [x] Validar taxas de crescimento: 2021 +8,2% / 2022 +10,9% / 2023 +4,3% / 2024–2025 extrapolados
+- [x] Integrar no dashboard (aba "PIB anual" — gráfico de crescimento real)
+
 ---
 
 ## Fase 6 — Manutenção e atualização trimestral
 
 ### A cada trimestre (rotina de atualização)
-- [ ] Atualizar dados de todas as fontes no script de cada setor
-- [ ] Rodar scripts na ordem: 01 → 02 → 03 → 04 → 05
-- [ ] Verificar se há revisões nas Contas Regionais do IBGE e atualizar pesos se necessário
-- [ ] Atualizar arquivo Excel e CSVs de output
-- [ ] Atualizar dashboard
+- [ ] Atualizar dados de todas as fontes no script de cada setor (CAGED, ANEEL, SIAPE, ANAC, ANP, BCB, ICMS)
+- [ ] Rodar pipeline completo via `R/run_all.R` (sequência: 00 → 01 → 02 → 03 → 04 → 05 → 05c → 05d → 05e → 05f → 05g → 05h → 05i)
+- [ ] Verificar se há revisões nas Contas Regionais do IBGE e atualizar benchmarks se necessário
+- [ ] Confirmar que todas as validações automáticas passaram (`05d_validacao.R`)
+- [ ] Atualizar `logs/fontes_utilizadas.csv` com as fontes do release
+- [ ] Atualizar dashboard e verificar visualmente as novas séries
 - [ ] Redigir nova nota técnica conjuntural
-- [ ] Fazer commit no GitHub com tag da versão (ex: `v2025-Q1`)
+- [ ] Fazer commit no GitHub com tag da versão (ex: `v2026-Q1`)
 - [ ] Atualizar `historico_simples.md`
 
 ---
@@ -502,7 +509,7 @@
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | 🟢 Concluída |
-| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6, 5.8 e 5.9 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
+| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6, 5.8, 5.9 e 5.10 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada

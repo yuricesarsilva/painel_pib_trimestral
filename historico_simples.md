@@ -2042,3 +2042,45 @@ comparação entre as séries do projeto e as Contas Regionais do IBGE.
 - a principal lacuna comparativa restante continua sendo uma rotina local formal para `PIB real`.
 
 *Última atualização: 14 de abril de 2026 — relatório rápido de comparação projeto x Contas Regionais adicionado em `notas/`*
+
+---
+
+### Abril de 2026 — Documentação geral alinhada ao estado atual do pipeline e do dashboard
+
+**O que foi corrigido:**
+
+A documentação do projeto acumulou alguns desajustes em relação ao que o pipeline `run_all.R` e o
+dashboard `dashboard/app.R` realmente fazem hoje. Foram revisados e corrigidos quatro arquivos:
+
+**`README.md`:**
+
+- o script `R/05i_pib_real.R` (Fase 5.10 — PIB real anual) estava ausente da tabela de status,
+  da estrutura do repositório e da lista de saídas de dados; foi adicionado nos três pontos;
+- a seção "Próximos passos" tinha um item duplicado sobre testes e publicação do dashboard; foi
+  consolidado em um único item claro;
+- o item "Incorporar cimento SNIC como segunda proxy de Construção" foi reformulado para refletir
+  que o suporte ao SNIC já existe no script (condicional) — o que falta é apenas o dado externo.
+
+**`regras.md`:**
+
+- a seção "Sequência obrigatória dos scripts" listava apenas os 6 primeiros scripts do pipeline
+  (`00` a `05_agregacao`); foi atualizada para refletir os 13 scripts que o `run_all.R` executa
+  hoje: `00` → `01` → `02` → `03` → `04` → `05` → `05c` → `05d` → `05e` → `05f` → `05g` →
+  `05h` → `05i`;
+- foi adicionada nota indicando que `05b_sensibilidade_calendario.R` não faz parte do pipeline
+  de produção.
+
+**`checklist.md`:**
+
+- foi adicionada a seção `5.10 PIB Real anual`, com os itens de criação e validação do script
+  `R/05i_pib_real.R` e do arquivo `data/output/pib_real_anual_rr.csv`;
+- a rotina de atualização trimestral (Fase 6) foi reescrita para citar o `run_all.R` e listar a
+  sequência completa dos 13 scripts;
+- a tabela de status geral atualizou a nota da Fase 5 para incluir a etapa 5.10 como concluída.
+
+**Leitura metodológica:**
+
+Nenhuma mudança de cálculo ou metodologia. A correção foi documental — mas necessária, porque
+documentação desatualizada gera leituras erradas do estado do projeto.
+
+*Última atualização: 15 de abril de 2026 — documentação alinhada ao pipeline completo (13 scripts) e ao dashboard atual*

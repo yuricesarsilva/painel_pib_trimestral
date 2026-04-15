@@ -280,13 +280,22 @@ avulsa fora da sequência definida — isso pode gerar inconsistências entre as
 ### Sequência obrigatória dos scripts
 
 ```
-R/00_dados_referencia.R   → Contas Regionais (pesos)
-R/01_agropecuaria.R       → Fase 1
-R/02_adm_publica.R        → Fase 2
-R/03_industria.R          → Fase 3
-R/04_servicos.R           → Fase 4
-R/05_agregacao.R          → Fase 5 (índice final)
+R/00_dados_referencia.R          → Contas Regionais (pesos e benchmarks)
+R/01_agropecuaria.R              → Fase 1 — Agropecuária
+R/02_adm_publica.R               → Fase 2 — Administração Pública
+R/03_industria.R                 → Fase 3 — Indústria
+R/04_servicos.R                  → Fase 4 — Serviços Privados
+R/05_agregacao.R                 → Fase 5.1 — Índice geral (Laspeyres + Denton)
+R/05c_ajuste_sazonal.R           → Fase 5.3 — Ajuste sazonal (X-13ARIMA-SEATS)
+R/05d_validacao.R                → Fase 5.4 — Validação (CR / IBCR / IBC-Br)
+R/05e_exportacao.R               → Fase 5.5 — Exportação (Excel + CSVs)
+R/05f_vab_nominal.R              → Fase 5.6 — VAB Nominal trimestral
+R/05g_pib_nominal.R              → Fase 5.8 — PIB Nominal trimestral (VAB + ILP)
+R/05h_vab_nominal_setorial.R     → Fase 5.9 — VAB Nominal setorial (4 blocos, 2020–2023)
+R/05i_pib_real.R                 → Fase 5.10 — PIB Real anual (R$ 2020)
 ```
+
+> `05b_sensibilidade_calendario.R` **não faz parte do pipeline de produção** — é um script de teste avulso para análise de sensibilidade do calendário agrícola.
 
 ---
 
