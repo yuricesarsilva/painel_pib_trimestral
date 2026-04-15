@@ -594,7 +594,7 @@ colocado na pasta correta — caso contrário, usa apenas os dados de emprego do
 - Índice mensal de energia total distribuída em RR (SIUP)
 - Série de emprego formal acumulado na construção civil (Construção)
 - Índice composto energia industrial + emprego na indústria (Transformação)
-- Índice industrial final: combinação dos três com pesos das Contas Regionais do IBGE (2021)
+- Índice industrial final: combinação dos três com pesos das Contas Regionais do IBGE (2020)
 - Todos passam pelo ajuste de Denton para bater com os dados anuais do IBGE (2020–2023)
 
 **Decisões técnicas importantes:**
@@ -634,10 +634,10 @@ cobrindo os três subsetores: SIUP, Construção Civil e Indústria de Transform
 
 **Índices gerados:**
 
-- SIUP (38,8% do bloco industrial): consumo total de energia elétrica distribuída em RR
-- Construção (46,2%): estoque acumulado de emprego formal CNAE F, base 1000 + saldos CAGED
-- Transformação (15,0%): energia industrial ANEEL (70%) + emprego CAGED C (30%)
-- Composto industrial: média ponderada dos três, pesos das Contas Regionais 2021
+- SIUP (47,3% do bloco industrial): consumo total de energia elétrica distribuída em RR
+- Construção (42,8%): estoque acumulado de emprego formal CNAE F, base 1000 + saldos CAGED
+- Transformação (9,9%): energia industrial ANEEL (70%) + emprego CAGED C (30%)
+- Composto industrial: média ponderada dos três, pesos das Contas Regionais 2020
 
 **Validação:**
 
@@ -646,9 +646,9 @@ As variações anuais do índice composto são:
 
 | Ano | Variação do índice |
 |---|---|
-| 2021 | −6,3% |
-| 2022 | +5,2% |
-| 2023 | +61,7% ← ver nota |
+| 2021 | +10,6% |
+| 2022 | +20,6% |
+| 2023 | +9,4% |
 
 **Nota sobre 2023:** a variação elevada reflete a instabilidade real do VAB de SIUP em Roraima
 nas Contas Regionais do IBGE — o setor passou de R$369M em 2022 para R$1.243M em 2023, resultado
@@ -1849,3 +1849,52 @@ cards passavam a exibir `[object Object]`. Também havia uma descrição simplif
 - o único aviso residual permaneceu restrito ao cache local do `sass`.
 
 *Última atualização: 14 de abril de 2026 — corrigido bug visual dos títulos e convertidos gráficos de nível para colunas empilhadas*
+
+---
+
+### Abril de 2026 — Correção metodológica dos pesos internos da indústria
+
+**O que foi corrigido:**
+
+O bloco industrial ainda agregava `SIUP`, `Construção` e `Transformação` com pesos internos
+calculados a partir das Contas Regionais de `2021`, apesar de o sistema já operar com ano-base
+`2020` no índice geral e nos demais blocos reformados.
+
+**Correção aplicada:**
+
+- o script `R/03_industria.R` passou a calcular os pesos internos a partir do `VAB 2020`;
+- os pesos internos do bloco mudaram de:
+  - `SIUP 38,8% / Construção 46,2% / Transformação 15,0%`
+  para:
+  - `SIUP 47,3% / Construção 42,8% / Transformação 9,9%`;
+- a cadeia foi rerrodada da Fase 3 em diante:
+  - `03_industria.R`
+  - `05_agregacao.R`
+  - `05c_ajuste_sazonal.R`
+  - `05d_validacao.R`
+  - `05e_exportacao.R`
+  - `05f_vab_nominal.R`
+  - `05g_pib_nominal.R`
+
+**Impacto medido:**
+
+- no bloco industrial, a mudança foi material:
+  - 2021: de `+12,1%` para `+10,6%`;
+  - 2022: de `+19,0%` para `+20,6%`;
+  - 2023: de `+7,9%` para `+9,4%`;
+  - 2024: de `+15,8%` para `+17,5%`;
+  - 2025: de `+17,4%` para `+19,2%`;
+- a diferença máxima intra-trimestral no índice industrial entre pesos 2021 e pesos 2020 ficou em
+  `12,9 pontos de índice`;
+- no índice geral bruto antes do segundo Denton, a diferença máxima intra-trimestral ficou em
+  `1,5 ponto de índice`;
+- no índice geral final, as médias anuais de `2020–2023` permaneceram idênticas por construção,
+  porque o benchmark anual total do Denton não mudou.
+
+**Leitura metodológica:**
+
+A crítica fazia sentido. O problema não destruía o sistema inteiro, mas quebrava a coerência do
+ano-base dentro do bloco industrial. A correção deixa o sistema mais consistente com a lógica
+Laspeyres base 2020 já adotada no topo e em serviços.
+
+*Última atualização: 14 de abril de 2026 — pesos internos da indústria alinhados ao ano-base 2020*

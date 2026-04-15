@@ -234,15 +234,15 @@
 - [x] Salvar como componente em `data/output/indice_industria.csv`
 
 ### 3.6 Índice industrial agregado e validação
-- [x] Pesos internos derivados das Contas Regionais 2021 (SIUP 5,40 / Const. 4,89 / Transf. 1,31)
+- [x] Pesos internos derivados das Contas Regionais 2020 (SIUP 5,51 / Const. 4,98 / Transf. 1,15)
 - [x] Cálculo do índice composto com pesos normalizados dentro do bloco
 - [x] Validação com `validar_serie()` em cada componente e no composto
 - [x] Salvar em `data/output/indice_industria.csv`
 - [x] **Executar** `R/03_industria.R` e verificar outputs
 - [x] Validação manual: comparar variações anuais com Contas Regionais IBGE
-  - Variações anuais: 2021 −6,3% / 2022 +5,2% / 2023 +61,7% / 2024 −22,8% / 2025 +10,5%
+  - Variações anuais: 2021 +10,6% / 2022 +20,6% / 2023 +9,4% / 2024 +17,5% / 2025 +19,2%
   - Denton garante exatidão vs. IBGE nos anos com benchmark (2020–2023)
-  - Variação 2023 elevada reflete instabilidade real do VAB SIUP nas CR (R$369M→R$1.243M)
+  - SIUP segue influenciando fortemente o bloco, mas a base 2020 reduziu a distorção criada pelos pesos internos de 2021
   - 2025T3 inicialmente ausente: bug corrigido (grid de meses com saldo=0 para meses sem movimentação CAGED)
   - Índice final: 24 observações (2020T1–2025T4) ✓
 - [x] Atualizar `historico_simples.md` com conclusão confirmada da Fase 3

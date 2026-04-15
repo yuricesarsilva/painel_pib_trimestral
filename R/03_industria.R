@@ -4,14 +4,14 @@
 # Autor   : Yuri Cesar de Lima e Silva (DIEAS/SEPLAN-RR)
 # Data    : 2026-04-11
 # Descrição: Índice trimestral do setor industrial de RR:
-#   SIUP (5,40% do VAB): consumo de energia elétrica por classe
+#   SIUP (5,51% do VAB em 2020): consumo de energia elétrica por classe
 #   de consumidor (ANEEL/SAMP) — residencial, comercial,
 #   industrial, público. O total de energia distribuída é o
 #   proxy de volume da produção do setor.
-#   Construção (4,89% do VAB): vínculos formais CNAE F via
+#   Construção (4,98% do VAB em 2020): vínculos formais CNAE F via
 #   CAGED microdata (FTP/MTE). SNIC cimento requer download
 #   manual — usado como componente adicional se arquivo presente.
-#   Indústria de Transformação (1,31% do VAB): energia
+#   Indústria de Transformação (1,15% do VAB em 2020): energia
 #   industrial ANEEL (peso 0,7) + emprego CAGED C (peso 0,3).
 #   Todos os subsetores aplicam Denton-Cholette contra VAB
 #   anual das Contas Regionais IBGE (benchmarks 2020–2023).
@@ -719,17 +719,17 @@ transf_trim_d <- aplicar_denton(transf_trim, "indice_transf_raw",
 
 # ============================================================
 # ETAPA 3.7 — Índice composto da Indústria
-# Pesos: participação no VAB total de RR (Contas Regionais 2021)
-# SIUP 5,40% + Construção 4,89% + Transformação 1,31% = 11,60%
+# Pesos: participação no VAB total de RR (Contas Regionais 2020)
+# SIUP 5,51% + Construção 4,98% + Transformação 1,15% = 11,64%
 # ============================================================
 
 message("\n=== ETAPA 3.7: Índice composto da Indústria ===\n")
 
 # Pesos relativos dentro do bloco industrial (normalizam para 100%)
 # Fonte: Contas Regionais IBGE — participação no VAB de RR
-vab_siup    <- cr_serie |> filter(atividade == atividade_siup,  ano == 2021) |> pull(vab_mi)
-vab_const   <- cr_serie |> filter(atividade == atividade_const, ano == 2021) |> pull(vab_mi)
-vab_transf  <- cr_serie |> filter(atividade == atividade_transf, ano == 2021) |> pull(vab_mi)
+vab_siup    <- cr_serie |> filter(atividade == atividade_siup,  ano == 2020) |> pull(vab_mi)
+vab_const   <- cr_serie |> filter(atividade == atividade_const, ano == 2020) |> pull(vab_mi)
+vab_transf  <- cr_serie |> filter(atividade == atividade_transf, ano == 2020) |> pull(vab_mi)
 
 vab_industria <- sum(c(vab_siup, vab_const, vab_transf), na.rm = TRUE)
 if (vab_industria == 0) stop("VAB industrial total = 0. Verificar Contas Regionais.")
@@ -738,7 +738,7 @@ peso_siup   <- vab_siup   / vab_industria
 peso_const  <- vab_const  / vab_industria
 peso_transf <- vab_transf / vab_industria
 
-message(sprintf("Pesos internos (Contas Regionais 2021):"))
+message(sprintf("Pesos internos (Contas Regionais 2020):"))
 message(sprintf("  SIUP:          %.1f%%", peso_siup   * 100))
 message(sprintf("  Construção:    %.1f%%", peso_const  * 100))
 message(sprintf("  Transformação: %.1f%%", peso_transf * 100))

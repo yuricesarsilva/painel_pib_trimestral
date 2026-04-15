@@ -506,8 +506,8 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Proxy: energia industrial 70% + CAGED C 30%
 - ICMS industrial: indisponível de forma automatizável
 
-**Índice composto industrial:** pesos das Contas Regionais 2021 (SIUP 5,40 / Const. 4,89 /
-Transf. 1,31). Pesos relativos internos calculados no script a partir do VAB 2021.
+**Índice composto industrial:** pesos das Contas Regionais 2020 (SIUP 5,51 / Const. 4,98 /
+Transf. 1,15). Pesos relativos internos calculados no script a partir do VAB 2020.
 
 **Coleta CAGED reutilizável:** o script baixa e agrega TODAS as seções CNAE para RR
 — economiza ~2,5 GB de re-download na Fase 4 (Comércio, Transportes, Outros Serviços).
@@ -523,11 +523,11 @@ descartados pelo filtro de trimestres completos.
 
 | Ano | Variação |
 |---|---|
-| 2021 | −6,3% |
-| 2022 | +5,2% |
-| 2023 | +61,7% |
-| 2024 | −22,8% |
-| 2025 | +10,5% |
+| 2021 | +10,6% |
+| 2022 | +20,6% |
+| 2023 | +9,4% |
+| 2024 | +17,5% |
+| 2025 | +19,2% |
 
 **Nota sobre SIUP:** o VAB do setor nas Contas Regionais é extremamente volátil em RR
 (R$799M em 2020 → R$369M em 2022 → R$1.243M em 2023), reflexo das mudanças estruturais
@@ -789,9 +789,9 @@ Na Fase 5 (agregação), gerar duas versões do índice:
 21. **ICMS excluído do bloco industrial (Fase 3)**: SEFAZ-RR não publica ICMS por seção CNAE
     de forma automatizável. Construção e Transformação usam apenas CAGED + energia. ICMS
     incorporado na Fase 4 (Comércio) onde o total de ICMS (sem disagregação) já é a proxy padrão.
-22. **Pesos internos do bloco industrial**: calculados a partir do VAB 2021 das Contas Regionais
-    (SIUP 5,40 + Construção 4,89 + Transformação 1,31 = 11,60% do VAB total). Normalizados
-    para soma 100% dentro do bloco. O bloco total recebe peso 11,60% no índice agregado (Fase 5).
+22. **Pesos internos do bloco industrial**: calculados a partir do VAB 2020 das Contas Regionais
+    (SIUP 5,51 + Construção 4,98 + Transformação 1,15 = 11,64% do VAB total). Normalizados
+    para soma 100% dentro do bloco. O bloco total recebe peso 11,64% no índice agregado (Fase 5).
 
 ---
 
