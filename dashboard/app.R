@@ -124,7 +124,7 @@ marcas_extrapolacao <- function(df, ano_benchmark = ultimo_benchmark) {
     annotations = list(
       list(
         x = x_inicio, y = 1, yref = "paper", xanchor = "left",
-        text = "<- extrapolacao", showarrow = FALSE,
+        text = "<- extrapolação", showarrow = FALSE,
         font = list(size = 10, color = "#6b7280")
       )
     )
@@ -158,7 +158,7 @@ serie <- dados_indices |>
 
 catalogo_series <- tibble::tibble(
   serie_id = c("iaet", "agro", "aapp", "industria", "servicos"),
-  serie = c("IAET-RR", "Agropecuaria", "Adm. Pública", "Industria", "Servicos"),
+  serie = c("IAET-RR", "Agropecuária", "Adm. Pública", "Indústria", "Serviços"),
   col_nsa = c("indice_geral", "indice_agropecuaria", "indice_aapp", "indice_industria", "indice_servicos"),
   col_sa  = c("indice_geral_sa", "indice_agropecuaria_sa", "indice_aapp_sa", "indice_industria_sa", "indice_servicos_sa")
 ) |>
@@ -170,10 +170,10 @@ catalogo_series <- tibble::tibble(
       mutate(
         peso_2020 = 100 * vab_2020 / sum(vab_2020, na.rm = TRUE),
         serie = recode(setor,
-                       "Agropecuaria" = "Agropecuaria",
+                       "Agropecuaria" = "Agropecuária",
                        "AAPP" = "Adm. Pública",
-                       "Industria" = "Industria",
-                       "Servicos" = "Servicos")
+                       "Industria" = "Indústria",
+                       "Servicos" = "Serviços")
       ) |>
       select(serie, peso_2020),
     by = "serie"
@@ -209,10 +209,10 @@ contrib <- indices_long |>
 tabela_indices <- indices_long |>
   select(periodo, serie, nsa, sa, taxa_crescimento_anual_nsa, taxa_crescimento_trimestral_sa, peso_2020, origem) |>
   rename(
-    Periodo = periodo,
-    Serie = serie,
-    `Indice sem ajuste sazonal` = nsa,
-    `Indice dessazonalizado` = sa,
+    Período = periodo,
+    Série = serie,
+    `Índice sem ajuste sazonal` = nsa,
+    `Índice dessazonalizado` = sa,
     `Taxa acumulada em 4 trimestres` = taxa_crescimento_anual_nsa,
     `Taxa de crescimento trimestral` = taxa_crescimento_trimestral_sa,
     `Peso 2020 (%)` = peso_2020,
@@ -221,7 +221,7 @@ tabela_indices <- indices_long |>
 
 tabela_pib <- serie |>
   transmute(
-    Periodo = periodo,
+    Período = periodo,
     Ano = ano,
     Trimestre = trimestre,
     `VAB nominal (R$ mi)` = vab_nominal_mi,
@@ -268,7 +268,10 @@ vab_nominal_anual <- dados_vab_set_an |>
     ano,
     setor = recode(
       setor,
-      "AAPP" = "Adm. Pública"
+      "Agropecuaria" = "Agropecuária",
+      "AAPP" = "Adm. Pública",
+      "Industria" = "Indústria",
+      "Servicos" = "Serviços"
     ),
     vab_mi = vab_nominal_mi_trimestralizado
   )
@@ -279,7 +282,10 @@ vab_real_anual_taxa <- dados_vab_set_an |>
     ano,
     serie = recode(
       setor,
-      "AAPP" = "Adm. Pública"
+      "Agropecuaria" = "Agropecuária",
+      "AAPP" = "Adm. Pública",
+      "Industria" = "Indústria",
+      "Servicos" = "Serviços"
     ),
     indice_real_anual_projeto
   ) |>
@@ -302,10 +308,10 @@ cores <- list(
 )
 
 cores_setores <- c(
-  "Agropecuaria" = "#2F7A45",
+  "Agropecuária" = "#2F7A45",
   "Adm. Pública" = "#123B72",
-  "Industria" = "#C68A18",
-  "Servicos" = "#2A6DB0"
+  "Indústria" = "#C68A18",
+  "Serviços" = "#2A6DB0"
 )
 
 cores_pib <- c(
@@ -331,7 +337,7 @@ ui <- page_navbar(
     ),
     div(
       tags$div(style = "font-weight:700; line-height:1;", "IAET-RR"),
-      tags$div(style = "font-size:11px; opacity:.8; line-height:1.2;", "Atividade economica trimestral")
+      tags$div(style = "font-size:11px; opacity:.8; line-height:1.2;", "Atividade econômica trimestral")
     )
   ),
   theme = bs_theme(
@@ -362,7 +368,7 @@ ui <- page_navbar(
           "O painel principal privilegia o indice geral e compara sempre a serie sem ajuste sazonal com a dessazonalizada."),
         sliderInput(
           "range_iaet",
-          "Janela de analise",
+          "Janela de análise",
           min = 1L, max = nrow(serie),
           value = c(1L, nrow(serie)),
           step = 1L, ticks = FALSE
@@ -382,7 +388,7 @@ ui <- page_navbar(
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
-          title = "Periodo de referencia",
+          title = "Período de referência",
           value = textOutput("iaet_periodo_ref"),
           showcase = icon("calendar"),
           theme = "primary"
@@ -422,14 +428,14 @@ ui <- page_navbar(
         h5("Escolha o componente"),
         selectInput(
           "serie_comp",
-          "Serie",
+          "Série",
           choices = setNames(catalogo_series$serie_id[catalogo_series$serie_id != "iaet"],
                              catalogo_series$serie[catalogo_series$serie_id != "iaet"]),
           selected = "agro"
         ),
         sliderInput(
           "range_comp",
-          "Janela de analise",
+          "Janela de análise",
           min = 1L, max = nrow(serie),
           value = c(1L, nrow(serie)),
           step = 1L, ticks = FALSE
@@ -445,7 +451,7 @@ ui <- page_navbar(
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
-          title = "Periodo de referencia",
+          title = "Período de referência",
           value = textOutput("comp_periodo_ref"),
           showcase = icon("calendar"),
           theme = "primary"
@@ -490,10 +496,10 @@ ui <- page_navbar(
     layout_sidebar(
       sidebar = sidebar(
         width = 320,
-        h5("Logica do PIB nominal"),
+        h5("Lógica do PIB nominal"),
         checkboxGroupInput(
           "series_pib",
-          "Series no grafico principal",
+          "Séries no gráfico principal",
           choices = c(
             "VAB nominal" = "vab_nominal_mi",
             "Impostos sobre produtos (ILP)" = "ilp_nominal_mi",
@@ -503,7 +509,7 @@ ui <- page_navbar(
         ),
         sliderInput(
           "range_pib",
-          "Janela de analise",
+          "Janela de análise",
           min = 1L, max = nrow(serie),
           value = c(1L, nrow(serie)),
           step = 1L, ticks = FALSE
@@ -522,7 +528,7 @@ ui <- page_navbar(
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
-          title = "Periodo de referencia",
+          title = "Período de referência",
           value = textOutput("pib_periodo_ref"),
           showcase = icon("calendar"),
           theme = "primary"
@@ -542,7 +548,7 @@ ui <- page_navbar(
       ),
       card(
         full_screen = TRUE,
-        card_header("Composicao do PIB nominal trimestral"),
+        card_header("Composição do PIB nominal trimestral"),
         card_body(plotlyOutput("grafico_pib_nivel", height = "420px"))
       ),
       layout_columns(
@@ -555,12 +561,12 @@ ui <- page_navbar(
         card(
           card_header("Como ler esta aba"),
           card_body(
-            p(strong("Identidade contabil:"), " PIB = VAB + impostos liquidos sobre produtos."),
-            p(strong("VAB nominal:"), " serie trimestral estimada a partir do IAET-RR em volume combinado com o deflator implicito anual das Contas Regionais, desagregado para frequencia trimestral com IPCA via Denton-Cholette."),
+            p(strong("Identidade contábil:"), " PIB = VAB + impostos líquidos sobre produtos."),
+            p(strong("VAB nominal:"), " série trimestral estimada a partir do IAET-RR em volume combinado com o deflator implícito anual das Contas Regionais, desagregado para frequência trimestral com IPCA via Denton-Cholette."),
             p(strong("ILP trimestral:"), " benchmark anual do IBGE distribuido por Denton-Cholette com ICMS da SEFAZ-RR como proxy."),
             p(strong("PIB nominal:"), " soma trimestral entre VAB nominal e ILP."),
             p(class = "text-muted small",
-              "Os anos de 2024 e 2025 ainda dependem de extrapolacao do benchmark anual e devem ser lidos como estimativas.")
+              "Os anos de 2024 e 2025 ainda dependem de extrapolação do benchmark anual e devem ser lidos como estimativas.")
           )
         )
       )
@@ -607,7 +613,7 @@ ui <- page_navbar(
           "base_tabela",
           "Base exibida",
           choices = c(
-            "Indices e componentes" = "indices",
+            "Índices e componentes" = "indices",
             "PIB do projeto" = "pib"
           ),
           selected = "indices"
@@ -639,11 +645,11 @@ ui <- page_navbar(
         width = 320,
         selectInput(
           "ano_estrutura",
-          "Ano de referencia",
+          "Ano de referência",
           choices = 2020:2025,
           selected = 2025
         ),
-        helpText("2020-2023: benchmark das Contas Regionais do IBGE. 2024-2025: extrapolacao do proprio projeto, ja incorporada nas series setoriais oficiais.")
+        helpText("2020-2023: benchmark das Contas Regionais do IBGE. 2024-2025: extrapolação do próprio projeto, já incorporada nas séries setoriais oficiais.")
       ),
       layout_columns(
         col_widths = c(7, 5),
@@ -651,23 +657,23 @@ ui <- page_navbar(
           card_header("Sobre o painel"),
           card_body(
             h5("IAET-RR"),
-            p("Painel interativo do indicador trimestral de atividade economica de Roraima, com navegacao separada entre indice principal, componentes, PIB e setores."),
+            p("Painel interativo do indicador trimestral de atividade econômica de Roraima, com navegação separada entre índice principal, componentes, PIB e setores."),
             hr(),
             h6("Principios desta versao"),
             tags$ul(
               tags$li("o indice principal e o foco da experiencia;"),
-              tags$li("o usuario escolhe a janela de analise, o tipo de taxa e a serie que quer ver;"),
-              tags$li("todos os graficos de indices comparam a serie sem ajuste sazonal com a dessazonalizada;"),
+              tags$li("o usuário escolhe a janela de análise, o tipo de taxa e a série que quer ver;"),
+              tags$li("todos os gráficos de índices comparam a série sem ajuste sazonal com a dessazonalizada;"),
               tags$li("as abas de taxas permitem alternar entre leitura anual e trimestral;"),
-              tags$li("as abas anuais leem diretamente as series oficiais geradas pelo pipeline do projeto.")
+              tags$li("as abas anuais leem diretamente as séries oficiais geradas pelo pipeline do projeto.")
             ),
             hr(),
             h6("Cobertura"),
             tags$ul(
               uiOutput("sobre_periodo_ui"),
               tags$li("2020T1 a 2023T4 - benchmark anual das Contas Regionais do IBGE"),
-              tags$li("2024T1 a 2025T4 - extrapolacao de tendencia/benchmark estendido"),
-              tags$li("revisao esperada quando o IBGE divulgar as Contas Regionais 2024")
+              tags$li("2024T1 a 2025T4 - extrapolação de tendência/benchmark estendido"),
+              tags$li("revisão esperada quando o IBGE divulgar as Contas Regionais 2024")
             )
           )
         ),
@@ -715,7 +721,7 @@ server <- function(input, output, session) {
       if (is.null(r)) return()
       updateSliderInput(
         session, id_input,
-        label = "Periodo de referencia"
+        label = "Período de referência"
       )
     })
   }
@@ -796,7 +802,7 @@ server <- function(input, output, session) {
 
   output$titulo_comp_contrib <- renderText({
     peso_txt <- fmt_pct(unique(dados_comp()$peso_2020), digits = 2)
-    paste0("Contribuicao setorial ao IAET - ", unique(dados_comp()$serie), " (peso 2020: ", peso_txt, ")")
+    paste0("Contribuição setorial ao IAET - ", unique(dados_comp()$serie), " (peso 2020: ", peso_txt, ")")
   })
 
   output$pib_periodo_ref <- renderText({
@@ -817,7 +823,7 @@ server <- function(input, output, session) {
   })
 
   output$titulo_pesos <- renderText({
-    paste0("Estrutura setorial - ano de referencia ", input$ano_estrutura)
+    paste0("Estrutura setorial - ano de referência ", input$ano_estrutura)
   })
 
   output$grafico_iaet_nivel <- renderPlotly({
@@ -837,7 +843,7 @@ server <- function(input, output, session) {
       ) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
-        yaxis = list(title = "Indice (base 2020 = 100)", gridcolor = "#dbe3ec"),
+        yaxis = list(title = "Índice (base 2020 = 100)", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 70, r = 190),
@@ -907,7 +913,7 @@ server <- function(input, output, session) {
       ) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
-        yaxis = list(title = "Indice (base 2020 = 100)", gridcolor = "#dbe3ec"),
+        yaxis = list(title = "Índice (base 2020 = 100)", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 70, r = 190),
@@ -1235,7 +1241,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       wb <- createWorkbook()
-      nome_aba <- if (identical(input$base_tabela, "pib")) "PIB Projeto" else "Indices"
+      nome_aba <- if (identical(input$base_tabela, "pib")) "PIB Projeto" else "Índices"
       df <- tabela_reativa()
 
       addWorksheet(wb, nome_aba)
