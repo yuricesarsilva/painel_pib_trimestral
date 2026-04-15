@@ -63,10 +63,12 @@ resolver_processed_dir <- function(data_dir) {
 
 processed_dir <- resolver_processed_dir(data_dir)
 
-arq_indices <- file.path(data_dir, "indice_geral_rr_sa.csv")
-arq_pib     <- file.path(data_dir, "pib_nominal_rr.csv")
-arq_ilp     <- file.path(data_dir, "ilp_rr_trimestral.csv")
-arq_contas  <- file.path(processed_dir, "contas_regionais_RR_serie.csv")
+arq_indices      <- file.path(data_dir, "indice_geral_rr_sa.csv")
+arq_pib          <- file.path(data_dir, "pib_nominal_rr.csv")
+arq_ilp          <- file.path(data_dir, "ilp_rr_trimestral.csv")
+arq_pib_real_an  <- file.path(data_dir, "pib_real_anual_rr.csv")
+arq_vab_set_trim <- file.path(data_dir, "vab_nominal_setorial_rr.csv")
+arq_vab_set_an   <- file.path(data_dir, "vab_nominal_setorial_anual_rr.csv")
 
 # ---------------------------------------------------------------------------
 # 2. LEITURA E PRE-PROCESSAMENTO
@@ -144,58 +146,38 @@ dados_ilp <- read_csv(arq_ilp, show_col_types = FALSE) |>
   arrange(ano, trimestre) |>
   select(periodo, ilp_anual_mi)
 
-contas_regionais <- read_csv(
-  arq_contas,
-  show_col_types = FALSE
-) |>
-  mutate(
-    bloco = case_when(
-      grepl("Agropec", atividade)                     ~ "Agropecuaria",
-      grepl("defesa", atividade)                      ~ "Adm. Publica",
-      grepl("extrat|transforma|Eletricidade|SIUP|Constru", atividade) ~ "Industria",
-      grepl("Total das Atividades", atividade)        ~ NA_character_,
-      TRUE                                            ~ "Servicos Privados"
-    )
-  ) |>
-  filter(!is.na(bloco)) |>
-  group_by(ano, bloco) |>
-  summarise(vab_mi = sum(vab_mi, na.rm = TRUE), .groups = "drop") |>
-  group_by(ano) |>
-  mutate(participacao_pct = 100 * vab_mi / sum(vab_mi, na.rm = TRUE)) |>
-  ungroup()
+dados_pib_real_an <- read_csv(arq_pib_real_an, show_col_types = FALSE) |>
+  arrange(ano)
+
+dados_vab_set_an <- read_csv(arq_vab_set_an, show_col_types = FALSE) |>
+  arrange(setor, ano)
 
 serie <- dados_indices |>
   left_join(dados_pib, by = "periodo") |>
   left_join(dados_ilp, by = "periodo")
 
-# VAB nominal por atividade (2020-2025): distribui VAB nominal total proporcionalmente
-# ao VAB real de cada setor (IAET), usando 2020 como ano-base de pesos
-vab_2020_setores <- contas_regionais |>
-  filter(ano == 2020) |>
-  select(bloco, vab_2020 = vab_mi)
-
-iaet_anual_setores <- serie |>
-  group_by(ano) |>
-  summarise(
-    Agropecuaria        = mean(indice_agropecuaria, na.rm = TRUE),
-    `Adm. Publica`      = mean(indice_aapp,         na.rm = TRUE),
-    Industria           = mean(indice_industria,    na.rm = TRUE),
-    `Servicos Privados` = mean(indice_servicos,     na.rm = TRUE),
-    .groups = "drop"
-  ) |>
-  pivot_longer(-ano, names_to = "bloco", values_to = "indice")
-
-vab_nominal_total_anual <- serie |>
-  group_by(ano) |>
-  summarise(vab_total = sum(vab_nominal_mi, na.rm = TRUE), .groups = "drop")
-
 catalogo_series <- tibble::tibble(
   serie_id = c("iaet", "agro", "aapp", "industria", "servicos"),
-  serie = c("IAET-RR", "Agropecuaria", "Adm. Publica", "Industria", "Servicos Privados"),
+  serie = c("IAET-RR", "Agropecuaria", "Adm. Pública", "Industria", "Servicos"),
   col_nsa = c("indice_geral", "indice_agropecuaria", "indice_aapp", "indice_industria", "indice_servicos"),
-  col_sa  = c("indice_geral_sa", "indice_agropecuaria_sa", "indice_aapp_sa", "indice_industria_sa", "indice_servicos_sa"),
-  peso_2020 = c(NA_real_, 6.89, 45.01, 11.63, 36.46)
-)
+  col_sa  = c("indice_geral_sa", "indice_agropecuaria_sa", "indice_aapp_sa", "indice_industria_sa", "indice_servicos_sa")
+) |>
+  left_join(
+    dados_vab_set_an |>
+      filter(ano == 2020) |>
+      group_by(setor) |>
+      summarise(vab_2020 = sum(vab_nominal_mi_trimestralizado, na.rm = TRUE), .groups = "drop") |>
+      mutate(
+        peso_2020 = 100 * vab_2020 / sum(vab_2020, na.rm = TRUE),
+        serie = recode(setor,
+                       "Agropecuaria" = "Agropecuaria",
+                       "AAPP" = "Adm. Pública",
+                       "Industria" = "Industria",
+                       "Servicos" = "Servicos")
+      ) |>
+      select(serie, peso_2020),
+    by = "serie"
+  )
 
 base_painel <- serie
 
@@ -251,13 +233,6 @@ tabela_pib <- serie |>
     Benchmark = tipo_benchmark
   )
 
-taxas_anuais_iaet <- indices_long |>
-  group_by(ano, serie) |>
-  summarise(indice_medio = mean(nsa, na.rm = TRUE), .groups = "drop") |>
-  group_by(serie) |>
-  mutate(taxa_anual = calc_var(indice_medio, 1)) |>
-  ungroup()
-
 taxas_anuais_pib <- serie |>
   group_by(ano) |>
   summarise(
@@ -280,28 +255,38 @@ pib_anual_total <- taxas_anuais_pib |>
   filter(serie == "PIB nominal") |>
   select(ano, valor_pib = valor)
 
-# PIB real anual: deflaciona PIB nominal pelo deflator implícito (indice_nominal / indice_geral)
-pib_real_anual_taxa <- serie |>
-  mutate(pib_real_mi = pib_nominal_mi * indice_geral / indice_nominal) |>
-  group_by(ano) |>
-  summarise(pib_real_mi = sum(pib_real_mi, na.rm = TRUE), .groups = "drop") |>
-  mutate(taxa_anual = calc_var(pib_real_mi, 1)) |>
+# PIB real anual: usa a serie oficial gerada pelo pipeline do projeto
+pib_real_anual_taxa <- dados_pib_real_an |>
+  transmute(
+    ano,
+    taxa_anual = crescimento_real_pct
+  ) |>
   filter(!is.na(taxa_anual))
 
-vab_nominal_anual <- iaet_anual_setores |>
-  left_join(vab_2020_setores, by = "bloco") |>
-  mutate(vab_real = (indice / 100) * vab_2020) |>
-  group_by(ano) |>
-  mutate(share_real = vab_real / sum(vab_real, na.rm = TRUE)) |>
-  ungroup() |>
-  left_join(vab_nominal_total_anual, by = "ano") |>
-  mutate(vab_mi = share_real * vab_total) |>
-  select(ano, bloco, vab_mi)
+vab_nominal_anual <- dados_vab_set_an |>
+  transmute(
+    ano,
+    setor = recode(
+      setor,
+      "AAPP" = "Adm. Pública"
+    ),
+    vab_mi = vab_nominal_mi_trimestralizado
+  )
 
 # Taxas de crescimento anuais reais por setor (para grafico de colunas agrupadas)
-vab_real_anual_taxa <- taxas_anuais_iaet |>
-  filter(serie != "IAET-RR", !is.na(taxa_anual)) |>
-  select(ano, serie, taxa_anual)
+vab_real_anual_taxa <- dados_vab_set_an |>
+  transmute(
+    ano,
+    serie = recode(
+      setor,
+      "AAPP" = "Adm. Pública"
+    ),
+    indice_real_anual_projeto
+  ) |>
+  group_by(serie) |>
+  mutate(taxa_anual = calc_var(indice_real_anual_projeto, 1)) |>
+  ungroup() |>
+  filter(!is.na(taxa_anual))
 
 # ---------------------------------------------------------------------------
 # 3. PALETA
@@ -318,9 +303,9 @@ cores <- list(
 
 cores_setores <- c(
   "Agropecuaria" = "#2F7A45",
-  "Adm. Publica" = "#123B72",
+  "Adm. Pública" = "#123B72",
   "Industria" = "#C68A18",
-  "Servicos Privados" = "#2A6DB0"
+  "Servicos" = "#2A6DB0"
 )
 
 cores_pib <- c(
@@ -598,16 +583,16 @@ ui <- page_navbar(
   ),
 
   nav_panel(
-    title = "VAB por atividade",
+    title = "VAB por setor",
     icon = icon("chart-column"),
     card(
       full_screen = TRUE,
-      card_header("VAB nominal por atividade \u2014 valores anuais (R$ milh\u00f5es)"),
+      card_header("VAB nominal por setor \u2014 valores anuais (R$ milh\u00f5es)"),
       card_body(plotlyOutput("grafico_vab_nominal_anual", height = "390px"))
     ),
     card(
       full_screen = TRUE,
-      card_header("Crescimento real do VAB por atividade \u2014 taxas anuais (%)"),
+      card_header("Crescimento real do VAB por setor \u2014 taxas anuais (%)"),
       card_body(plotlyOutput("grafico_vab_real_anual", height = "330px"))
     )
   ),
@@ -623,7 +608,7 @@ ui <- page_navbar(
           "Base exibida",
           choices = c(
             "Indices e componentes" = "indices",
-            "PIB nominal" = "pib"
+            "PIB do projeto" = "pib"
           ),
           selected = "indices"
         ),
@@ -658,7 +643,7 @@ ui <- page_navbar(
           choices = 2020:2025,
           selected = 2025
         ),
-        helpText("2020-2023: Contas Regionais do IBGE. 2024-2025: proporcoes de 2023 aplicadas ao VAB nominal estimado.")
+        helpText("2020-2023: benchmark das Contas Regionais do IBGE. 2024-2025: extrapolacao do proprio projeto, ja incorporada nas series setoriais oficiais.")
       ),
       layout_columns(
         col_widths = c(7, 5),
@@ -666,7 +651,7 @@ ui <- page_navbar(
           card_header("Sobre o painel"),
           card_body(
             h5("IAET-RR"),
-            p("Painel interativo do indicador trimestral de atividade economica de Roraima, com navegacao separada entre indice principal, componentes, taxas e bloco do PIB nominal."),
+            p("Painel interativo do indicador trimestral de atividade economica de Roraima, com navegacao separada entre indice principal, componentes, PIB e setores."),
             hr(),
             h6("Principios desta versao"),
             tags$ul(
@@ -674,7 +659,7 @@ ui <- page_navbar(
               tags$li("o usuario escolhe a janela de analise, o tipo de taxa e a serie que quer ver;"),
               tags$li("todos os graficos de indices comparam a serie sem ajuste sazonal com a dessazonalizada;"),
               tags$li("as abas de taxas permitem alternar entre leitura anual e trimestral;"),
-              tags$li("o bloco PIB aparece em aba propria, com VAB, impostos e PIB.")
+              tags$li("as abas anuais leem diretamente as series oficiais geradas pelo pipeline do projeto.")
             ),
             hr(),
             h6("Cobertura"),
@@ -1130,11 +1115,11 @@ server <- function(input, output, session) {
       config(locale = "pt-BR")
   })
 
-  # Aba IAET em nivel — grafico 1: VAB nominal por atividade (linhas anuais)
+  # Aba IAET em nivel — grafico 1: VAB nominal por setor (linhas anuais)
   output$grafico_vab_nominal_anual <- renderPlotly({
     df <- vab_nominal_anual
 
-    plot_ly(df, x = ~ano, y = ~vab_mi, color = ~bloco,
+    plot_ly(df, x = ~ano, y = ~vab_mi, color = ~setor,
             colors = cores_setores, type = "scatter", mode = "lines+markers",
             hovertemplate = "%{fullData.name}: R$ %{y:,.1f} mi<extra></extra>") |>
       layout(
@@ -1174,10 +1159,10 @@ server <- function(input, output, session) {
   output$grafico_pesos <- renderPlotly({
     df_pesos <- vab_nominal_anual |>
       filter(ano == as.integer(input$ano_estrutura)) |>
-      group_by(bloco) |>
+      group_by(setor) |>
       summarise(vab_mi = sum(vab_mi, na.rm = TRUE), .groups = "drop") |>
       mutate(peso = 100 * vab_mi / sum(vab_mi, na.rm = TRUE)) |>
-      transmute(serie = bloco, peso)
+      transmute(serie = setor, peso)
 
     cores_pizza <- setNames(
       unname(cores_setores[df_pesos$serie]),
@@ -1235,7 +1220,7 @@ server <- function(input, output, session) {
 
   output$dl_csv <- downloadHandler(
     filename = function() {
-      prefixo <- if (identical(input$base_tabela, "pib")) "PIB_nominal_RR" else "IAET_RR_indices"
+      prefixo <- if (identical(input$base_tabela, "pib")) "PIB_projeto_RR" else "IAET_RR_indices"
       paste0(prefixo, "_", format(Sys.Date(), "%Y%m%d"), ".csv")
     },
     content = function(file) {
@@ -1245,12 +1230,12 @@ server <- function(input, output, session) {
 
   output$dl_xlsx <- downloadHandler(
     filename = function() {
-      prefixo <- if (identical(input$base_tabela, "pib")) "PIB_nominal_RR" else "IAET_RR_indices"
+      prefixo <- if (identical(input$base_tabela, "pib")) "PIB_projeto_RR" else "IAET_RR_indices"
       paste0(prefixo, "_", format(Sys.Date(), "%Y%m%d"), ".xlsx")
     },
     content = function(file) {
       wb <- createWorkbook()
-      nome_aba <- if (identical(input$base_tabela, "pib")) "PIB Nominal" else "Indices"
+      nome_aba <- if (identical(input$base_tabela, "pib")) "PIB Projeto" else "Indices"
       df <- tabela_reativa()
 
       addWorksheet(wb, nome_aba)
@@ -1283,4 +1268,3 @@ server <- function(input, output, session) {
 # ---------------------------------------------------------------------------
 
 shinyApp(ui = ui, server = server)
-

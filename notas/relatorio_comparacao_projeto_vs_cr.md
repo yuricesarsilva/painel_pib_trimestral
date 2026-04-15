@@ -10,6 +10,7 @@ disponível localmente e validado no repositório:
 - `VAB nominal total`
 - `VAB nominal por bloco setorial do projeto` (`Agropecuária`, `AAPP`, `Indústria`, `Serviços`)
 - `PIB nominal`
+- `PIB real`
 - `taxas de crescimento real do VAB total`
 - `taxas de crescimento real do VAB por bloco setorial`
 
@@ -17,9 +18,8 @@ Observação importante:
 
 - a comparação nominal setorial ainda é feita no nível dos `4 blocos do projeto`, não nas `12 atividades`
   individuais das Contas Regionais;
-- a comparação de `PIB real` ainda não entra aqui, porque o acervo local do projeto não mantém uma
-  série anual oficial de `PIB em volume` comparável às Contas Regionais no mesmo fluxo em que hoje
-  já mantém `VAB em volume` e `PIB nominal`.
+- a comparação de `PIB real` abaixo usa as taxas oficiais anuais divulgadas para o PIB estadual de
+  Roraima nas Contas Regionais, e não a linha `Total das Atividades` do `VAB em volume`.
 
 ---
 
@@ -139,18 +139,22 @@ Leitura:
 
 ## 6. PIB real
 
-Esta nota não traz uma tabela de comparação do `PIB real`, porque essa série anual oficial em
-volume não está mantida localmente no projeto no mesmo padrão em que já estão mantidos:
+A comparação da `taxa de crescimento real do PIB` do projeto com a taxa oficial do `PIB real`
+de Roraima nas Contas Regionais ficou assim:
 
-- `VAB nominal`
-- `VAB em volume`
-- `PIB nominal`
+| Ano | Projeto (%) | CR IBGE (%) | Diferença (p.p.) |
+|---|---:|---:|---:|
+| 2021 | 8,40 | 8,40 | 0,00 |
+| 2022 | 11,30 | 11,30 | 0,00 |
+| 2023 | 4,20 | 4,20 | 0,00 |
 
 Leitura:
 
-- hoje a comparação robusta e já reproduzível está fechada para `VAB real`, `VAB nominal` e `PIB nominal`;
-- para incluir `PIB real`, o próximo passo é incorporar ao fluxo local uma série anual oficial de
-  `PIB em volume` ou sua taxa oficial de crescimento.
+- após a ancoragem do `PIB real trimestral` ao benchmark anual oficial, o projeto passa a reproduzir
+  exatamente a taxa anual do `PIB real` das Contas Regionais em `2021–2023`;
+- a diferença que antes aparecia nessa comparação deixou de ser um problema aberto da série anual;
+- a utilidade da etapa `05i` passa a ser combinar `fechamento anual oficial` com `trajetória intra-anual`
+  do projeto.
 
 ---
 
@@ -160,6 +164,8 @@ O quadro atual é este:
 
 - o `lado nominal` está resolvido no total e nos `4 blocos` do projeto;
 - o `PIB nominal` anual também está reconciliado;
+- o projeto já mantém `PIB real` anual em série própria, com crescimento real explícito;
 - o `lado real` está muito bem alinhado por bloco, com diferença pequena apenas em `Serviços`;
 - a diferença remanescente mais visível está no `VAB real total` em `2022–2023`, mas ainda em nível baixo;
-- a principal lacuna comparativa restante é a ausência de uma rotina local formal para `PIB real`.
+- no `PIB real`, a comparação anual direta agora coincide com a taxa oficial das Contas Regionais
+  nos anos com benchmark (`2021–2023`).
