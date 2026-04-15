@@ -148,8 +148,8 @@
 
 ### 2.1 Folha federal (SIAPE)
 - [x] Investigar API do Portal da Transparência: endpoint `/remuneracao-servidores-ativos` retorna HTTP 403 para o cadastro padrão — independentemente do token ou parâmetros
-- [x] **Decisão metodológica**: componente federal omitido da proxy, mas incluído implicitamente via Denton-Cholette (benchmark IBGE engloba todo o VAB de AAPP, inclusive federal). Validação 2021–2023 confirma abordagem correta.
-- [x] Alternativa futura documentada no script: download manual dos arquivos `.zip` mensais do portal
+- [x] Processar SIAPE via arquivos mensais `.zip` do Portal da Transparência
+- [x] Tornar a base federal obrigatória: sem `data/raw/siape_rr_mensal.csv`, o script de AAPP para com erro
 
 ### 2.2 Folha estadual (SICONFI/STN — elemento 31)
 - [x] Coletar RREO Anexo 06 via API SICONFI (STN) para o Estado de RR (id_ente=14)

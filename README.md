@@ -85,7 +85,7 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 
 | Atividade | % VAB 2023¹ | Proxy principal | Fonte |
 |---|---|---|---|
-| Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento (federal + estadual + municipal) | SIAPE / SEPLAN-RR / SICONFI |
+| Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual + municipal) | Portal da Transparência / SEPLAN-RR / SICONFI |
 | Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (67%) + emprego CAGED G (33%)² | ANEEL / MTE |
 | Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA) + pecuária (PPM/abate) | IBGE SIDRA |
 | Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | CR IBGE |
@@ -185,7 +185,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 |---|---|---|
 | IBGE Contas Regionais | VAB nominal e índice de volume por atividade — Roraima | FTP IBGE |
 | IBGE / SIDRA | LSPA, PAM, PPM, Abate, Leite, Ovos | API SIDRA (`sidrar`) |
-| Portal da Transparência | Folha federal (SIAPE) por UF | API pública |
+| Portal da Transparência | Folha federal (SIAPE) por UF | Arquivos mensais processados localmente |
 | SEPLAN-RR | Folha estadual de Roraima | Interno |
 | STN / SICONFI | Folha municipal estimada | Portal SOF |
 | BCB SGS / Estban / SCR | IPCA, crédito, depósitos bancários por UF | BCB open data |

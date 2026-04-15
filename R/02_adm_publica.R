@@ -4,11 +4,9 @@
 # Autor   : Yuri Cesar de Lima e Silva (DIEAS/SEPLAN-RR)
 # Data    : 2026-04-10
 # Descrição: Índice trimestral de Administração Pública de RR.
-#   Etapa 2.1 — Folha federal (SIAPE): INDISPONÍVEL via API.
-#               O endpoint /remuneracao-servidores-ativos do Portal da
-#               Transparência retorna HTTP 403 para o cadastro padrão.
-#               O componente federal é implicitamente incluído via
-#               Denton-Cholette (benchmark IBGE já engloba federal).
+#   Etapa 2.1 — Folha federal (SIAPE): obrigatória, via arquivos
+#               manuais do Portal da Transparência processados localmente.
+#               Sem SIAPE observado, o script para com erro explícito.
 #   Etapa 2.2 — Folha estadual (elemento 31 — pessoal ativo):
 #               SICONFI/STN — RREO Anexo 06, governo do estado de RR.
 #   Etapa 2.3 — Folha municipal: SICONFI/STN — RREO Anexo 06,
@@ -350,14 +348,19 @@ if (file.exists(arq_siape)) {
     message(sprintf("\nSIAPE: %d meses processados — cache salvo em %s",
                     nrow(folha_federal), arq_siape))
   } else {
-    message("SIAPE: nenhum resultado. Folha federal = NULL.")
-    folha_federal <- NULL
+    stop(
+      "SIAPE obrigatório: nenhum resultado processado a partir dos ZIPs em ",
+      dir_siape_bulk,
+      ". Verifique os arquivos manuais antes de rodar o índice de AAPP."
+    )
   }
 
 } else {
-  message(sprintf("SIAPE: pasta %s não encontrada.", dir_siape_bulk))
-  message("  Índice calculado com estado + municípios; Denton ancora ao total IBGE (inclui federal).")
-  folha_federal <- NULL
+  stop(
+    "SIAPE obrigatório: pasta não encontrada em ",
+    dir_siape_bulk,
+    ". Baixe/processse a base federal antes de rodar o índice de AAPP."
+  )
 }
 
 # ============================================================
@@ -560,8 +563,10 @@ if (!is.null(folha_federal) && nrow(folha_federal) > 0) {
     summarise(federal = sum(folha_bruta, na.rm = TRUE), .groups = "drop")
   message(sprintf("Componente federal (SIAPE): %d trimestres disponíveis.", nrow(folha_fed_trim)))
 } else {
-  message("Componente federal (SIAPE) indisponível — índice baseado em estadual + municipal.")
-  folha_fed_trim <- data.frame(ano = integer(), trimestre = integer(), federal = numeric())
+  stop(
+    "Componente federal (SIAPE) indisponível após a etapa 2.1. ",
+    "O índice de AAPP não pode ser calculado sem a folha federal observada."
+  )
 }
 
 # --- Combinar todos os componentes --------------------------

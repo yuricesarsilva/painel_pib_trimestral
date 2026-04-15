@@ -153,7 +153,7 @@ ponderação.
 |---|---|---|---|---|
 | Folha estadual — pessoal ativo (elemento 31) | SICONFI/STN — RREO Anexo 06 | `apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo` | Bimestral acumulado | **Disponível** |
 | Folha municipal — pessoal ativo (15 municípios) | SICONFI/STN — RREO Anexo 06 | Mesmo endpoint, id_ente = cod IBGE município | Bimestral acumulado | **Disponível** |
-| Folha federal (SIAPE) | Portal da Transparência | `/remuneracao-servidores-ativos` | Mensal | **Indisponível via API** (HTTP 403) |
+| Folha federal (SIAPE) | Portal da Transparência | Arquivos mensais `.zip` processados localmente | Mensal | **Obrigatória em produção** |
 
 **Justificativa metodológica (por que folha de pessoal > PNADC):**
 O IBGE mensura o produto de Administração Pública nas Contas Regionais pela **abordagem de custo**
@@ -176,13 +176,11 @@ acumulado, etc.). O processo de conversão é:
 3. Agregação por trimestre (3 meses) → valor trimestral
 
 **Situação do SIAPE (folha federal):**
-O endpoint `/remuneracao-servidores-ativos` do Portal da Transparência retorna HTTP 403 para o
-cadastro padrão da API — independentemente do header ou parâmetros utilizados. O componente
-federal está, contudo, implicitamente incluído no índice via Denton-Cholette: o benchmark anual
-utilizado (VAB AAPP das Contas Regionais IBGE) já engloba o setor público federal. O perfil
-trimestral é derivado de estado + municípios e calibrado para o total correto pelo Denton.
-Alternativa futura: download manual dos arquivos `.zip` mensais do portal, com filtro por
-`uf_exercicio = 'RR'`.
+O endpoint `/remuneracao-servidores-ativos` do Portal da Transparência não sustenta o fluxo
+automatizado direto do projeto. A solução operacional adotada foi o processamento local dos
+arquivos mensais `.zip` do portal, com filtro para servidores federais vinculados a Roraima.
+Na versão atual do projeto, o componente federal é **obrigatório**: sem SIAPE observado, o script
+`R/02_adm_publica.R` interrompe a execução com erro explícito.
 
 **Deflação**: IPCA nacional (SIDRA tab. 1737, v2266 — variação mensal) aplicado à folha nominal →
 índice encadeado de preços, base jan/2020 = 1 → série de volume.
@@ -465,10 +463,10 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 **Script**: `R/02_adm_publica.R`
 **Saídas**: `data/output/indice_adm_publica.csv` (16 obs., 2020T1–2023T4)
 
-**Etapa 2.1 — Folha federal (SIAPE)** — indisponível
-- API `portaldatransparencia.gov.br/api-de-dados/remuneracao-servidores-ativos`: retorna HTTP 403
-  para o cadastro padrão da API, independentemente do token ou parâmetros
-- Componente federal está implicitamente incluído via Denton (ver decisão metodológica na seção 2)
+**Etapa 2.1 — Folha federal (SIAPE)** ✅
+- Componente processado a partir dos arquivos mensais `.zip` do Portal da Transparência
+- Cache operacional: `data/raw/siape_rr_mensal.csv`
+- O script falha explicitamente se a base federal não existir
 
 **Etapa 2.2 — Folha estadual** ✅
 - SICONFI: `GET apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo`
@@ -759,10 +757,9 @@ Na Fase 5 (agregação), gerar duas versões do índice:
 7. **Elemento 31 (pessoal ativo) para AAPP**: alinhado com a metodologia do IBGE — aposentados
    e pensionistas são transferências, não remuneração de fator, e não integram o VAB de AAPP nas
    Contas Nacionais. O SICONFI (RREO Anexo 06) é a fonte oficial para estado e municípios.
-8. **SIAPE indisponível via API**: o endpoint `/remuneracao-servidores-ativos` do Portal da
-   Transparência retorna HTTP 403. O componente federal está implicitamente incluído via Denton-Cholette:
-   o benchmark IBGE engloba todo o VAB de AAPP. O perfil trimestral de estado + municípios é
-   calibrado para o total correto (inclusive federal).
+8. **SIAPE obrigatório na produção**: o endpoint `/remuneracao-servidores-ativos` do Portal da
+   Transparência não sustenta o fluxo automatizado direto. O projeto usa os arquivos mensais do
+   Portal processados localmente e o script de AAPP falha explicitamente se a base federal não existir.
 9. **RREO bimestral acumulado → trimestral**: diferença entre bimestres consecutivos → valor
    incremental; distribuição uniforme em 2 meses; agregação por trimestre.
 10. **Ausência de PIM-PF**: compensada por CAGED C + energia industrial ANEEL; peso < 2% no total.

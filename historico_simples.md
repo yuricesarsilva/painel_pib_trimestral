@@ -547,17 +547,13 @@ de "01"), fazendo a busca por janeiro falhar. Corrigido com detecção do format
 
 **Decisão final sobre o SIAPE:**
 
-Após investigação completa da API do Portal da Transparência, o endpoint
-`/remuneracao-servidores-ativos` retorna HTTP 403 para o cadastro padrão —
-independentemente do token ou dos parâmetros utilizados. O download em massa
-dos arquivos mensais (`.zip`) também é bloqueado. Não há caminho programático
-disponível com este tipo de acesso.
+Esse trecho ficou superado. O projeto passou a usar os arquivos mensais do SIAPE
+baixados manualmente e processados localmente, e o componente federal deixou de ser
+contingência. Na versão atual, a folha federal observada é requisito operacional do
+índice de AAPP.
 
-Isso não compromete a qualidade do índice. O Denton-Cholette ancora a série
-(estadual + municipal) ao VAB AAPP anual do IBGE — que já inclui todo o setor
-público, inclusive o federal. O componente federal está, portanto, implicitamente
-incorporado via calibração. O script documenta como alternativa futura o download
-manual dos arquivos mensais para quem tiver acesso privilegiado.
+Sem `SIAPE` processado, o script `R/02_adm_publica.R` agora interrompe a execução
+explicitamente, em vez de seguir apenas com estado + municípios.
 
 ---
 
@@ -1898,3 +1894,29 @@ ano-base dentro do bloco industrial. A correção deixa o sistema mais consisten
 Laspeyres base 2020 já adotada no topo e em serviços.
 
 *Última atualização: 14 de abril de 2026 — pesos internos da indústria alinhados ao ano-base 2020*
+
+---
+
+### Abril de 2026 — SIAPE torna-se obrigatório no bloco de Administração Pública
+
+**O que mudou:**
+
+O projeto deixou de aceitar o fallback em que a AAPP poderia ser calculada apenas com folhas
+estadual e municipal. A crítica metodológica era correta: mesmo com benchmark anual do Denton,
+ficaria faltando o perfil intra-anual do componente federal, especialmente relevante em Roraima.
+
+**Decisão aplicada:**
+
+- o `SIAPE` observado passou a ser requisito operacional do índice de AAPP;
+- se `data/raw/siape_rr_mensal.csv` não existir e não puder ser reconstruído a partir dos arquivos
+  mensais do Portal da Transparência, o script `R/02_adm_publica.R` para com erro explícito;
+- a documentação foi atualizada para deixar de tratar o federal como “implícito via Denton” no
+  fluxo normal de produção.
+
+**Leitura metodológica:**
+
+O benchmark anual do IBGE continua importante para ancoragem, mas ele não substitui a observação
+do componente federal na distribuição trimestral. A produção oficial do índice passa, portanto,
+a exigir a base federal observada.
+
+*Última atualização: 14 de abril de 2026 — SIAPE federal definido como insumo obrigatório da AAPP*
