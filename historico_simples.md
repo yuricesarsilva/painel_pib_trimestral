@@ -1920,3 +1920,25 @@ do componente federal na distribuição trimestral. A produção oficial do índ
 a exigir a base federal observada.
 
 *Última atualização: 14 de abril de 2026 — SIAPE federal definido como insumo obrigatório da AAPP*
+
+---
+
+### Abril de 2026 — Documentação da agregação geral alinhada ao código
+
+**O que foi corrigido:**
+
+O script `R/05_agregacao.R` já operava com pesos Laspeyres de 2020 e com extrapolação por
+trimestre homólogo do ano anterior, mas ainda mantinha comentários antigos falando em
+“pesos 2023” e “tendência linear”.
+
+**Ajuste aplicado:**
+
+- o cabeçalho e os comentários internos do script passaram a descrever a metodologia vigente;
+- o checklist e o histórico foram atualizados para registrar essa correção documental.
+
+**Leitura metodológica:**
+
+Não houve mudança no cálculo do índice nesta etapa. A correção foi documental, mas necessária,
+porque a documentação do próprio script é parte da governança metodológica do projeto.
+
+*Última atualização: 14 de abril de 2026 — agregação geral documentada com pesos 2020 e extrapolação homóloga*

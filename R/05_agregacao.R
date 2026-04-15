@@ -9,13 +9,15 @@
 #   atividade econômica trimestral de Roraima (base 2020 = 100).
 #
 #   Metodologia:
-#   1. Pesos: participação % no VAB total de RR (CR IBGE 2023).
+#   1. Pesos: participação % no VAB nominal total de RR em 2020
+#      (ano-base Laspeyres, calculados dinamicamente).
 #   2. Composição: média ponderada dos subíndices setoriais.
-#   3. Ancoragem: Denton-Cholette contra VAB total anual (CR 2020–2023).
-#   4. Extrapolação AAPP e Agropecuária: tendência linear 2022→2023
+#   3. Ancoragem: Denton-Cholette contra o índice anual de volume total
+#      de RR (CR 2020–2023).
+#   4. Extrapolação de blocos incompletos: crescimento pelo trimestre
+#      homólogo, usando a taxa anual média do último biênio disponível
 #      para 2024–2025 (provisional — revisar quando CR 2024 for
 #      publicado, previsão IBGE: out/2026).
-#
 # Entrada : data/output/indice_agropecuaria.csv
 #            data/output/indice_adm_publica.csv
 #            data/output/indice_industria.csv
@@ -146,7 +148,8 @@ message(sprintf("Serviços Privados — %d obs. (%dT%d–%dT%d)",
 # ETAPA 5.1.2 — Grid completo e extrapolação de AAPP e Agropecuária
 # Indústria e Serviços têm 2020T1–2025T4 (24 obs.)
 # AAPP e Agropecuária têm apenas 2020T1–2023T4 (16 obs.)
-# → extrapolar 2024–2025 com tendência linear do último bieênio
+# → extrapolar 2024–2025 pelo trimestre homólogo do ano anterior,
+#   com taxa anual média do último biênio (preserva sazonalidade)
 # ============================================================
 
 message("\n=== ETAPA 5.1.2: Grid e extrapolação 2024–2025 ===\n")
@@ -236,7 +239,7 @@ message(sprintf("\nSéries alinhadas ao grid %dT1–%dT%d (%d trimestres cada)",
 
 # ============================================================
 # ETAPA 5.1.3 — Índice composto (média ponderada Laspeyres)
-# Pesos: % VAB 2023 (CR IBGE) por bloco setorial
+# Pesos: % do VAB nominal de 2020 por bloco setorial
 # ============================================================
 
 message("\n=== ETAPA 5.1.3: Índice composto ponderado ===\n")
@@ -272,7 +275,7 @@ message(sprintf("  Pesos efetivos: Agro=%.1f%% AAPP=%.1f%% Ind=%.1f%% Serv=%.1f%
 
 
 # ============================================================
-# ETAPA 5.1.4 — Benchmark: VAB total anual (CR IBGE 2020–2023)
+# ETAPA 5.1.4 — Benchmark: índice anual de volume total (CR IBGE 2020–2023)
 # ============================================================
 
 message("\n=== ETAPA 5.1.4: Benchmark — índice de volume total RR (Laspeyres, base 2020=100) ===\n")
@@ -310,10 +313,10 @@ message(sprintf("\nBenchmark volume total (base 2020=100): %s",
 
 
 # ============================================================
-# ETAPA 5.1.5 — Denton-Cholette: ancorar ao VAB total CR
+# ETAPA 5.1.5 — Denton-Cholette: ancorar ao índice de volume total
 # ============================================================
 
-message("\n=== ETAPA 5.1.5: Denton-Cholette — ancoragem ao VAB total ===\n")
+message("\n=== ETAPA 5.1.5: Denton-Cholette — ancoragem ao índice de volume total ===\n")
 
 # Restringir série do indicador ao período com benchmark (2020–2023)
 n_bench_trim <- length(anos_cr) * 4  # 16 trimestres para 4 anos

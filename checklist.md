@@ -338,6 +338,8 @@
   → **REFORMA 2026-04-13**: benchmark substituído — agora usa índice de **volume** (Especiais IBGE, `tab05.xls`, série encadeada 2002–2023), não VAB nominal (Tabela 5). Ver `plano_reforma_indicador_real.md`.
 - [x] Salvar em `data/output/indice_geral_rr.csv`
   → **CORREÇÃO 2026-04-14**: `extrapolar_tendencia()` corrigida para crescer pelo trimestre homólogo do ano anterior (preserva sazonalidade); todos os scripts setoriais (01–04) passaram a usar Denton sobre o período completo das proxies com benchmark estendido via `estender_benchmark()` em `utils.R` — elimina extrapolação plana que destruía a sazonalidade em 2024–2025
+- [x] Alinhar a documentação interna da agregação ao código vigente
+  → **CORREÇÃO 2026-04-14**: cabeçalho e comentários de `05_agregacao.R` atualizados para refletir pesos Laspeyres de 2020 e extrapolação por trimestre homólogo, evitando leitura incorreta de “pesos 2023” ou “tendência linear”
 
 ### 5.2 Teste de sensibilidade (versão A vs. versão B vs. versão C)
 
