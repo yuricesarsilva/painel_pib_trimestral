@@ -1,0 +1,438 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgf-pie}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
+\pgfplotsset{compat=1.18}
+
+\definecolor{seplanblue}{RGB}{20,52,100}
+\definecolor{seplanblue2}{RGB}{32,78,145}
+\definecolor{seplangold}{RGB}{200,145,20}
+\definecolor{seplangreen}{RGB}{34,130,64}
+\definecolor{seplanred}{RGB}{180,40,40}
+\definecolor{seplanlight}{RGB}{236,242,248}
+
+\setbeamercolor{palette primary}{bg=seplanblue,fg=white}
+\setbeamercolor{palette secondary}{bg=seplanblue2,fg=white}
+\setbeamercolor{palette tertiary}{bg=seplangold,fg=white}
+\setbeamercolor{frametitle}{bg=seplanblue,fg=white}
+\setbeamercolor{title}{fg=seplanblue}
+\setbeamercolor{structure}{fg=seplanblue}
+\setbeamercolor{block title}{bg=seplanblue2,fg=white}
+\setbeamercolor{block body}{bg=seplanlight,fg=black}
+\setbeamercolor{itemize item}{fg=seplanblue}
+\setbeamercolor{itemize subitem}{fg=seplangold}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.76\paperwidth,ht=2.5ex,dp=1.2ex,leftskip=1em]{palette primary}%
+    \insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.24\paperwidth,ht=2.5ex,dp=1.2ex,rightskip=1em,right]{palette secondary}%
+    \insertframenumber/\inserttotalframenumber
+  \end{beamercolorbox}}%
+}
+
+\title[PIB Trimestral de Roraima]{PIB Trimestral de Roraima: defesa técnica do projeto}
+\subtitle{Produto estatístico central da SEPLAN/RR}
+\author{Yuri Cesar de Lima e Silva}
+\institute{SEPLAN/RR -- CGEES/DIEAS}
+\date{Abril de 2026}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+  \vspace{-0.4cm}
+  \begin{center}
+    \small Apresentação técnica com foco no PIB trimestral e em sua sustentação metodológica
+  \end{center}
+\end{frame}
+
+\begin{frame}{Qual lacuna o projeto resolve}
+\begin{itemize}
+  \item O Brasil não dispõe de PIB estadual oficial em frequência trimestral.
+  \item As Contas Regionais do IBGE são anuais e têm defasagem aproximada de dois anos.
+  \item A gestão estadual precisa de uma leitura trimestral do nível de atividade e do PIB para monitoramento, comunicação e decisão.
+\end{itemize}
+
+\vspace{0.3cm}
+\begin{block}{Mensagem central}
+O produto do projeto é o \textbf{PIB trimestral de Roraima}, em termos nominais e reais. O IAET-RR é o instrumento metodológico que permite construir o perfil intra-anual desse PIB com disciplina estatística.
+\end{block}
+\end{frame}
+
+\begin{frame}{O produto estatístico central}
+\begin{columns}[T]
+\column{0.49\textwidth}
+\textbf{Entregas principais}
+\begin{itemize}
+  \item PIB nominal trimestral
+  \item PIB real trimestral
+  \item VAB nominal trimestral
+  \item VAB nominal setorial
+  \item série dessazonalizada
+  \item dashboard e bases exportáveis
+\end{itemize}
+
+\column{0.47\textwidth}
+\textbf{Uso institucional}
+\begin{itemize}
+  \item leitura conjuntural do estado
+  \item apoio a notas técnicas e boletins
+  \item monitoramento setorial
+  \item comunicação econômica oficial
+\end{itemize}
+\end{columns}
+
+\vspace{0.2cm}
+\begin{alertblock}{Hierarquia conceitual}
+PIB trimestral é o fim estatístico. IAET-RR é o meio técnico para chegar ao componente real do VAB.
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Arquitetura do produto}
+\centering
+\begin{tikzpicture}[
+  node distance=0.45cm,
+  box/.style={draw=seplanblue, rounded corners, align=center, minimum height=0.95cm, text width=3.0cm, fill=seplanlight},
+  arrow/.style={-Stealth, thick, seplanblue2}
+]
+  \node[box] (a) {\textbf{Proxies setoriais}\\agro, AAPP, indústria, serviços};
+  \node[box, right=of a] (b) {\textbf{IAET-RR}\\índice trimestral de volume do VAB};
+  \node[box, right=of b] (c) {\textbf{VAB nominal}\\real $\times$ deflator implícito};
+  \node[box, right=of c] (d) {\textbf{PIB nominal}\\VAB + ILP};
+  \node[box, below=of c, xshift=1.75cm] (e) {\textbf{PIB real}\\deflação + ancoragem anual};
+
+  \draw[arrow] (a) -- (b);
+  \draw[arrow] (b) -- (c);
+  \draw[arrow] (c) -- (d);
+  \draw[arrow] (d) -- (e);
+\end{tikzpicture}
+
+\vspace{0.35cm}
+\begin{block}{Leitura}
+O projeto parte de um sistema trimestral de volume, deriva o VAB nominal, incorpora impostos líquidos sobre produtos e fecha o PIB trimestral em duas óticas: nominal e real.
+\end{block}
+\end{frame}
+
+\begin{frame}{Fundamento metodológico}
+\begin{enumerate}
+  \item construir indicadores trimestrais por setor;
+  \item agregar com pesos compatíveis com o ano-base de 2020;
+  \item impor coerência com benchmark anual oficial das Contas Regionais;
+  \item derivar séries nominais e reais consistentes com a identidade do PIB.
+\end{enumerate}
+
+\vspace{0.3cm}
+\begin{block}{Intuição}
+As Contas Regionais definem o nível anual correto. As proxies trimestrais definem como esse nível se distribui dentro do ano.
+\end{block}
+\end{frame}
+
+\begin{frame}{O papel do IAET-RR dentro do projeto PIB}
+\begin{columns}[T]
+\column{0.54\textwidth}
+\[
+I_t = \sum_{i=1}^{n} w_i^{(2020)} \cdot I_{i,t}
+\]
+
+\begin{itemize}
+  \item \(I_t\) = índice agregado trimestral de volume
+  \item \(I_{i,t}\) = índice setorial no trimestre \(t\)
+  \item \(w_i^{(2020)}\) = peso do setor \(i\) no VAB nominal de 2020
+\end{itemize}
+
+\begin{block}{Função do IAET}
+Produzir o perfil trimestral do \textbf{VAB real} que servirá de base para a construção do VAB nominal e, em seguida, do PIB trimestral.
+\end{block}
+
+\column{0.42\textwidth}
+\small
+\begin{tabular}{lr}
+\toprule
+\textbf{Bloco} & \textbf{Peso 2020} \\
+\midrule
+Adm. Pública & 45,01\% \\
+Serviços & 36,46\% \\
+Indústria & 11,63\% \\
+Agropecuária & 6,89\% \\
+\bottomrule
+\end{tabular}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Denton-Cholette e coerência com o IBGE}
+\textbf{Condição de fechamento anual}
+
+Para índices de volume:
+\[
+\frac{1}{4}\sum_{q=1}^{4} x_{y,q} = B_y
+\]
+
+Para séries de fluxo em valores:
+\[
+\sum_{q=1}^{4} x_{y,q} = B_y
+\]
+
+\vspace{0.2cm}
+\begin{itemize}
+  \item O benchmark anual do núcleo real usa o \textbf{índice encadeado de volume} das Contas Regionais.
+  \item O benchmark anual do núcleo nominal usa os totais nominais das Contas Regionais.
+  \item O método preserva o desenho intra-anual da proxy, mas obriga o fechamento no total oficial.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Construção do PIB nominal trimestral}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{Etapa 1: VAB nominal}
+\[
+I_t^{nom} = I_t^{real} \times \frac{D_t}{100}
+\]
+
+\begin{itemize}
+  \item deflator implícito anual obtido das Contas Regionais;
+  \item trimestralização do deflator via Denton-Cholette;
+  \item IPCA usado como indicador auxiliar intra-anual.
+\end{itemize}
+
+\column{0.48\textwidth}
+\textbf{Etapa 2: identidade do PIB}
+\[
+PIB_t^{nom} = VAB_t^{nom} + ILP_t
+\]
+
+\begin{itemize}
+  \item \(ILP\) = impostos líquidos sobre produtos;
+  \item distribuição trimestral do ILP com benchmark anual e proxy tributária;
+  \item resultado final em R\$ milhões.
+\end{itemize}
+\end{columns}
+
+\vspace{0.2cm}
+\begin{block}{Ponto forte}
+Nos anos com benchmark disponível, o VAB nominal anual e o PIB nominal anual fecham com as Contas Regionais.
+\end{block}
+\end{frame}
+
+\begin{frame}{Construção do PIB real trimestral}
+\textbf{Etapa 1: série preliminar}
+\[
+PIB_t^{real,prel} = \frac{PIB_t^{nom}}{D_t/100}
+\]
+
+\textbf{Etapa 2: ancoragem anual}
+\begin{itemize}
+  \item calcular a média anual preliminar do PIB real;
+  \item comparar com o benchmark oficial do PIB real das Contas Regionais;
+  \item aplicar Denton-Cholette para impor coincidência anual.
+\end{itemize}
+
+\begin{alertblock}{Vantagem metodológica}
+Essa etapa separa explicitamente o problema do volume do VAB e o comportamento dos impostos sobre produtos, evitando que a dinâmica real do PIB seja contaminada por flutuações nominais tributárias.
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Validação do PIB real}
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Ano} & \textbf{Projeto} & \textbf{CR IBGE} \\
+\midrule
+2021 & 8,40\% & 8,40\% \\
+2022 & 11,30\% & 11,30\% \\
+2023 & 4,20\% & 4,20\% \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.35cm}
+\begin{block}{Leitura}
+Nos anos com benchmark oficial disponível, o crescimento real anual do PIB trimestral do projeto coincide exatamente com as Contas Regionais do IBGE.
+\end{block}
+\end{frame}
+
+\begin{frame}{Resultados: PIB nominal anual}
+\begin{columns}[T]
+\column{0.40\textwidth}
+\small
+\begin{tabular}{lr}
+\toprule
+\textbf{Ano} & \textbf{R\$ bi} \\
+\midrule
+2020 & 16,02 \\
+2021 & 18,20 \\
+2022 & 21,10 \\
+2023 & 25,12 \\
+2024 & 28,86 \\
+2025 & 32,59 \\
+\bottomrule
+\end{tabular}
+
+\column{0.58\textwidth}
+\begin{tikzpicture}
+\begin{axis}[
+  ybar,
+  bar width=12pt,
+  ymin=0,ymax=35,
+  width=\textwidth,
+  height=5.7cm,
+  ylabel={R\$ bi},
+  symbolic x coords={2020,2021,2022,2023,2024,2025},
+  xtick=data,
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize, rotate=90, anchor=west},
+  nodes near coords align={vertical},
+  enlarge x limits=0.08,
+  axis x line*=bottom,
+  axis y line*=left,
+  ymajorgrids=true,
+  grid style={dashed,gray!30}
+]
+\addplot[fill=seplanblue] coordinates {
+  (2020,16.02) (2021,18.20) (2022,21.10) (2023,25.12) (2024,28.86) (2025,32.59)
+};
+\end{axis}
+\end{tikzpicture}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Resultados: crescimento real do PIB}
+\begin{columns}[T]
+\column{0.38\textwidth}
+\small
+\begin{tabular}{lr}
+\toprule
+\textbf{Ano} & \textbf{\%} \\
+\midrule
+2021 & 8,40 \\
+2022 & 11,30 \\
+2023 & 4,20 \\
+2024 & 6,50 \\
+2025 & 7,50 \\
+\bottomrule
+\end{tabular}
+
+\column{0.60\textwidth}
+\begin{tikzpicture}
+\begin{axis}[
+  ybar,
+  bar width=14pt,
+  ymin=0,ymax=12,
+  width=\textwidth,
+  height=5.7cm,
+  ylabel={\%},
+  symbolic x coords={2021,2022,2023,2024,2025},
+  xtick=data,
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize},
+  enlarge x limits=0.10,
+  axis x line*=bottom,
+  axis y line*=left,
+  ymajorgrids=true,
+  grid style={dashed,gray!30}
+]
+\addplot[fill=seplangold] coordinates {
+  (2021,8.40) (2022,11.30) (2023,4.20) (2024,6.50) (2025,7.50)
+};
+\end{axis}
+\end{tikzpicture}
+\end{columns}
+
+\vspace{0.1cm}
+\small 2024 e 2025 ainda são preliminares, sem benchmark oficial anual publicado pelo IBGE.
+\end{frame}
+
+\begin{frame}{Resultados: estrutura setorial estimada de 2025}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Setor} & \textbf{R\$ bi} & \textbf{\%} \\
+\midrule
+Adm. Pública & 15,74 & 47,4 \\
+Serviços & 9,08 & 27,4 \\
+Indústria & 4,97 & 15,0 \\
+Agropecuária & 3,39 & 10,2 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.25cm}
+\begin{itemize}
+  \item O projeto entrega o agregado e a decomposição setorial do VAB.
+  \item Isso permite narrativa econômica e leitura estrutural do PIB.
+\end{itemize}
+
+\column{0.42\textwidth}
+\centering
+\begin{tikzpicture}
+\pie[
+  text=legend,
+  radius=1.65,
+  color={seplanblue,seplanblue2,seplangold,seplangreen}
+]{47.4/Adm.\ Pública,27.4/Serviços,15.0/Indústria,10.2/Agropecuária}
+\end{tikzpicture}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Pipeline e governança estatística}
+\begin{enumerate}
+  \item produzir os setores reais;
+  \item agregar o IAET-RR;
+  \item dessazonalizar e validar;
+  \item gerar VAB nominal;
+  \item gerar PIB nominal;
+  \item gerar PIB real;
+  \item detalhar VAB nominal setorial;
+  \item exportar séries e publicar no painel.
+\end{enumerate}
+
+\begin{block}{Ganho institucional}
+O projeto transforma uma modelagem conjuntural em rotina oficial: replicável, auditável, atualizável e pronta para divulgação pública.
+\end{block}
+\end{frame}
+
+\begin{frame}{Limitações conhecidas e agenda de aperfeiçoamento}
+\begin{itemize}
+  \item O benchmark anual oficial disponível hoje vai até 2023; 2024 e 2025 são séries preliminares.
+  \item O comércio ainda pode melhorar com ICMS por atividade econômica da SEFAZ-RR.
+  \item A nota técnica metodológica ainda precisa ser formalizada como documento institucional.
+  \item O dashboard já está operacional, mas precisa de publicação definitiva em ambiente institucional.
+\end{itemize}
+
+\vspace{0.25cm}
+\begin{alertblock}{Próximo marco crítico}
+Quando o IBGE publicar as Contas Regionais de 2024, em previsão para outubro de 2026, o projeto substitui a extrapolação de 2024 por benchmark oficial e reancora toda a borda recente do PIB trimestral.
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Mensagem final}
+\begin{itemize}
+  \item o produto que a SEPLAN/RR passa a oferecer é o \textbf{PIB trimestral de Roraima};
+  \item o IAET-RR permanece essencial, mas como infraestrutura metodológica;
+  \item a aderência às Contas Regionais garante defensabilidade técnica;
+  \item a atualização trimestral dá tempestividade à leitura econômica oficial do estado.
+\end{itemize}
+
+\vspace{0.4cm}
+\begin{alertblock}{Proposta de valor}
+Institucionalizar a SEPLAN/RR como referência na produção e comunicação do PIB trimestral estadual, com metodologia transparente e alinhada ao padrão das Contas Regionais.
+\end{alertblock}
+\end{frame}
+
+\end{document}

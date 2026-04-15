@@ -227,7 +227,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 
 ## Instituição e autoria
 
-**Secretaria do Planejamento e Orçamento de Roraima — SEPLAN/RR**  
+**Secretaria de Planejamento e Orçamento de Roraima — SEPLAN/RR**  
 Coordenação-Geral de Estudos Econômicos e Sociais — CGEES
 
 **Yuri Cesar de Lima e Silva**  
