@@ -138,7 +138,7 @@ dados_indices <- read_csv(arq_indices, show_col_types = FALSE) |>
 
 dados_pib <- read_csv(arq_pib, show_col_types = FALSE) |>
   arrange(ano, trimestre) |>
-  select(periodo, vab_nominal_mi, icms_mi, ilp_nominal_mi, pib_nominal_mi, tipo_benchmark)
+  select(periodo, indice_nominal, vab_nominal_mi, icms_mi, ilp_nominal_mi, pib_nominal_mi, tipo_benchmark)
 
 dados_ilp <- read_csv(arq_ilp, show_col_types = FALSE) |>
   arrange(ano, trimestre) |>
@@ -146,32 +146,15 @@ dados_ilp <- read_csv(arq_ilp, show_col_types = FALSE) |>
 
 contas_regionais <- read_csv(
   arq_contas,
-  show_col_types = FALSE,
-  locale = locale(encoding = "Latin1")
+  show_col_types = FALSE
 ) |>
   mutate(
-    atividade = iconv(atividade, from = "", to = "ASCII//TRANSLIT"),
     bloco = case_when(
-      atividade == "Agropecuaria" ~ "Agropecuaria",
-      atividade == "Adm., defesa, educacao e saude publicas e seguridade social" ~ "Adm. Publica",
-      atividade %in% c(
-        "Industrias extrativas",
-        "Industrias de transformacao",
-        "Eletricidade e gas, agua, esgoto, atividades de gestao de residuos e descontaminacao",
-        "Construcao"
-      ) ~ "Industria",
-      atividade %in% c(
-        "Comercio e reparacao de veiculos automotores e motocicletas",
-        "Transporte, armazenagem e correio",
-        "Alojamento e alimentacao",
-        "Informacao e comunicacao",
-        "Atividades financeiras, de seguros e servicos relacionados",
-        "Atividades imobiliarias",
-        "Atividades profissionais, cientificas e tecnicas, administrativas e servicos complementares",
-        "Administracao, educacao, saude, pesquisa e desenvolvimento privadas",
-        "Artes, cultura, esporte e recreacao e outras atividades de servicos"
-      ) ~ "Servicos Privados",
-      TRUE ~ NA_character_
+      grepl("Agropec", atividade)                     ~ "Agropecuaria",
+      grepl("defesa", atividade)                      ~ "Adm. Publica",
+      grepl("extrat|transforma|Eletricidade|SIUP|Constru", atividade) ~ "Industria",
+      grepl("Total das Atividades", atividade)        ~ NA_character_,
+      TRUE                                            ~ "Servicos Privados"
     )
   ) |>
   filter(!is.na(bloco)) |>
@@ -276,16 +259,21 @@ pib_anual_total <- taxas_anuais_pib |>
   filter(serie == "PIB nominal") |>
   select(ano, valor_pib = valor)
 
-iaet_real_anual <- taxas_anuais_iaet |>
-  filter(serie == "IAET-RR") |>
-  select(ano, taxa_anual)
+# PIB real anual: deflaciona PIB nominal pelo deflator implícito (indice_nominal / indice_geral)
+pib_real_anual_taxa <- serie |>
+  mutate(pib_real_mi = pib_nominal_mi * indice_geral / indice_nominal) |>
+  group_by(ano) |>
+  summarise(pib_real_mi = sum(pib_real_mi, na.rm = TRUE), .groups = "drop") |>
+  mutate(taxa_anual = calc_var(pib_real_mi, 1)) |>
+  filter(!is.na(taxa_anual))
 
 vab_nominal_anual <- contas_regionais |>
   select(ano, bloco, vab_mi)
 
-vab_real_anual <- taxas_anuais_iaet |>
-  filter(serie != "IAET-RR") |>
-  select(ano, serie, indice_medio)
+# Taxas de crescimento anuais reais por setor (para grafico de colunas agrupadas)
+vab_real_anual_taxa <- taxas_anuais_iaet |>
+  filter(serie != "IAET-RR", !is.na(taxa_anual)) |>
+  select(ano, serie, taxa_anual)
 
 # ---------------------------------------------------------------------------
 # 3. PALETA
@@ -571,7 +559,7 @@ ui <- page_navbar(
     icon = icon("percent"),
     card(
       full_screen = TRUE,
-      card_header("PIB nominal de Roraima — valores anuais (R$ milhoes)"),
+      card_header("PIB nominal de Roraima \u2014 valores anuais (R$ milh\u00f5es)"),
       card_body(plotlyOutput("grafico_pib_anual_nivel", height = "390px"))
     ),
     card(
@@ -586,7 +574,7 @@ ui <- page_navbar(
     icon = icon("chart-column"),
     card(
       full_screen = TRUE,
-      card_header("VAB nominal por atividade — valores anuais (R$ milhoes)"),
+      card_header("VAB nominal por atividade \u2014 valores anuais (R$ milh\u00f5es)"),
       card_body(plotlyOutput("grafico_vab_nominal_anual", height = "390px"))
     ),
     card(
@@ -855,7 +843,8 @@ server <- function(input, output, session) {
         font = list(family = "Segoe UI"),
         shapes = marcas$shapes,
         annotations = marcas$annotations
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_iaet_taxas <- renderPlotly({
@@ -865,7 +854,7 @@ server <- function(input, output, session) {
     p <- plot_ly(df, x = ~label) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
-        yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
+        yaxis = list(title = "Varia\u00e7\u00e3o (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
         legend = layout_legenda(),
         plot_bgcolor = "white",
@@ -894,7 +883,8 @@ server <- function(input, output, session) {
     }
 
     p |>
-      layout(legend = layout_legenda(), margin = list(b = 70, r = 190))
+      layout(legend = layout_legenda(), margin = list(b = 70, r = 190)) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_comp_nivel <- renderPlotly({
@@ -923,7 +913,8 @@ server <- function(input, output, session) {
         font = list(family = "Segoe UI"),
         shapes = marcas$shapes,
         annotations = marcas$annotations
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_comp_taxas <- renderPlotly({
@@ -944,14 +935,15 @@ server <- function(input, output, session) {
       ) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
-        yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
+        yaxis = list(title = "Varia\u00e7\u00e3o (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 70, r = 190),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_contrib <- renderPlotly({
@@ -969,7 +961,8 @@ server <- function(input, output, session) {
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_pib_nivel <- renderPlotly({
@@ -1011,7 +1004,7 @@ server <- function(input, output, session) {
       layout(
         barmode = "stack",
         xaxis = list(title = "", tickangle = -45),
-        yaxis = list(title = "R$ milhoes", gridcolor = "#dbe3ec"),
+        yaxis = list(title = "R$ milh\u00f5es", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 70, r = 190),
@@ -1020,7 +1013,8 @@ server <- function(input, output, session) {
         font = list(family = "Segoe UI"),
         shapes = marcas$shapes,
         annotations = marcas$annotations
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_pib_taxas <- renderPlotly({
@@ -1030,7 +1024,7 @@ server <- function(input, output, session) {
     p <- plot_ly(df, x = ~label) |>
       layout(
         xaxis = list(title = "", tickangle = -45),
-        yaxis = list(title = "Variacao (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
+        yaxis = list(title = "Varia\u00e7\u00e3o (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
         legend = layout_legenda(),
         plot_bgcolor = "white",
@@ -1059,7 +1053,8 @@ server <- function(input, output, session) {
     }
 
     p |>
-      layout(legend = layout_legenda(), margin = list(b = 70, r = 190))
+      layout(legend = layout_legenda(), margin = list(b = 70, r = 190)) |>
+      config(locale = "pt-BR")
   })
 
   # Aba PIB anual — grafico 1: PIB nominal por componente (barras + linha)
@@ -1071,113 +1066,118 @@ server <- function(input, output, session) {
       add_bars(
         data = barras,
         x = ~ano, y = ~valor, color = ~serie,
-        colors = c(
-          "VAB nominal" = cores_pib["VAB nominal"],
-          "Impostos sobre produtos (ILP)" = cores_pib["Impostos sobre produtos (ILP)"]
-        ),
+        colors = c("VAB nominal" = "#123B72", "Impostos sobre produtos (ILP)" = "#C68A18"),
         hovertemplate = "%{fullData.name}: R$ %{y:,.1f} mi<extra></extra>"
       ) |>
       add_lines(
         data = total,
         x = ~ano, y = ~valor_pib,
         name = "PIB nominal",
-        line = list(color = cores_pib["PIB nominal"], width = 3),
-        marker = list(size = 7, color = cores_pib["PIB nominal"]),
+        line = list(color = "#2F7A45", width = 3),
+        marker = list(size = 8, color = "#2F7A45"),
         hovertemplate = "PIB nominal: R$ %{y:,.1f} mi<extra></extra>"
       ) |>
       layout(
         barmode = "stack",
         xaxis = list(title = "", dtick = 1, tickformat = "d"),
-        yaxis = list(title = "R$ milhoes", gridcolor = "#dbe3ec"),
+        yaxis = list(title = "R$ milh\u00f5es", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 60, r = 190),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
-  # Aba PIB anual — grafico 2: crescimento real anual (IAET)
+  # Aba PIB anual — grafico 2: crescimento real do PIB
   output$grafico_pib_anual_real <- renderPlotly({
-    df <- iaet_real_anual |>
-      filter(!is.na(taxa_anual))
+    df <- pib_real_anual_taxa
 
     plot_ly(df, x = ~ano, y = ~taxa_anual, type = "bar",
-            marker = list(
-              color = ifelse(df$taxa_anual >= 0, cores$azul_medio, cores$vermelho)
-            ),
-            hovertemplate = "Taxa anual: %{y:.1f}%<extra></extra>",
-            name = "Crescimento real (IAET-RR)") |>
+            marker = list(color = ifelse(df$taxa_anual >= 0, cores$azul_medio, cores$vermelho)),
+            hovertemplate = "Crescimento real do PIB: %{y:.1f}%<extra></extra>",
+            name = "Crescimento real do PIB") |>
       layout(
         xaxis = list(title = "", dtick = 1, tickformat = "d"),
-        yaxis = list(title = "Variacao anual (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
+        yaxis = list(title = "Varia\u00e7\u00e3o anual (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
         showlegend = FALSE,
         margin = list(b = 60, r = 40),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
-  # Aba IAET em nivel — grafico 1: VAB nominal por atividade (barras empilhadas anuais)
+  # Aba IAET em nivel — grafico 1: VAB nominal por atividade (linhas anuais)
   output$grafico_vab_nominal_anual <- renderPlotly({
     df <- vab_nominal_anual
 
     plot_ly(df, x = ~ano, y = ~vab_mi, color = ~bloco,
-            colors = cores_setores, type = "bar",
+            colors = cores_setores, type = "scatter", mode = "lines+markers",
             hovertemplate = "%{fullData.name}: R$ %{y:,.1f} mi<extra></extra>") |>
       layout(
-        barmode = "stack",
         xaxis = list(title = "", dtick = 1, tickformat = "d"),
-        yaxis = list(title = "R$ milhoes", gridcolor = "#dbe3ec"),
+        yaxis = list(title = "R$ milh\u00f5es", gridcolor = "#dbe3ec"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 60, r = 190),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
-  # Aba IAET em nivel — grafico 2: VAB real por atividade (indice anual, linhas)
+  # Aba IAET em nivel — grafico 2: taxas de crescimento reais anuais por setor (colunas agrupadas)
   output$grafico_vab_real_anual <- renderPlotly({
-    df <- vab_real_anual
+    df <- vab_real_anual_taxa
 
-    plot_ly(df, x = ~ano, y = ~indice_medio, color = ~serie,
-            colors = cores_setores, type = "scatter", mode = "lines+markers",
-            hovertemplate = "%{fullData.name}: %{y:.1f}<extra></extra>") |>
+    plot_ly(df, x = ~ano, y = ~taxa_anual, color = ~serie,
+            colors = cores_setores, type = "bar",
+            hovertemplate = "%{fullData.name}: %{y:.1f}%<extra></extra>") |>
       layout(
+        barmode = "group",
         xaxis = list(title = "", dtick = 1, tickformat = "d"),
-        yaxis = list(title = "Indice de volume (base 2020 = 100)", gridcolor = "#dbe3ec"),
+        yaxis = list(title = "Varia\u00e7\u00e3o anual (%)", gridcolor = "#dbe3ec", zerolinecolor = "#9aa4b2"),
         hovermode = "x unified",
         legend = layout_legenda(),
         margin = list(b = 60, r = 190),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   output$grafico_pesos <- renderPlotly({
     df_pesos <- dados_estrutura() |>
       transmute(serie = bloco, peso = participacao_pct)
 
+    cores_pizza <- setNames(
+      unname(cores_setores[df_pesos$serie]),
+      df_pesos$serie
+    )
+
     plot_ly(
       df_pesos,
       labels = ~serie,
       values = ~peso,
       type = "pie",
-      marker = list(colors = unname(cores_setores[df_pesos$serie])),
+      marker = list(colors = unname(cores_pizza)),
       textinfo = "label+percent",
       hovertemplate = "%{label}: %{value:.2f}%<extra></extra>"
     ) |>
       layout(
-        showlegend = FALSE,
-        margin = list(t = 20, b = 20, l = 10, r = 10),
+        showlegend = TRUE,
+        legend = list(orientation = "v"),
+        margin = list(t = 20, b = 20, l = 10, r = 120),
         font = list(family = "Segoe UI")
-      )
+      ) |>
+      config(locale = "pt-BR")
   })
 
   tabela_reativa <- reactive({
