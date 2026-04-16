@@ -13,12 +13,12 @@
 #   Metodologia:
 #     1. ILP anual benchmark = PIB anual (SIDRA 5938) - VAB anual (CR IBGE)
 #     2. ILP 2024–2025 extrapolado pela taxa anual do ICMS
-#     3. ICMS mensal agregado a trimestre (fluxo, soma)
+#     3. ICMS trimestral (SEFAZ-RR por atividade) como indicador de movimento
 #     4. Denton-Cholette com conversion = "sum": ILP_anual ~ ICMS_trim
 #     5. PIB nominal trimestral = VAB nominal trimestral + ILP trimestral
 #
 # Entrada : data/output/vab_nominal_rr_reais.csv
-#            data/processed/icms_sefaz_rr_mensal.csv
+#            data/processed/icms_sefaz_rr_trimestral.csv
 #            data/processed/contas_regionais_RR_serie.csv
 # Saída   : data/output/pib_nominal_rr.csv
 #            data/output/ilp_rr_trimestral.csv
@@ -40,7 +40,7 @@ library(openxlsx)
 dir_processed <- file.path("data", "processed")
 dir_output    <- file.path("data", "output")
 
-arq_icms      <- file.path(dir_processed, "icms_sefaz_rr_mensal.csv")
+arq_icms      <- file.path(dir_processed, "icms_sefaz_rr_trimestral.csv")
 arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 arq_vab_reais <- file.path(dir_output,    "vab_nominal_rr_reais.csv")
 arq_ilp_trim  <- file.path(dir_output,    "ilp_rr_trimestral.csv")
@@ -60,8 +60,9 @@ anos_saida <- ano_inicio:(ano_atual - 1L)
 
 message("\n=== ETAPA 5.8.1: Carregando insumos ===\n")
 
-icms_mensal <- read_csv(arq_icms, show_col_types = FALSE) |>
-  arrange(ano, mes)
+icms_trim <- read_csv(arq_icms, show_col_types = FALSE) |>
+  rename(icms_mi = icms_total_mi) |>
+  arrange(ano, trimestre)
 
 vab_trim <- read_csv(arq_vab_reais, show_col_types = FALSE) |>
   arrange(ano, trimestre)
@@ -72,10 +73,10 @@ if (nrow(vab_trim) == 0) {
   stop("Arquivo de VAB nominal trimestral vazio ou ausente.", call. = FALSE)
 }
 
-message(sprintf("ICMS mensal: %d observações (%d-%02d a %d-%02d)",
-                nrow(icms_mensal),
-                min(icms_mensal$ano), min(icms_mensal$mes[icms_mensal$ano == min(icms_mensal$ano)]),
-                max(icms_mensal$ano), max(icms_mensal$mes[icms_mensal$ano == max(icms_mensal$ano)])))
+message(sprintf("ICMS trimestral: %d trimestres (%s a %s)",
+                nrow(icms_trim),
+                icms_trim$periodo[1],
+                tail(icms_trim$periodo, 1)))
 message(sprintf("VAB nominal trimestral: %d trimestres (%s a %s)",
                 nrow(vab_trim), vab_trim$periodo[1], tail(vab_trim$periodo, 1)))
 
@@ -132,16 +133,9 @@ for (i in seq_len(nrow(ilp_anual))) {
 # ETAPA 5.8.3 — ICMS trimestral e extrapolação do ILP anual
 # ============================================================
 
-message("\n=== ETAPA 5.8.3: ICMS trimestral e ILP extrapolado ===\n")
+message("\n=== ETAPA 5.8.3: ICMS anual e ILP extrapolado ===\n")
 
-icms_trim <- icms_mensal |>
-  mutate(
-    trimestre = ceiling(mes / 3),
-    periodo   = sprintf("%dT%d", ano, trimestre)
-  ) |>
-  group_by(ano, trimestre, periodo) |>
-  summarise(icms_mi = sum(icms_mi, na.rm = TRUE), .groups = "drop") |>
-  arrange(ano, trimestre)
+# ICMS já em frequência trimestral — lido diretamente de icms_sefaz_rr_trimestral.csv
 
 icms_anual <- icms_trim |>
   group_by(ano) |>
