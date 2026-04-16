@@ -90,18 +90,18 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 
 | Atividade | % VAB 2023¹ | Proxy principal | Fonte |
 |---|---|---|---|
-| Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual + municipal) | Portal da Transparência / SEPLAN-RR / SICONFI |
-| Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE |
-| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA) + pecuária (PPM/abate) | IBGE SIDRA |
-| Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | CR IBGE |
-| Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE |
-| Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL |
-| Construção | 4,89% | Estoque acumulado de emprego CAGED F | MTE |
-| Atividades financeiras e de seguros | 2,78% | Depósitos Estban BCB (60%) + concessões de crédito BCB (40%) | BCB |
+| Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual + municipal) | Portal da Transparência / STN–SICONFI |
+| Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE–CAGED |
+| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA) + pecuária (PPM/abate) | IBGE/SIDRA |
+| Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | IBGE – CR |
+| Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE–CAGED |
+| Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL (SAMP) |
+| Construção | 4,89% | Estoque acumulado de emprego CAGED F | MTE–CAGED |
+| Atividades financeiras e de seguros | 2,78% | Depósitos Estban BCB (60%) + concessões de crédito BCB (40%) | BCB (Estban / SCR) |
 | Transporte, armazenagem e correio | 1,92% | Passageiros ANAC (55%) + diesel ANP (45%) | ANAC / ANP |
-| Indústrias de transformação | 1,31% | Energia industrial ANEEL (55%) + emprego CAGED C (45%) | ANEEL / MTE |
-| Informação e comunicação | 1,01% | Emprego em TI/telecom (CAGED J) | MTE |
-| Indústrias extrativas | 0,05% | Interpolação linear CR IBGE (peso negligenciável) | CR IBGE |
+| Indústrias de transformação | 1,31% | Energia industrial ANEEL (55%) + emprego CAGED C (45%) | ANEEL (SAMP) / MTE–CAGED |
+| Informação e comunicação | 1,01% | Emprego em TI/telecom (CAGED J) | MTE–CAGED |
+| Indústrias extrativas | 0,05% | Interpolação linear CR IBGE (peso negligenciável) | IBGE – CR |
 
 ¹ Participações de referência informativa (CR IBGE 2023). Os **pesos efetivos do índice** usam participações de 2020 (ano base Laspeyres), calculados dinamicamente de `contas_regionais_RR_serie.csv`.
 
