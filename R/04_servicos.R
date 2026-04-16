@@ -5,8 +5,10 @@
 # Data    : 2026-04-11
 # Descrição: Índice trimestral do bloco de Serviços Privados de RR:
 #
-#   Comércio (12,25%): energia comercial ANEEL (40%) + ICMS comércio
-#     SEFAZ-RR deflacionado pelo IPCA (40%) + CAGED G (20%).
+#   Comércio (12,25%): energia comercial ANEEL (60%) + ICMS comércio
+#     SEFAZ-RR deflacionado pelo IPCA (20%) + CAGED G (20%).
+#     Pesos conservadores: ótimo Denton aponta 100% energia, mas ICMS
+#     tem histórico curto (2020+); mantidos 3 componentes.
 #   Transportes (1,92%): passageiros ANAC (40%) + carga ANAC (30%)
 #     + diesel ANP (30%).
 #   Financeiro (2,78%): concessões de crédito BCB (70%) +
@@ -100,19 +102,26 @@ dir_scr_bulk    <- file.path("bases_baixadas_manualmente", "dados_bcb_src_2020_2
 ano_inicio <- 2020L
 ano_atual  <- as.integer(format(Sys.Date(), "%Y"))
 
-# Pesos dos componentes — Comércio (3 componentes com ICMS SEFAZ-RR)
-peso_energia_comercio <- 0.40
-peso_icms_comercio    <- 0.40
+# Pesos dos componentes — otimizados por 05b_sensibilidade_pesos.R
+# (critério: minimização da variância da correção Denton, 2026-04-15)
+
+# Comércio: ótimo Denton = 100%/0%/0%, mas ICMS tem histórico curto (2020+);
+#   decisão conservadora: aumentar energia, reduzir ICMS, manter CAGED
+#   Ad hoc anterior: 40%/40%/20% | Adotado: 60%/20%/20%
+peso_energia_comercio <- 0.60
+peso_icms_comercio    <- 0.20
 peso_caged_g          <- 0.20
 
-# Transportes
-peso_pax_anac    <- 0.40
-peso_carga_anac  <- 0.30
-peso_diesel_anp  <- 0.30
+# Transportes: carga aérea eliminada (0%) — volátil e não informativa em RR
+#   Ad hoc anterior: 40%/30%/30% | Ótimo: 55%/0%/45% | Melhoria: 41,7%
+peso_pax_anac    <- 0.55
+peso_carga_anac  <- 0.00
+peso_diesel_anp  <- 0.45
 
-# Financeiro
-peso_concessoes  <- 0.70
-peso_depositos   <- 0.30
+# Financeiro: depósitos Estban têm maior peso que concessões BCB
+#   Ad hoc anterior: 70%/30% | Ótimo: 40%/60% | Melhoria: 90,5%
+peso_concessoes  <- 0.40
+peso_depositos   <- 0.60
 
 # Benchmark: anos com Contas Regionais disponíveis
 anos_cr <- 2020:2023
@@ -1647,6 +1656,45 @@ message(sprintf("Extrativas — %d trimestres (interpolação linear CR)", nrow(
 # ============================================================
 
 message("\n=== ETAPA 4.15: Índice composto de Serviços ===\n")
+
+# Salvar proxies brutas dos setores com pesos ad hoc para análise de sensibilidade
+{
+  dir_sens <- file.path(dir_output, "sensibilidade")
+  dir.create(dir_sens, recursive = TRUE, showWarnings = FALSE)
+
+  proxies_serv <- comercio_trim |>
+    select(ano, trimestre,
+           com_energia = indice_energia_com,
+           com_icms    = indice_icms_com,
+           com_caged_g = indice_g)
+
+  if (exists("transportes_trim") && is.data.frame(transportes_trim) && nrow(transportes_trim) > 0) {
+    cols_transp <- intersect(c("indice_pax", "indice_carga", "indice_diesel"),
+                             names(transportes_trim))
+    proxies_serv <- proxies_serv |>
+      left_join(
+        transportes_trim |>
+          select(ano, trimestre, all_of(cols_transp)) |>
+          rename_with(~ paste0("transp_", sub("indice_", "", .x)), all_of(cols_transp)),
+        by = c("ano", "trimestre")
+      )
+  }
+
+  if (exists("financeiro_trim") && is.data.frame(financeiro_trim) && nrow(financeiro_trim) > 0) {
+    cols_fin <- intersect(c("indice_concessoes", "indice_depositos"), names(financeiro_trim))
+    proxies_serv <- proxies_serv |>
+      left_join(
+        financeiro_trim |>
+          select(ano, trimestre, all_of(cols_fin)) |>
+          rename_with(~ paste0("fin_", sub("indice_", "", .x)), all_of(cols_fin)),
+        by = c("ano", "trimestre")
+      )
+  }
+
+  write_csv(proxies_serv, file.path(dir_sens, "proxies_servicos.csv"))
+  message(sprintf("Proxies Serviços salvas para sensibilidade (%d trimestres, %d colunas).",
+                  nrow(proxies_serv), ncol(proxies_serv)))
+}
 
 # Grade de todos os trimestres de 2020 a ano_atual
 grade_trim <- expand_grid(

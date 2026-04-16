@@ -12,7 +12,8 @@
 #   CAGED microdata (FTP/MTE). SNIC cimento requer download
 #   manual — usado como componente adicional se arquivo presente.
 #   Indústria de Transformação (1,15% do VAB em 2020): energia
-#   industrial ANEEL (peso 0,7) + emprego CAGED C (peso 0,3).
+#   industrial ANEEL (peso 0,55) + emprego CAGED C (peso 0,45).
+#   Pesos otimizados por minimização da variância do Denton (2026-04-15).
 #   Todos os subsetores aplicam Denton-Cholette contra VAB
 #   anual das Contas Regionais IBGE (benchmarks 2020–2023).
 #   A coleta ANEEL é compartilhada: energia comercial e
@@ -98,8 +99,10 @@ caged_ano_inicio <- 2020
 caged_ano_fim    <- 2025
 
 # Pesos do índice composto de Transformação
-peso_energia_transf <- 0.7
-peso_emprego_transf <- 0.3
+# Otimizados por 05b_sensibilidade_pesos.R (critério: variância Denton)
+# Ad hoc anterior: 70%/30% | Ótimo estimado: 55%/45% | Melhoria: 59,9%
+peso_energia_transf <- 0.55
+peso_emprego_transf <- 0.45
 
 # ============================================================
 # ETAPA 3.1 — ANEEL SAMP via API CKAN
@@ -616,6 +619,17 @@ if (peso_emprego_transf_efetivo > 0 && exists("caged_c_trim")) {
 }
 
 print(transf_trim |> select(ano, trimestre, indice_transf_raw))
+
+# Salvar proxies brutas da Transformação para análise de sensibilidade
+{
+  dir_sens <- file.path(dir_output, "sensibilidade")
+  dir.create(dir_sens, recursive = TRUE, showWarnings = FALSE)
+
+  cols_transf <- intersect(c("ano", "trimestre", "indice_energia_ind", "indice_emprego_c"),
+                           names(transf_trim))
+  write_csv(transf_trim[, cols_transf], file.path(dir_sens, "proxies_transformacao.csv"))
+  message("Proxies Transformação salvas para sensibilidade.")
+}
 
 # ============================================================
 # ETAPA 3.6 — Denton-Cholette: cada subsetor × benchmark IBGE

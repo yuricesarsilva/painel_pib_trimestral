@@ -138,7 +138,7 @@
 - [x] Calcular índice agropecuário trimestral (base 2020 = 100)
 - [x] Aplicar Denton-Cholette (`tempdisagg::td()`, `~ 0 + x`, `conversion="mean"`) contra VAB agropecuário anual
 - [x] Validar: variação anual do índice **coincide exatamente** com Contas Regionais (2011–2023)
-- [ ] Gerar gráfico de validação (série vs. benchmark anual) — Fase 5
+- ~~Gerar gráfico de validação (série vs. benchmark anual)~~ *(removido — validação numérica via `05d_validacao.R` é suficiente nesta fase)*
 - [x] Salvar em `data/output/indice_agropecuaria.csv`
 - [x] Atualizar `historico_simples.md` com conclusão da Fase 1
 
@@ -263,7 +263,7 @@
   → **INTEGRADO 2026-04-15**: `R/00b_icms_sefaz_atividade.R` extrai shares de PDFs da SEFAZ-RR;
     `icms_comercio_mi` em `data/processed/icms_sefaz_rr_trimestral.csv` (2020T1–2026T1)
   - [x] Deflacionar pelo IPCA nacional (deflator trimestral = média mensal do índice de preços jan/2020=1)
-  - [ ] Registrar datas de quebras tributárias (mudanças de alíquota/regime) → dummy no script
+  - ~~Registrar datas de quebras tributárias~~ *(não há quebras documentadas no período 2020–2026)*
 - [x] Reutilizar vínculos no comércio (CNAE G) do CAGED — cache da Fase 3
 - [x] Construir índice composto (energia 40% + ICMS 40% + CAGED G 20%) com pesos explícitos
   - [x] Energia comercial como componente de volume físico (independente de preço)
@@ -356,8 +356,18 @@
 - [x] Para testar: script `R/05b_sensibilidade_calendario.R` criado e executado
       Usa `source(01_agropecuaria.R)` com variáveis pré-definidas — não-destrutivo
 
-**Outros candidatos (a definir):**
-- [ ] Pesos alternativos nos índices compostos (ex: ICMS com peso maior em Comércio)
+**Outros candidatos — pesos das proxies compostas:**
+- [x] Otimizar pesos das proxies compostas por minimização da variância da correção Denton
+      → **IMPLEMENTADO 2026-04-15**: script `R/05b_sensibilidade_pesos.R`; busca em grade (504 combinações,
+        passo 5%); critério: `sum(diff(output/proxy)²)`. Resultados em `data/output/sensibilidade/`.
+  - [x] Ind. Transformação: energia 70%→**55%** / CAGED C 30%→**45%** (melhoria 59,9%)
+  - [x] Comércio: energia 40%→**60%** / ICMS 40%→**20%** / CAGED G 20% mantido
+        *(decisão conservadora: ótimo Denton = 100% energia, mas ICMS tem histórico curto)*
+  - [x] Transportes: pax 40%→**55%** / carga 30%→**0%** / diesel 30%→**45%** (melhoria 41,7%)
+  - [x] Financeiro: concessões 70%→**40%** / depósitos 30%→**60%** (melhoria 90,5%)
+  - [x] Documentar metodologia e decisões em `notas/otimizacao_pesos_proxies.md`
+  - [x] Pesos atualizados nos scripts `R/03_industria.R` e `R/04_servicos.R`
+  - [ ] Re-rodar após publicação das CR 2024 (previsão: out/2026) para re-estimar com 5 anos de benchmark
 
 **Execução do teste:**
 - [x] Comparar versões A/B/C: calcular divergência trimestral e anual
