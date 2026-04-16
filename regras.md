@@ -290,6 +290,7 @@ R/05c_ajuste_sazonal.R           → Fase 5.3 — Ajuste sazonal (X-13ARIMA-SEAT
 R/05d_validacao.R                → Fase 5.4 — Validação (CR / IBCR / IBC-Br)
 R/05e_exportacao.R               → Fase 5.5 — Exportação (Excel + CSVs)
 R/05f_vab_nominal.R              → Fase 5.6 — VAB Nominal trimestral
+R/00b_icms_sefaz_atividade.R     → Fase 5.7 — ICMS por atividade (shares trimestrais SEFAZ-RR)
 R/05g_pib_nominal.R              → Fase 5.8 — PIB Nominal trimestral (VAB + ILP)
 R/05h_vab_nominal_setorial.R     → Fase 5.9 — VAB Nominal setorial (4 blocos, 2020–2023)
 R/05i_pib_real.R                 → Fase 5.10 — PIB Real anual (R$ 2020)

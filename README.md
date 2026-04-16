@@ -34,8 +34,8 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e 
 | 2021 | +8,4% | +7,2% | +4,2% |
 | 2022 | +11,3% | −1,2% | +2,8% |
 | 2023 | +4,2% | +1,7% | +2,7% |
-| 2024 | +6,5% *(sem benchmark oficial)* | +4,1% | +3,7% |
-| 2025 | +7,5% *(sem benchmark oficial)* | +1,7% | +2,5% |
+| 2024 | +7,2% *(sem benchmark oficial)* | +4,1% | +3,7% |
+| 2025 | +7,2% *(sem benchmark oficial)* | +1,7% | +2,5% |
 
 > As taxas de 2021–2023 são ancoradas ao **PIB real das Contas Regionais do IBGE** via Denton-Cholette. As taxas de 2024–2025 derivam da série preliminar do projeto (sem benchmark oficial disponível) e serão substituídas quando as Contas Regionais 2024 forem publicadas (previsão IBGE: outubro de 2026).
 

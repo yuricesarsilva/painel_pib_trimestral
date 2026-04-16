@@ -5,9 +5,8 @@
 # Data    : 2026-04-11
 # Descrição: Índice trimestral do bloco de Serviços Privados de RR:
 #
-#   Comércio (12,25%): energia comercial ANEEL (67%) + CAGED G (33%).
-#     ICMS por atividade (SEFAZ-RR) excluído desta versão — não
-#     disponível; será integrado quando obtido.
+#   Comércio (12,25%): energia comercial ANEEL (40%) + ICMS comércio
+#     SEFAZ-RR deflacionado pelo IPCA (40%) + CAGED G (20%).
 #   Transportes (1,92%): passageiros ANAC (40%) + carga ANAC (30%)
 #     + diesel ANP (30%).
 #   Financeiro (2,78%): concessões de crédito BCB (70%) +
@@ -45,9 +44,9 @@
 #   - BCB Estban: OData, UF=14, verbete 160 (depósitos totais).
 #   - BCB Concessões: OData NotaCredito. Se indisponível, fallback
 #     para Estban com aviso.
-#   - Comércio SEM ICMS: índice calculado com 2 componentes.
-#     Quando ICMS for disponibilizado pela SEFAZ-RR, reprocessar
-#     com pesos: energia 40%, ICMS 40%, CAGED 20%.
+#   - Comércio: 3 componentes (energia 40% + ICMS SEFAZ-RR 40% + CAGED G 20%).
+#     Fallback automático para 2 componentes se icms_sefaz_rr_trimestral.csv
+#     não estiver disponível (energia 67% + CAGED G 33%).
 # ============================================================
 
 source("R/utils.R")
@@ -86,6 +85,7 @@ arq_estban_out     <- file.path(dir_bcb,   "bcb_estban_rr_mensal.csv")
 arq_concessoes_out <- file.path(dir_bcb,   "bcb_concessoes_rr_mensal.csv")
 arq_ipca           <- file.path(dir_raw,   "ipca_mensal.csv")
 arq_cr_serie       <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
+arq_icms_trim      <- file.path(dir_processed, "icms_sefaz_rr_trimestral.csv")
 arq_vol_serie      <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 arq_indice         <- file.path(dir_output, "indice_servicos.csv")
 
@@ -100,11 +100,10 @@ dir_scr_bulk    <- file.path("bases_baixadas_manualmente", "dados_bcb_src_2020_2
 ano_inicio <- 2020L
 ano_atual  <- as.integer(format(Sys.Date(), "%Y"))
 
-# Pesos dos componentes — Comércio (sem ICMS: redistribuir entre 2)
-# Plano original: energia 40%, ICMS 40%, CAGED 20%
-# Versão atual (ICMS indisponível): energia 67%, CAGED 33%
-peso_energia_comercio <- 0.67
-peso_caged_g          <- 0.33
+# Pesos dos componentes — Comércio (3 componentes com ICMS SEFAZ-RR)
+peso_energia_comercio <- 0.40
+peso_icms_comercio    <- 0.40
+peso_caged_g          <- 0.20
 
 # Transportes
 peso_pax_anac    <- 0.40
@@ -883,14 +882,14 @@ if (bcb_concessoes_ok) {
 
 # ============================================================
 # ETAPA 4.8 — COMÉRCIO (12,25% do VAB)
-# Índice composto: energia comercial (67%) + CAGED G (33%)
-# NOTA: ICMS SEFAZ-RR excluído. Ao integrar ICMS:
-#   pesos = energia 40%, ICMS deflacionado 40%, CAGED G 20%
-# Tipo medida: volume (energia) + insumo (emprego)
-# Qualidade: aceitável (sem ICMS) — revisar quando disponível
+# Índice composto: energia comercial ANEEL (40%) +
+#   ICMS comércio SEFAZ-RR deflacionado pelo IPCA (40%) +
+#   CAGED G (20%)
+# Tipo medida: volume (energia) + valor real (ICMS) + insumo (emprego)
+# Qualidade: forte (ICMS disponível)
 # ============================================================
 
-message("\n=== ETAPA 4.8: Comércio — energia comercial + CAGED G ===\n")
+message("\n=== ETAPA 4.8: Comércio — energia + ICMS SEFAZ-RR + CAGED G ===\n")
 
 # Energia comercial trimestral
 energia_com_trim <- energia_com_mensal |>
@@ -905,42 +904,114 @@ base_ecom_2020 <- energia_com_trim |> filter(ano == 2020) |>
 energia_com_trim <- energia_com_trim |>
   mutate(indice_energia_com = energia_kwh / base_ecom_2020 * 100)
 
-# CAGED G já normalizado na função agregar_caged_secoes
-if (is.null(caged_g) || nrow(caged_g) == 0) {
-  warning("CAGED G: sem dados — Comércio usará apenas energia comercial.")
-  peso_energia_comercio_ef <- 1.0
-  peso_caged_g_ef           <- 0.0
+# ICMS comércio trimestral (SEFAZ-RR) — deflacionado pelo IPCA
+icms_comercio_disp <- FALSE
+icms_com_trim      <- NULL
+
+if (file.exists(arq_icms_trim)) {
+  icms_raw_com <- read_csv(arq_icms_trim, show_col_types = FALSE) |>
+    filter(!is.na(icms_comercio_mi), icms_comercio_mi > 0)
+
+  if (nrow(icms_raw_com) > 0 && !is.null(ipca)) {
+    # Deflator trimestral = média do índice de preços dos 3 meses do trimestre
+    ipca_trim_defl <- ipca |>
+      filter(ano >= ano_inicio) |>
+      mutate(trimestre = ceiling(mes / 3)) |>
+      group_by(ano, trimestre) |>
+      summarise(defl_trim = mean(indice_preco, na.rm = TRUE), .groups = "drop")
+
+    icms_com_trim <- icms_raw_com |>
+      select(ano, trimestre, icms_comercio_mi) |>
+      left_join(ipca_trim_defl, by = c("ano", "trimestre")) |>
+      mutate(
+        icms_com_real = if_else(!is.na(defl_trim) & defl_trim > 0,
+                                icms_comercio_mi / defl_trim,
+                                icms_comercio_mi)
+      ) |>
+      arrange(ano, trimestre)
+
+    base_icms_2020 <- icms_com_trim |> filter(ano == 2020) |>
+      pull(icms_com_real) |> mean(na.rm = TRUE)
+
+    if (!is.na(base_icms_2020) && base_icms_2020 > 0) {
+      icms_com_trim <- icms_com_trim |>
+        mutate(indice_icms_com = icms_com_real / base_icms_2020 * 100)
+      icms_comercio_disp <- TRUE
+      message(sprintf("ICMS comércio: %d trimestres deflacionados (base 2020=100)",
+                      sum(!is.na(icms_com_trim$indice_icms_com))))
+    } else {
+      message("ICMS comércio: base 2020 inválida — componente desativado.")
+    }
+  } else {
+    message("ICMS comércio: dados insuficientes ou IPCA ausente — componente desativado.")
+  }
 } else {
-  peso_energia_comercio_ef <- peso_energia_comercio
-  peso_caged_g_ef           <- peso_caged_g
+  message(sprintf("ICMS comércio: arquivo não encontrado (%s) — usando 2 componentes.", arq_icms_trim))
 }
 
-# Índice composto Comércio
+# Pesos efetivos com fallback automático
+if (icms_comercio_disp) {
+  peso_energia_comercio_ef <- peso_energia_comercio   # 0.40
+  peso_icms_comercio_ef    <- peso_icms_comercio      # 0.40
+  peso_caged_g_ef          <- peso_caged_g             # 0.20
+} else {
+  # Sem ICMS: redistribuir proporcionalmente entre energia e CAGED
+  soma_sem_icms            <- peso_energia_comercio + peso_caged_g
+  peso_energia_comercio_ef <- peso_energia_comercio / soma_sem_icms
+  peso_icms_comercio_ef    <- 0.0
+  peso_caged_g_ef          <- peso_caged_g / soma_sem_icms
+  message(sprintf("Fallback Comércio sem ICMS: energia %.0f%% + CAGED G %.0f%%",
+                  peso_energia_comercio_ef * 100, peso_caged_g_ef * 100))
+}
+
+if (is.null(caged_g) || nrow(caged_g) == 0) {
+  warning("CAGED G: sem dados — peso redistribuído entre energia e ICMS.")
+  total_ef             <- peso_energia_comercio_ef + peso_icms_comercio_ef
+  peso_energia_comercio_ef <- if (total_ef > 0) peso_energia_comercio_ef / total_ef else 1.0
+  peso_icms_comercio_ef    <- if (total_ef > 0) peso_icms_comercio_ef    / total_ef else 0.0
+  peso_caged_g_ef          <- 0.0
+}
+
+# Montar base com os três componentes
 comercio_base <- energia_com_trim |>
   select(ano, trimestre, indice_energia_com)
 
-if (peso_caged_g_ef > 0) {
-  comercio_trim <- comercio_base |>
+if (peso_caged_g_ef > 0 && !is.null(caged_g)) {
+  comercio_base <- comercio_base |>
     left_join(select(caged_g, ano, trimestre, indice_g = indice),
-              by = c("ano", "trimestre")) |>
-    mutate(
-      indice_comercio_raw = case_when(
-        !is.na(indice_energia_com) & !is.na(indice_g) ~
-          peso_energia_comercio_ef * indice_energia_com +
-          peso_caged_g_ef * indice_g,
-        !is.na(indice_energia_com) ~ indice_energia_com,
-        !is.na(indice_g)           ~ indice_g,
-        TRUE ~ NA_real_
-      )
-    )
+              by = c("ano", "trimestre"))
 } else {
-  comercio_trim <- comercio_base |>
-    mutate(indice_comercio_raw = indice_energia_com)
+  comercio_base <- comercio_base |> mutate(indice_g = NA_real_)
 }
 
-message(sprintf("Comércio: %d trimestres (energia %.0f%% + CAGED G %.0f%% — sem ICMS)",
+if (icms_comercio_disp) {
+  comercio_base <- comercio_base |>
+    left_join(select(icms_com_trim, ano, trimestre, indice_icms_com),
+              by = c("ano", "trimestre"))
+} else {
+  comercio_base <- comercio_base |> mutate(indice_icms_com = NA_real_)
+}
+
+# Índice composto — média ponderada dos componentes disponíveis
+comercio_trim <- comercio_base |>
+  mutate(
+    indice_comercio_raw = mapply(
+      function(e_i, ic_i, g_i) {
+        vals  <- c(e_i,  ic_i,  g_i)
+        pesos <- c(peso_energia_comercio_ef,
+                   peso_icms_comercio_ef,
+                   peso_caged_g_ef)
+        ok <- !is.na(vals) & pesos > 0
+        if (any(ok)) sum(vals[ok] * pesos[ok]) / sum(pesos[ok]) else NA_real_
+      },
+      indice_energia_com, indice_icms_com, indice_g
+    )
+  )
+
+message(sprintf("Comércio: %d trimestres (energia %.0f%% + ICMS %.0f%% + CAGED G %.0f%%)",
                 sum(!is.na(comercio_trim$indice_comercio_raw)),
                 peso_energia_comercio_ef * 100,
+                peso_icms_comercio_ef * 100,
                 peso_caged_g_ef * 100))
 
 # Contas Regionais — VAB nominal (pesos) e volume (benchmark Denton)

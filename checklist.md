@@ -251,20 +251,23 @@
 
 ## Fase 4 — Serviços Privados
 
-### 4.0 Decisão metodológica — Comércio sem ICMS (Opção A)
-- [x] ICMS por atividade (SEFAZ-RR) não disponível para coleta automatizada nesta versão
-- [x] **Decisão**: implementar Comércio com 2 componentes (energia comercial + CAGED G); integrar ICMS quando dado for obtido
-- [x] Pesos temporários Comércio: energia comercial 67%, CAGED G 33%
-- [x] Documentar no script instrução de revisão ao obter ICMS (pesos → 40%/40%/20%)
+### 4.0 Decisão metodológica — Comércio com ICMS (integrado em 2026-04-15)
+- [x] ICMS por atividade (SEFAZ-RR) obtido em PDFs (trimestral 2020–2024 + mensal 2024–2026)
+- [x] **Decisão**: integrar ICMS como 3º componente do Comércio com pesos energia 40% / ICMS 40% / CAGED G 20%
+- [x] Pesos finais Comércio: energia comercial 40%, ICMS SEFAZ-RR deflacionado 40%, CAGED G 20%
+- [x] Fallback automático no script para 2 componentes (energia 67% + CAGED 33%) se CSV ausente
 
 ### 4.1 Comércio
 - [x] Reutilizar energia comercial ANEEL da coleta 3.1 (sem coleta adicional)
-- [ ] Obter ICMS por atividade econômica da SEFAZ-RR — segmento comércio *(pendente dado externo)*
-  - [ ] Deflacionar pelo IPCA nacional
+- [x] Obter ICMS por atividade econômica da SEFAZ-RR — segmento comércio
+  → **INTEGRADO 2026-04-15**: `R/00b_icms_sefaz_atividade.R` extrai shares de PDFs da SEFAZ-RR;
+    `icms_comercio_mi` em `data/processed/icms_sefaz_rr_trimestral.csv` (2020T1–2026T1)
+  - [x] Deflacionar pelo IPCA nacional (deflator trimestral = média mensal do índice de preços jan/2020=1)
   - [ ] Registrar datas de quebras tributárias (mudanças de alíquota/regime) → dummy no script
 - [x] Reutilizar vínculos no comércio (CNAE G) do CAGED — cache da Fase 3
-- [x] Construir índice composto (energia comercial 67% + CAGED G 33%) com pesos explícitos
-  - [x] Energia comercial como componente prioritário (volume físico independente de preço)
+- [x] Construir índice composto (energia 40% + ICMS 40% + CAGED G 20%) com pesos explícitos
+  - [x] Energia comercial como componente de volume físico (independente de preço)
+  - [x] ICMS comércio deflacionado como componente de valor real
   - [x] Denton-Cholette contra VAB Comércio das Contas Regionais (2020–2023)
 
 ### 4.2 Transportes
@@ -392,7 +395,9 @@
 - [x] Comparar perfil de ciclo com IBC-BR e IBCR Norte (Banco Central)
       IBC-BR: corr nível=0,906; corr variação=0,401
       IBCR Norte: corr nível=0,374; corr variação=-0,419 (esperado — RR≠AM/PA)
-- [ ] Verificar correlação com arrecadação tributária total de RR (pendente — requer ICMS anual)
+- [x] Verificar correlação com arrecadação tributária total de RR
+      → **RESULTADO 2026-04-15**: ICMS trimestral total x IAET-RR: r(nível)=0,754 | r(var. YoY)=-0,112 (20 pares).
+      Correlação de nível razoável (tendência comum); variação descorrelacionada — esperado, pois ICMS é nominal e IAET é volume deflacionado.
 - [x] Verificar comportamento em 2020 (queda COVID) vs. estados vizinhos
       Queda T2 (-9,8% vs T1); recuperação em T3 por colheita e AAPP estável
 - [x] Documentar e justificar eventuais divergências
@@ -489,7 +494,7 @@
 
 ### A cada trimestre (rotina de atualização)
 - [ ] Atualizar dados de todas as fontes no script de cada setor (CAGED, ANEEL, SIAPE, ANAC, ANP, BCB, ICMS)
-- [ ] Rodar pipeline completo via `R/run_all.R` (sequência: 00 → 01 → 02 → 03 → 04 → 05 → 05c → 05d → 05e → 05f → 05g → 05h → 05i)
+- [ ] Rodar pipeline completo via `R/run_all.R` (sequência: 00 → 01 → 02 → 03 → 04 → 05 → 05c → 05d → 05e → 05f → 00b → 05g → 05h → 05i)
 - [ ] Verificar se há revisões nas Contas Regionais do IBGE e atualizar benchmarks se necessário
 - [ ] Confirmar que todas as validações automáticas passaram (`05d_validacao.R`)
 - [ ] Atualizar `logs/fontes_utilizadas.csv` com as fontes do release
@@ -509,7 +514,7 @@
 | 2 | Administração Pública | 🟢 Concluída |
 | 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | 🟢 Concluída |
-| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6, 5.8, 5.9 e 5.10 concluídas; 5.7 pendente, além da publicação/testes finais do dashboard) |
+| 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6, 5.8, 5.9 e 5.10 concluídas; 5.7 nota técnica pendente; publicação/testes finais do dashboard pendentes) |
 | 6 | Manutenção trimestral | ⚪ Não iniciada |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada
