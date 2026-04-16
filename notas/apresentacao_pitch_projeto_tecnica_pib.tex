@@ -176,60 +176,79 @@ Agropecuária & 6,89\% \\
 \end{columns}
 \end{frame}
 
-\begin{frame}{Proxies setoriais: estrutura e fontes}
+\begin{frame}{Proxies setoriais: estrutura e pesos}
+\begin{columns}[T]
+\column{0.46\textwidth}
+\textbf{Blocos principais}
+\vspace{0.1cm}
+
 \small
-\begin{tabular}{p{4.0cm}rp{5.0cm}}
+\begin{tabular}{p{2.1cm}rp{1.6cm}}
 \toprule
-\textbf{Atividade} & \textbf{Peso 2020} & \textbf{Proxy principal} \\
+\textbf{Bloco} & \textbf{Peso} & \textbf{Proxy} \\
 \midrule
-Adm.\ Pública & 45,01\% & Folha observada (SIAPE + estadual + municipal) \\
-Serviços privados & 36,46\% & subblocos: comércio, transp., financeiro, outros \\
-Indústria & 11,63\% & construção (CAGED F), SIUP (energia), transformação \\
-Agropecuária & 6,89\% & PAM/LSPA + PPM/abate \\
+Adm.\ Pública & 45,01\% & folha pública \\
+Serviços & 36,46\% & subblocos \\
+Indústria & 11,63\% & subblocos \\
+Agropecuária & 6,89\% & PAM/PPM \\
 \bottomrule
 \end{tabular}
 
-\vspace{0.2cm}
-\textbf{Subblocos com proxies compostas (pesos otimizados):}
+\column{0.50\textwidth}
+\textbf{Proxies compostas (pesos otimizados)}
+\vspace{0.1cm}
 
-\begin{tabular}{p{3.4cm}p{6.8cm}}
+\small
+\begin{tabular}{p{2.0cm}p{3.6cm}}
 \toprule
 \textbf{Subbloco} & \textbf{Composição} \\
 \midrule
-Comércio & energia ANEEL (60\%) + ICMS SEFAZ-RR (20\%) + CAGED G (20\%) \\
-Transportes & passageiros ANAC (55\%) + diesel ANP (45\%) \\
-Financeiro & depósitos Estban (60\%) + concessões BCB (40\%) \\
-Ind.\ Transformação & energia ANEEL (55\%) + emprego CAGED C (45\%) \\
+Comércio & energia 60\% + ICMS 20\% + CAGED G 20\% \\
+Transportes & pax ANAC 55\% + diesel 45\% \\
+Financeiro & depósitos 60\% + crédito 40\% \\
+Transformação & energia 55\% + CAGED C 45\% \\
 \bottomrule
 \end{tabular}
+\end{columns}
+
+\vspace{0.3cm}
+\begin{block}{Como os pesos são definidos}
+Pesos contábeis (entre blocos): participação no VAB de 2020 — Contas Regionais. Pesos técnicos (dentro dos subblocos): otimização por critério de variância do Denton (slide seguinte).
+\end{block}
 \end{frame}
 
-\begin{frame}{Otimização dos pesos técnicos das proxies compostas}
-\textbf{Critério: variância residual do Denton-Cholette}
+\begin{frame}{Otimização dos pesos técnicos}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\textbf{Critério adotado}
 
 \vspace{0.1cm}
-Quando a proxy é perfeita, a razão $p_t / x_t$ é constante e o Denton não precisa corrigir nada. A função-objetivo do método Denton mede exatamente esse ruído:
-\[
-\text{Objetivo} = \sum_{t=2}^{T} \left(\frac{p_t}{x_t} - \frac{p_{t-1}}{x_{t-1}}\right)^2
-\]
-
-Os \textbf{pesos ótimos} minimizam esse objetivo sobre o período de benchmark 2020--2023. Busca em grade com passo de 5 p.p.\ (504 combinações avaliadas, script \texttt{05b\_sensibilidade\_pesos.R}).
-
-\vspace{0.2cm}
 \small
-\begin{tabular}{lrrr}
+Proxy perfeita $\Rightarrow$ razão $p_t/x_t$ constante $\Rightarrow$ Denton não precisa corrigir. Pesos ótimos minimizam:
+\[
+\sum_{t=2}^{T} \!\left(\frac{p_t}{x_t} - \frac{p_{t-1}}{x_{t-1}}\right)^{\!2}
+\]
+Busca em grade, passo 5 p.p., 504 combinações, benchmark 2020--2023.
+
+\column{0.46\textwidth}
+\textbf{Resultados}
+
+\vspace{0.1cm}
+\small
+\begin{tabular}{p{1.9cm}rr}
 \toprule
-\textbf{Setor} & \textbf{Obj.\ anterior} & \textbf{Obj.\ ótimo} & \textbf{Redução} \\
+\textbf{Setor} & \textbf{Ant.} & \textbf{Red.} \\
 \midrule
-Ind.\ Transformação & 0,002118 & 0,000849 & 59,9\% \\
-Comércio & 0,034204 & \emph{conservador} & --- \\
-Transportes & 0,035024 & 0,020417 & 41,7\% \\
-Financeiro & 0,002532 & 0,000240 & 90,5\% \\
+Transformação & 0,0021 & $-$59,9\% \\
+Transportes & 0,0350 & $-$41,7\% \\
+Financeiro & 0,0025 & $-$90,5\% \\
+Comércio & 0,0342 & conserv. \\
 \bottomrule
 \end{tabular}
 
 \vspace{0.15cm}
-\scriptsize Comércio: ótimo seria 100\% energia, mas conservamos diversificação (histórico do ICMS por atividade limitado a 2020--2023). Decisão documentada em \texttt{notas/otimizacao\_pesos\_proxies.md}.
+\scriptsize Comércio: ótimo seria 100\% energia, mas o histórico do ICMS por atividade cobre apenas 2020--2023. Decisão conservadora: 60/20/20.
+\end{columns}
 \end{frame}
 
 \begin{frame}{Denton-Cholette e coerência com o IBGE}
