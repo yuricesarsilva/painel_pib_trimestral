@@ -28,8 +28,8 @@ MathJax = {
 html { scroll-behavior: smooth; }
 body {
   font-family: "Segoe UI", Arial, sans-serif;
-  font-size: 17px;
-  line-height: 1.7;
+  font-size: 18px;
+  line-height: 1.75;
   color: var(--text);
   background: var(--bg);
 }
@@ -37,8 +37,8 @@ body {
 /* ── Layout ── */
 .wrapper { display: flex; min-height: 100vh; }
 nav {
-  width: 270px;
-  min-width: 270px;
+  width: 250px;
+  min-width: 250px;
   background: var(--azul);
   color: #fff;
   padding: 0;
@@ -50,9 +50,9 @@ nav {
 }
 main {
   flex: 1;
-  padding: 2.5rem 3rem;
-  max-width: 1100px;
-  width: 100%;
+  padding: 2.5rem 3.5rem;
+  width: 0; /* força flex a expandir sem limite de max-width */
+  min-width: 0;
 }
 @media (max-width: 900px) {
   nav { display: none; }
