@@ -12,6 +12,7 @@ data/output/
 
 # Credenciais — NUNCA versionar
 .env
+deploy_shinyapps.R
 
 # renv — apenas o lock e activate.R são versionados; a library é local
 renv/library/

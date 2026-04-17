@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metodologia — PIB Trimestral de Roraima · SEPLAN/RR</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root {
+  --azul:    #123B72;
+  --azul-m:  #2A6DB0;
+  --dourado: #C68A18;
+  --verde:   #2F7A45;
+  --vermelho:#C54A43;
+  --cinza:   #5D6B7A;
+  --bg:      #EEF2F6;
+  --card:    #ffffff;
+  --borda:   #dbe3ec;
+  --text:    #1E293B;
+  --muted:   #64748b;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ── Layout ── */
+.wrapper { display: flex; min-height: 100vh; }
+nav {
+  width: 270px;
+  min-width: 270px;
+  background: var(--azul);
+  color: #fff;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+main {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  max-width: 960px;
+}
+@media (max-width: 900px) {
+  nav { display: none; }
+  main { padding: 1.5rem; }
+}
+
+/* ── Nav ── */
+.nav-header {
+  padding: 1.4rem 1.2rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+}
+.nav-header .badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--dourado); color: #fff; font-weight: 700; font-size: 13px;
+  margin-right: 8px;
+}
+.nav-header .titulo { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.nav-header .subtitulo { font-size: 11px; opacity: .65; margin-top: 2px; }
+nav ul { list-style: none; padding: 0.6rem 0; }
+nav ul li a {
+  display: block;
+  padding: 5px 1.2rem;
+  color: rgba(255,255,255,.78);
+  text-decoration: none;
+  font-size: 12.5px;
+  transition: background .15s, color .15s;
+}
+nav ul li a:hover { background: rgba(255,255,255,.1); color: #fff; }
+nav ul li.section > a {
+  font-weight: 700; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .05em; color: rgba(255,255,255,.45);
+  padding-top: 1.2rem; cursor: default; pointer-events: none;
+}
+nav ul li.sub > a { padding-left: 2.2rem; font-size: 12px; }
+
+/* ── Cover ── */
+.cover {
+  background: linear-gradient(135deg, var(--azul) 60%, var(--azul-m));
+  color: #fff;
+  border-radius: 12px;
+  padding: 2.5rem 2.8rem;
+  margin-bottom: 2.5rem;
+}
+.cover .pretitulo { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; opacity: .65; margin-bottom: .5rem; }
+.cover h1 { font-size: 1.9rem; font-weight: 700; line-height: 1.2; }
+.cover .subtitulo { font-size: 1rem; opacity: .8; margin-top: .4rem; }
+.cover hr { border: none; border-top: 1px solid rgba(255,255,255,.2); margin: 1.4rem 0; }
+.cover .meta { display: flex; flex-wrap: wrap; gap: 1.5rem; font-size: 13px; opacity: .75; }
+.cover .meta strong { opacity: 1; color: var(--dourado); font-weight: 600; }
+
+/* ── Sections ── */
+section { margin-bottom: 3rem; }
+h2 {
+  font-size: 1.35rem; font-weight: 700; color: var(--azul);
+  border-bottom: 2px solid var(--borda);
+  padding-bottom: .4rem; margin-bottom: 1.3rem; margin-top: .5rem;
+}
+h3 {
+  font-size: 1.05rem; font-weight: 700; color: var(--azul);
+  margin: 1.6rem 0 .7rem;
+}
+h4 {
+  font-size: .95rem; font-weight: 700; color: var(--cinza);
+  margin: 1.2rem 0 .5rem;
+}
+p { margin-bottom: .85rem; }
+p:last-child { margin-bottom: 0; }
+strong { font-weight: 700; }
+em { font-style: italic; }
+code {
+  background: #e8eef5; color: var(--azul); border-radius: 4px;
+  padding: 1px 5px; font-size: 12.5px; font-family: Consolas, monospace;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card); border: 1px solid var(--borda);
+  border-radius: 10px; padding: 1.4rem 1.6rem; margin-bottom: 1.2rem;
+  box-shadow: 0 4px 16px rgba(18,59,114,.06);
+}
+.card-azul  { border-left: 4px solid var(--azul); }
+.card-ouro  { border-left: 4px solid var(--dourado); }
+.card-verde { border-left: 4px solid var(--verde); }
+.card-cinza { border-left: 4px solid var(--cinza); background: #f8fafc; }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; margin-bottom: 1.2rem; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+thead tr { background: var(--azul); color: #fff; }
+thead th { padding: 9px 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+tbody tr:nth-child(even) { background: #f4f7fb; }
+tbody tr:hover { background: #e8eef5; }
+tbody td { padding: 7px 12px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+tbody td:first-child { font-weight: 500; }
+
+/* ── Badges / tags ── */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.badge-forte  { background: #d1fae5; color: #065f46; }
+.badge-aceit  { background: #fef3c7; color: #92400e; }
+.badge-fraca  { background: #fee2e2; color: #991b1b; }
+.badge-azul   { background: #dbeafe; color: #1e40af; }
+.badge-verde  { background: #d1fae5; color: #065f46; }
+
+/* ── Callouts ── */
+.callout {
+  border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0;
+  display: flex; gap: .8rem; align-items: flex-start;
+}
+.callout .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .1rem; }
+.callout-info  { background: #eff6ff; border-left: 4px solid var(--azul-m); }
+.callout-warn  { background: #fffbeb; border-left: 4px solid var(--dourado); }
+.callout-ok    { background: #f0fdf4; border-left: 4px solid var(--verde); }
+
+/* ── Formula ── */
+.formula-box {
+  background: #f1f5f9;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 1.1rem 1.4rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+/* ── Pipeline ── */
+.pipeline {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0;
+  align-items: center;
+}
+.pipe-step {
+  background: var(--azul); color: #fff;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+}
+.pipe-arrow { color: var(--cinza); font-size: 18px; font-weight: 700; }
+
+/* ── Validation table highlight ── */
+.match { color: var(--verde); font-weight: 700; }
+.nomatch { color: var(--vermelho); }
+
+/* ── TOC number ── */
+.sec-num {
+  display: inline-block; background: var(--dourado); color: #fff;
+  border-radius: 50%; width: 24px; height: 24px; line-height: 24px;
+  text-align: center; font-size: 12px; font-weight: 700;
+  margin-right: 8px; flex-shrink: 0;
+}
+
+/* ── Quality legend ── */
+.quality-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: .8rem 0; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- ═══════════════════ NAVEGAÇÃO ═══════════════════ -->
+<nav>
+  <div class="nav-header">
+    <div style="display:flex;align-items:center;">
+      <span class="badge">RR</span>
+      <div>
+        <div class="titulo">PIB Trimestral — RR</div>
+        <div class="subtitulo">Nota Metodológica</div>
+      </div>
+    </div>
+  </div>
+  <ul>
+    <li class="section"><a>Documento</a></li>
+    <li><a href="#contexto">1. Contexto</a></li>
+    <li><a href="#arquitetura">2. Arquitetura</a></li>
+    <li class="section"><a>Métodos</a></li>
+    <li><a href="#laspeyres">3. Índice de Laspeyres</a></li>
+    <li><a href="#denton">4. Denton-Cholette</a></li>
+    <li><a href="#x13">5. X-13ARIMA-SEATS</a></li>
+    <li class="section"><a>Componentes</a></li>
+    <li><a href="#agro">6.1 Agropecuária</a></li>
+    <li class="sub"><a href="#lavouras">Lavouras</a></li>
+    <li class="sub"><a href="#pecuaria">Pecuária</a></li>
+    <li><a href="#aapp">6.2 Adm. Pública</a></li>
+    <li><a href="#industria">6.3 Indústria</a></li>
+    <li class="sub"><a href="#siup">SIUP</a></li>
+    <li class="sub"><a href="#construcao">Construção</a></li>
+    <li class="sub"><a href="#transformacao">Transformação</a></li>
+    <li><a href="#servicos">6.4 Serviços</a></li>
+    <li class="sub"><a href="#comercio">Comércio</a></li>
+    <li class="sub"><a href="#transportes">Transportes</a></li>
+    <li class="sub"><a href="#financeiro">Financeiro</a></li>
+    <li class="sub"><a href="#imobiliario">Imobiliário</a></li>
+    <li class="sub"><a href="#outros">Outros Serviços</a></li>
+    <li class="section"><a>Produtos</a></li>
+    <li><a href="#pesos">7. Otimização de Pesos</a></li>
+    <li><a href="#pib-nominal">8. PIB Nominal</a></li>
+    <li><a href="#pib-real">9. PIB Real</a></li>
+    <li class="section"><a>Avaliação</a></li>
+    <li><a href="#validacao">10. Validação</a></li>
+    <li><a href="#qualidade">11. Qualidade das Proxies</a></li>
+    <li><a href="#limitacoes">12. Limitações</a></li>
+    <li><a href="#referencias">13. Referências</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════ CONTEÚDO ═══════════════════ -->
+<main>
+
+<!-- CAPA -->
+<div class="cover">
+  <div class="pretitulo">SEPLAN/RR · CGEES/DIEAS</div>
+  <h1>Metodologia do PIB Trimestral de Roraima</h1>
+  <div class="subtitulo">Indicador de Atividade Econômica Trimestral — IAET-RR</div>
+  <hr>
+  <div class="meta">
+    <span><strong>Autoria</strong> Yuri Cesar de Lima e Silva</span>
+    <span><strong>Versão</strong> 1.0 · Abril/2026</span>
+    <span><strong>Cobertura</strong> 2020T1 – 2025T4</span>
+    <span><strong>Benchmark</strong> Contas Regionais IBGE 2020–2023</span>
+  </div>
+</div>
+
+<!-- ─── 1. CONTEXTO ─── -->
+<section id="contexto">
+<h2><span class="sec-num">1</span>Contexto e Motivação</h2>
+
+<p>O Brasil não dispõe de estimativa oficial do PIB estadual em frequência trimestral. As <strong>Contas Regionais do IBGE</strong> — referência metodológica deste projeto — são publicadas anualmente e com defasagem média de dois anos (as contas de 2023 foram divulgadas em outubro de 2025). Roraima, estado com estrutura econômica singular e participação desproporcionalmente elevada do setor público, carece portanto de um indicador conjuntural que permita monitorar a evolução da atividade econômica em tempo próximo ao real.</p>
+
+<p>Este projeto preenche essa lacuna construindo o <strong>Indicador de Atividade Econômica Trimestral de Roraima (IAET-RR)</strong>, um índice encadeado de volume que serve como instrumento metodológico para gerar o <strong>PIB real e nominal trimestral de Roraima</strong> a partir de 2020T1.</p>
+
+<div class="callout callout-warn">
+  <span class="icon">⚠</span>
+  <div><strong>Restrições estruturais de Roraima</strong><br>
+  O estado não é coberto pelas pesquisas de conjuntura do IBGE que seriam naturalmente aplicáveis: sem PIM-PF (Pesquisa Industrial Mensal), sem PMC (Pesquisa Mensal de Comércio) e sem PMS (Pesquisa Mensal de Serviços) para Roraima. Também não há IPCA estadual em nenhum período, o que obriga o uso do IPCA nacional como deflator de séries nominais.</div>
+</div>
+
+<p>A solução adotada é construir um <strong>índice encadeado de volume sem unidade monetária</strong> — metodologicamente convergente com o <strong>IBCR (Índice de Atividade Econômica Regional) do Banco Central do Brasil</strong> — utilizando proxies de alta frequência disponíveis para Roraima e ancorando os totais anuais nas Contas Regionais via Denton-Cholette.</p>
+
+<div class="card card-azul">
+  <strong>Produto estatístico</strong>
+  <ul style="margin-top:.5rem;padding-left:1.2rem;">
+    <li>PIB nominal trimestral de Roraima em R$ milhões (VAB + impostos líquidos sobre produtos)</li>
+    <li>PIB real trimestral em R$ milhões de 2020 e índice encadeado de volume (base média 2020 = 100)</li>
+    <li>IAET-RR: índice agregado e por bloco setorial, com e sem ajuste sazonal</li>
+    <li>Dashboard interativo com download CSV/XLSX</li>
+    <li>Cobertura: 2020T1–2025T4 (2020–2023 com benchmark oficial; 2024–2025 preliminar)</li>
+  </ul>
+</div>
+</section>
+
+<!-- ─── 2. ARQUITETURA ─── -->
+<section id="arquitetura">
+<h2><span class="sec-num">2</span>Arquitetura do Sistema</h2>
+
+<p>O pipeline é composto por cinco fases sequenciais, implementadas em R. A estrutura garante reprodutibilidade total: dado o mesmo conjunto de entradas (CSVs de APIs e bases baixadas manualmente), o pipeline reaplica todo o processamento e gera as mesmas saídas.</p>
+
+<div class="pipeline">
+  <span class="pipe-step">Fase 1: Agropecuária</span>
+  <span class="pipe-arrow">→</span>
+  <span class="pipe-step">Fase 2: Adm. Pública</span>
+  <span class="pipe-arrow">→</span>
+  <span class="pipe-step">Fase 3: Indústria</span>
+  <span class="pipe-arrow">→</span>
+  <span class="pipe-step">Fase 4: Serviços</span>
+  <span class="pipe-arrow">→</span>
+  <span class="pipe-step">Fase 5: Agregação, Ajuste Sazonal e Publicação</span>
+</div>
+
+<p>Cada fase produz um índice setorial com base média 2020 = 100, ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette. A Fase 5 agrega os quatro blocos setoriais com pesos Laspeyres de 2020, produz o índice geral, aplica X-13ARIMA-SEATS e deriva o PIB nominal e real.</p>
+
+<div class="card card-cinza">
+  <h4 style="margin-top:0">Scripts do pipeline</h4>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Script</th><th>Fase</th><th>Saída principal</th></tr></thead>
+    <tbody>
+      <tr><td><code>00_dados_referencia.R</code></td><td>Pré-processamento</td><td>Pesos nominais e benchmarks de volume (CR IBGE)</td></tr>
+      <tr><td><code>01_agropecuaria.R</code></td><td>1</td><td><code>indice_agropecuaria.csv</code></td></tr>
+      <tr><td><code>02_adm_publica.R</code></td><td>2</td><td><code>indice_adm_publica.csv</code></td></tr>
+      <tr><td><code>03_industria.R</code></td><td>3</td><td><code>indice_industria.csv</code></td></tr>
+      <tr><td><code>04_servicos.R</code></td><td>4</td><td><code>indice_servicos.csv</code></td></tr>
+      <tr><td><code>05_agregacao.R</code></td><td>5.1</td><td><code>indice_geral_rr.csv</code></td></tr>
+      <tr><td><code>05b_sensibilidade_pesos.R</code></td><td>5.2</td><td>Grid de pesos ótimos (504 combinações)</td></tr>
+      <tr><td><code>05c_ajuste_sazonal.R</code></td><td>5.3</td><td><code>indice_geral_rr_sa.csv</code>, <code>fatores_sazonais.csv</code></td></tr>
+      <tr><td><code>05d_validacao.R</code></td><td>5.4</td><td><code>validacao_relatorio.csv</code></td></tr>
+      <tr><td><code>05e_exportacao.R</code></td><td>5.5</td><td><code>IAET_RR_series.xlsx</code></td></tr>
+      <tr><td><code>05f_vab_nominal.R</code></td><td>5.6</td><td><code>indice_nominal_rr.csv</code></td></tr>
+      <tr><td><code>05g_pib_nominal.R</code></td><td>5.7</td><td><code>pib_nominal_rr.csv</code></td></tr>
+      <tr><td><code>05h_vab_nominal_setorial.R</code></td><td>5.8</td><td><code>vab_nominal_setorial_rr.csv</code></td></tr>
+      <tr><td><code>05i_pib_real.R</code></td><td>5.9</td><td><code>pib_real_rr.csv</code>, <code>pib_real_anual_rr.csv</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+</section>
+
+<!-- ─── 3. LASPEYRES ─── -->
+<section id="laspeyres">
+<h2><span class="sec-num">3</span>Índice de Laspeyres Encadeado por Volume</h2>
+
+<p>O IAET-RR é um <strong>índice encadeado de volume com pesos fixos do ano-base 2020</strong>, seguindo o padrão das Contas Nacionais do IBGE. A formulação é convergente com o método adotado pelo IBCR (Banco Central do Brasil).</p>
+
+<h3>Fórmula base (Laspeyres)</h3>
+<div class="formula-box">
+$$I_t = \frac{\displaystyle\sum_{i} w_i \cdot \tilde{x}_{it}}{\displaystyle\sum_{i} w_i \cdot \tilde{x}_{i,0}} \times 100$$
+</div>
+<p>onde $w_i$ é o peso do setor $i$ (participação no VAB nominal de 2020), $\tilde{x}_{it}$ é o índice de volume do setor $i$ no trimestre $t$, e $\tilde{x}_{i,0}$ é o valor médio de 2020 (= 100 por construção).</p>
+
+<h3>Encadeamento anual</h3>
+<p>Os pesos são calculados a partir do <strong>VAB nominal de 2020</strong> (ano-base do índice) e permanecem fixos até que novas Contas Regionais sejam publicadas. A cada nova publicação anual do IBGE (tipicamente com dois anos de defasagem), os pesos são revisados dinamicamente pelo script <code>00_dados_referencia.R</code>.</p>
+
+<h3>Pesos setoriais efetivos (base 2020)</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Bloco</th><th>Atividades incluídas</th><th>Peso 2020 (%)</th></tr></thead>
+  <tbody>
+    <tr><td>Agropecuária</td><td>Lavouras + pecuária</td><td>6,89%</td></tr>
+    <tr><td>Administração Pública</td><td>AAPP, defesa, saúde e educação públicas, seguridade social</td><td>45,01%</td></tr>
+    <tr><td>Indústria</td><td>SIUP + construção + ind. de transformação + ind. extrativas</td><td>11,63%</td></tr>
+    <tr><td>Serviços Privados</td><td>Comércio, transportes, financeiro, imobiliário, outros serviços</td><td>36,46%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+  <span class="icon">ℹ</span>
+  <div><strong>Distinção entre pesos contábeis e técnicos</strong><br>
+  Os pesos <em>contábeis</em> (participação no VAB de 2020) são usados na agregação entre setores e subsetores, derivados das Contas Regionais. Os pesos <em>técnicos</em> — que definem como múltiplas proxies são combinadas dentro de um mesmo subsetor (ex.: 55% energia + 45% emprego na indústria de transformação) — foram otimizados pelo critério de variância do Denton (ver Seção 7).</div>
+</div>
+</section>
+
+<!-- ─── 4. DENTON ─── -->
+<section id="denton">
+<h2><span class="sec-num">4</span>Desagregação Temporal — Método Denton-Cholette</h2>
+
+<p>O Denton-Cholette é o método central do projeto. Ele garante que a <strong>média dos quatro trimestres de cada ano reproduza exatamente o benchmark anual</strong> das Contas Regionais do IBGE, preservando ao máximo o perfil trimestral indicado pelas proxies.</p>
+
+<h3>Função-objetivo</h3>
+<div class="formula-box">
+$$\min_{p_1,\ldots,p_T} \sum_{t=2}^{T} \left(\frac{p_t}{x_t} - \frac{p_{t-1}}{x_{t-1}}\right)^2 \quad \text{s.a.} \quad \frac{1}{4}\sum_{q=1}^{4} p_{4(j-1)+q} = B_j \quad \forall j$$
+</div>
+<p>onde $p_t$ é o valor trimestral estimado, $x_t$ é o indicador proxy no trimestre $t$, e $B_j$ é o benchmark anual (índice de volume das Contas Regionais) do ano $j$.</p>
+
+<p><strong>Interpretação:</strong> a razão $p_t / x_t$ representa o fator de escala entre a série estimada e a proxy. Quando a proxy captura perfeitamente o perfil intra-anual, esse fator é constante ao longo do tempo (o Denton não precisa corrigir nada). Quanto mais a razão varia, mais a proxy se afasta do comportamento real do setor.</p>
+
+<h3>Implementação em R</h3>
+<div class="formula-box" style="text-align:left;font-family:Consolas,monospace;font-size:13px;">
+<code>tempdisagg::td(benchmark ~ 0 + indicador, conversion = "mean")</code>
+</div>
+
+<div class="callout callout-warn">
+  <span class="icon">⚠</span>
+  <div><strong>Detalhes de implementação críticos</strong><br>
+  (a) <strong>Fórmula sem intercepto obrigatória</strong>: <code>~ 0 + indicador</code>. A forma com intercepto <code>~ indicador</code> gera uma matrix RHS que o algoritmo Denton rejeita.<br>
+  (b) <strong><code>conversion = "mean"</code> obrigatório para índices</strong>: a média dos quatro trimestres deve igualar o benchmark anual, não a soma. A opção <code>"sum"</code> seria correta para variáveis de fluxo (e.g., VAB nominal em R$ milhões).</div>
+</div>
+
+<h3>Decisão sobre o benchmark: volume, não nominal</h3>
+<div class="callout callout-ok">
+  <span class="icon">✔</span>
+  <div><strong>Reforma metodológica de 13/04/2026</strong><br>
+  O benchmark anual do Denton-Cholette passou a utilizar o <strong>índice encadeado de volume</strong> das Contas Regionais (arquivo <code>Especiais_2002_2023_xls.zip</code>, aba <code>tab05.xls</code>) em vez do VAB nominal (Tabela 5 / <code>Conta_da_Producao</code>).<br><br>
+  <strong>Motivação:</strong> as proxies trimestrais são indicadores de volume (emprego, energia, passageiros). Ancorá-las ao VAB nominal introduzia inflação setorial no índice real, gerando crescimentos artificialmente elevados (+20% em 2023 com benchmark nominal vs. +4% com benchmark de volume). Com a ancoragem ao volume, as taxas anuais refletem crescimento real e são diretamente comparáveis ao IBCR do Banco Central.</div>
+</div>
+
+<h3>Tratamento de anos sem benchmark</h3>
+<p>Para os anos 2024 e 2025 (sem Contas Regionais publicadas), o índice agregado usa <strong>extrapolação por tendência geométrica</strong> com base no bieênio 2022–2023. Os índices setoriais de AAPP e Agropecuária usam taxas anuais estimadas (AAPP: +20%/ano; Agropecuária: +12%/ano). Esses valores serão substituídos quando as CR 2024 forem divulgadas pelo IBGE (previsão: outubro de 2026).</p>
+</section>
+
+<!-- ─── 5. X-13 ─── -->
+<section id="x13">
+<h2><span class="sec-num">5</span>Ajuste Sazonal — X-13ARIMA-SEATS</h2>
+
+<p>O ajuste sazonal é aplicado ao índice geral e aos quatro blocos setoriais via <strong>X-13ARIMA-SEATS</strong>, implementado pelo pacote R <code>seasonal</code> (interface para o programa X-13 do U.S. Census Bureau). O projeto publica tanto a série <em>sem ajuste sazonal (NSA)</em> quanto a série <em>dessazonalizada (SA)</em>.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Série</th><th>Uso recomendado</th></tr></thead>
+  <tbody>
+    <tr><td>Sem ajuste sazonal (NSA)</td><td>Comparações interanuais (taxa em 4 trimestres), comportamento estrutural</td></tr>
+    <tr><td>Dessazonalizada (SA)</td><td>Taxa de crescimento trimestral, leitura conjuntural do momento corrente</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>As saídas do ajuste sazonal estão em <code>data/output/indice_geral_rr_sa.csv</code> (índices SA por bloco) e <code>data/output/fatores_sazonais.csv</code> (fatores sazonais aditivos por componente e trimestre).</p>
+</section>
+
+<!-- ─── 6. COMPONENTES ─── -->
+<section id="agro">
+<h2><span class="sec-num">6</span>Componentes Setoriais</h2>
+<h3 id="lavouras">6.1 Agropecuária</h3>
+
+<p>Peso no VAB de 2020: <strong>6,89%</strong>. O índice agropecuário é composto por dois subíndices — lavouras (93% do VBP médio 2018–2022) e pecuária (7%) — ponderados por VBP médio calculado via PAM/PPM.</p>
+
+<h4>Lavouras — hierarquia de fontes e desagregação intra-anual</h4>
+
+<p>A produção anual de lavouras é obtida em dois níveis, conforme a disponibilidade de dados:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Situação</th><th>Fonte</th><th>SIDRA</th><th>Critério</th></tr></thead>
+  <tbody>
+    <tr><td>Ano com PAM disponível</td><td>Produção Agrícola Municipal (PAM)</td><td>Tab. 5457 (c782)</td><td>Dado consolidado definitivo; RR coberto até 2024</td></tr>
+    <tr><td>Ano corrente sem PAM</td><td>Levantamento Sistemático (LSPA — dezembro)</td><td>Tab. 6588 (c48)</td><td>Estimativa provisória; substituída automaticamente quando PAM for publicada</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+  <span class="icon">ℹ</span>
+  <div><strong>A LSPA não é um fluxo mensal</strong> — ela publica revisões mensais da <em>projeção anual</em> de produção. A desagregação intra-anual é sempre derivada dos coeficientes de colheita, tanto para PAM quanto para LSPA.</div>
+</div>
+
+<p><strong>Método de desagregação intra-anual (para PAM e LSPA):</strong></p>
+<ol style="padding-left:1.4rem;margin:.6rem 0;">
+  <li>Tomar a produção anual por cultura (toneladas ou unidades).</li>
+  <li>Aplicar <strong>coeficientes mensais de colheita</strong> como pesos de distribuição ao longo dos 12 meses, gerando produção mensal estimada por cultura.</li>
+  <li>Agregar meses em trimestres.</li>
+  <li>Calcular índice de Laspeyres com pesos VBP médio 2018–2022 (Tab. 5457, variável <em>valor da produção</em>).</li>
+  <li>Aplicar Denton-Cholette contra o VAB agropecuário anual das Contas Regionais.</li>
+</ol>
+
+<h4>Calendários de colheita disponíveis</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Versão</th><th>Fonte</th><th>Arquivo</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A — SEADI-RR</strong> (ativo)</td><td>Calendário Agrícola oficial da Secretaria de Agricultura de RR (produção)</td><td><code>calendario_colheita_seadi_rr.csv</code></td><td><span class="badge badge-verde">Produção</span></td></tr>
+    <tr><td>B — Censo 2006 (área)</td><td>Censo Agropecuário 2006, época de colheita, ponderação por área colhida</td><td><code>calendario_colheita_censo2006_area_rr.csv</code></td><td><span class="badge badge-azul">Sensibilidade</span></td></tr>
+    <tr><td>C — Censo 2006 (estab.)</td><td>Idem, ponderação por número de estabelecimentos</td><td><code>calendario_colheita_censo2006_estabelecimentos_rr.csv</code></td><td><span class="badge badge-azul">Sensibilidade</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>O Censo Agropecuário 2017 não publicou tabela equivalente de época de colheita. Para culturas sem mensalização no Censo 2006 (banana, cacau, laranja, cana, tomate), as versões B/C usam distribuição uniforme de 1/12.</p>
+
+<h4>Culturas cobertas e cobertura de VBP</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Cultura</th><th>Cobertura do VBP total (RR)</th></tr></thead>
+  <tbody>
+    <tr><td>Soja</td><td>~48%</td></tr>
+    <tr><td>Milho</td><td>~11%</td></tr>
+    <tr><td>Arroz</td><td>~11%</td></tr>
+    <tr><td>Banana</td><td>~10%</td></tr>
+    <tr><td>Mandioca</td><td>~5%</td></tr>
+    <tr><td>Laranja</td><td>~2%</td></tr>
+    <tr><td>Feijão</td><td>~2%</td></tr>
+    <tr><td>Cana-de-açúcar</td><td>~1%</td></tr>
+    <tr><td>Tomate + Cacau</td><td>&lt;1%</td></tr>
+    <tr><td><strong>Total coberto</strong></td><td><strong>~90,4% do VBP de lavouras</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>Notas SIDRA:</strong> (a) Tab. 5457 (c782) cobre lavouras temporárias e permanentes numa única consulta. (b) Feijão (3 safras) e milho (2 safras) na LSPA retornam linhas separadas por safra — o script agrega por ano antes de usar.</p>
+
+<h4 id="pecuaria">Pecuária</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Proxy</th><th>Fonte/SIDRA</th><th>Frequência</th><th>Status para RR</th></tr></thead>
+  <tbody>
+    <tr><td>Abate de bovinos, suínos e aves</td><td>IBGE Abate, Tab. 1092</td><td>Trimestral</td><td><span class="badge badge-verde">Disponível</span> (290 obs.)</td></tr>
+    <tr><td>Produção de ovos de galinha</td><td>IBGE Ovos, Tab. 915</td><td>Trimestral</td><td><span class="badge badge-verde">Disponível</span> (57 obs.)</td></tr>
+    <tr><td>Produção de leite</td><td>IBGE Leite, Tab. 74</td><td>Trimestral</td><td><span class="badge badge-forte" style="background:#fee2e2;color:#991b1b">Indisponível para RR — excluída</span></td></tr>
+  </tbody>
+</table>
+</div>
+<p>Pesos: lavouras <strong>93%</strong>, pecuária <strong>7%</strong> (VBP médio 2018–2022; leite excluído sem distorção significativa pois seu peso seria próximo de zero).</p>
+</section>
+
+<!-- AAPP -->
+<section id="aapp">
+<h3>6.2 Administração Pública (AAPP)</h3>
+<p>Peso no VAB de 2020: <strong>45,01%</strong> — <em>o componente mais importante do IAET-RR</em>. Inclui administração, defesa, educação e saúde públicas e seguridade social.</p>
+
+<h4>Justificativa metodológica: folha de pessoal como proxy primária</h4>
+<p>O IBGE mensura o produto de Administração Pública nas Contas Regionais pela <strong>abordagem de custo</strong> (<em>non-market services</em>): VAB ≈ remuneração dos empregados ativos + consumo intermediário + consumo de capital fixo. O componente dominante é a folha de pessoal ativo. A folha é, portanto, <strong>a mesma variável que o IBGE usa como insumo de cálculo</strong> — não um proxy, mas o próprio dado de base.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Esfera</th><th>Fonte</th><th>Endpoint / Arquivo</th><th>Cobertura</th></tr></thead>
+  <tbody>
+    <tr><td>Federal (SIAPE)</td><td>Portal da Transparência — arquivos mensais .zip</td><td>Download manual, processamento local; cache: <code>data/raw/siape_rr_mensal.csv</code></td><td>2020–2026T1</td></tr>
+    <tr><td>Estadual</td><td>SICONFI/STN — RREO Anexo 06, <code>id_ente=14</code></td><td><code>apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo</code></td><td>2020–2026T1 (37 bimestres)</td></tr>
+    <tr><td>Municipal (15 municípios)</td><td>SICONFI/STN — RREO Anexo 06</td><td>Mesmo endpoint, <code>id_ente</code> = código IBGE de cada município</td><td>30–37 bimestres por município</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Escopo: elemento 31 (pessoal ativo)</h4>
+<p>O RREO Anexo 06 registra despesas com pessoal e encargos sociais. O alinhamento metodológico com o IBGE exige usar apenas o <strong>elemento de despesa 31 (pessoal ativo)</strong>. Aposentados e pensionistas são transferências, não remuneração de fator de produção, e portanto não integram o VAB de AAPP nas Contas Nacionais.</p>
+<p>Conta no SICONFI: <code>RREO6PessoalEEncargosSociais</code>, coluna <code>DESPESAS LIQUIDADAS</code>.</p>
+
+<h4>Conversão bimestral → trimestral</h4>
+<p>O RREO é publicado em bimestres acumulados (bimestre 1 = jan+fev acumulado desde jan, etc.). O procedimento de conversão é:</p>
+<ol style="padding-left:1.4rem;margin:.5rem 0;">
+  <li>Diferença entre bimestres consecutivos → valor incremental por bimestre (2 meses).</li>
+  <li>Distribuição uniforme entre os 2 meses do bimestre → valor mensal estimado.</li>
+  <li>Agregação por trimestre (3 meses) → valor trimestral nominal.</li>
+</ol>
+
+<h4>Deflação e construção do índice de volume</h4>
+<div class="formula-box">
+$$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t / \text{IPCA}_t}{\text{Folha nominal}_{2020} / \text{IPCA}_{2020}} \times 100$$
+</div>
+<p>IPCA nacional: SIDRA Tab. 1737, variável 2266 (variação mensal). O script constrói o índice encadeado de preços com base jan/2020 = 1.</p>
+
+<div class="callout callout-ok">
+  <span class="icon">✔</span>
+  <div><strong>Validação perfeita contra Contas Regionais (2021–2023)</strong><br>
+  2021: +9,7% (projeto) = +9,7% (CR IBGE) ✓ &nbsp;&nbsp;
+  2022: +25,6% = +25,6% ✓ &nbsp;&nbsp;
+  2023: +18,0% = +18,0% ✓</div>
+</div>
+</section>
+
+<!-- INDUSTRIA -->
+<section id="industria">
+<h3>6.3 Indústria</h3>
+<p>Peso no VAB de 2020: <strong>11,63%</strong>. O bloco industrial é composto por três subsetores com pesos internos derivados do VAB nominal de 2020 das Contas Regionais.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Subsetor</th><th>VAB 2020 (R$ mi)</th><th>Peso interno</th><th>Peso no total</th></tr></thead>
+  <tbody>
+    <tr><td>SIUP (energia, gás, água, esgoto)</td><td>R$ 799 mi (2020)</td><td>47,4%</td><td>5,51%</td></tr>
+    <tr><td>Construção civil</td><td>—</td><td>42,8%</td><td>4,98%</td></tr>
+    <tr><td>Indústria de Transformação</td><td>—</td><td>9,9%</td><td>1,15%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4 id="siup">SIUP — Eletricidade, Gás, Água, Esgoto e Resíduos</h4>
+<p><span class="badge badge-forte">Proxy forte</span> Proxy: soma mensal do consumo de energia elétrica (kWh) de todas as classes de consumo em Roraima.</p>
+<p><strong>Justificativa:</strong> O VAB do SIUP nas Contas Nacionais mede o valor adicionado pelos distribuidores, proporcional ao volume distribuído. O total de kWh é o proxy de volume natural.</p>
+<p><strong>Fonte:</strong> ANEEL SAMP (Sistema de Acompanhamento do Mercado de Energia Elétrica), API CKAN do portal de dados abertos da ANEEL.</p>
+
+<div class="card card-cinza">
+  <strong>Detalhes técnicos — API ANEEL SAMP</strong>
+  <ul style="margin-top:.5rem;padding-left:1.2rem;font-size:13px;">
+    <li>Dataset ID: <code>3e153db4-a503-4093-88be-75d31b002dcf</code></li>
+    <li>Endpoint: <code>dadosabertos.aneel.gov.br/api/3/action/datastore_search</code></li>
+    <li>Filtros: <code>SigAgenteDistribuidora = "BOA VISTA"</code>, <code>NomTipoMercado = "Sistema Isolado - Regular"</code>, <code>DscDetalheMercado = "Energia TE (kWh)"</code></li>
+    <li>Roraima opera em <strong>sistema isolado</strong> (separado do SIN); distribuidor: <strong>Roraima Energia S.A.</strong></li>
+    <li>Retorna ~800 registros/ano para RR (vs. ~200 MB do CSV nacional completo) — API com filtros evita download pesado</li>
+    <li>Reaproveitamento: classes "Comercial" → proxy de Comércio; "Industrial" → proxy de Ind. de Transformação</li>
+  </ul>
+</div>
+
+<h4 id="construcao">Construção Civil</h4>
+<p><span class="badge badge-aceit">Proxy aceitável</span> Proxy principal: estoque acumulado de emprego formal (CAGED, seção CNAE F).</p>
+
+<div class="card card-cinza">
+  <strong>CAGED — processamento via FTP nacional</strong>
+  <p style="font-size:13px;margin-top:.5rem;">O Novo CAGED (2020+) não está disponível em SIDRA nem via API com filtro por UF. O script baixa o arquivo nacional <code>CAGEDMOV{yearmonth}.7z</code> do FTP MTE (<code>ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/</code>), extrai com 7-Zip local, filtra <code>uf == 14</code> (Roraima) com <code>data.table::fread</code>, agrega por seção CNAE e apaga os arquivos grandes. Volume: ~2,5 GB de download na primeira execução (72 meses × ~35 MB); idempotente.</p>
+  <p style="font-size:13px;"><strong>Estoque acumulado:</strong> o CAGED publica fluxo mensal (admissões − desligamentos = saldo). Para usar como indicador Denton (que requer série de nível), acumula-se o saldo a partir de base 1000 (Jan/2020). O Denton calibra o nível absoluto; apenas o perfil temporal importa.</p>
+</div>
+
+<p><strong>SNIC cimento (condicional):</strong> o snic.org.br não responde a requisições automáticas. Se o arquivo <code>data/raw/snic_cimento_rr.csv</code> estiver presente (download manual), Construção usa CAGED F 60% + SNIC 40%. Caso contrário, usa apenas CAGED F.</p>
+
+<h4 id="transformacao">Indústria de Transformação</h4>
+<p><span class="badge badge-aceit">Proxy aceitável</span> Sem PIM-PF para Roraima (o IBGE publica apenas para estados com ≥ 0,5% da produção industrial nacional). Proxy composta com pesos otimizados:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Componente</th><th>Fonte</th><th>Tipo</th><th>Peso ótimo</th></tr></thead>
+  <tbody>
+    <tr><td>Energia industrial (kWh)</td><td>ANEEL SAMP — classe "Industrial"</td><td>Volume físico</td><td><strong>55%</strong></td></tr>
+    <tr><td>Emprego CAGED C</td><td>FTP MTE — seção C</td><td>Insumo (estoque)</td><td><strong>45%</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<p>Os pesos foram otimizados pelo critério de variância do Denton (ver Seção 7): os pesos ad hoc originais (70%/30%) foram revisados para 55%/45%, com melhoria de 59,9% na função-objetivo.</p>
+</section>
+
+<!-- SERVICOS -->
+<section id="servicos">
+<h3>6.4 Serviços Privados</h3>
+<p>Peso no VAB de 2020: <strong>36,46%</strong>. O bloco de serviços agrega seis subsetores com pesos derivados dinamicamente do VAB nominal de 2020.</p>
+
+<h4 id="comercio">Comércio e Reparação de Veículos (12,25% do VAB 2023)</h4>
+<p><span class="badge badge-aceit">Proxy aceitável</span> Proxy composta com pesos otimizados:</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Componente</th><th>Fonte</th><th>Tipo</th><th>Peso adotado</th></tr></thead>
+  <tbody>
+    <tr><td>Energia comercial (kWh)</td><td>ANEEL SAMP — classe "Comercial"</td><td>Volume físico</td><td><strong>60%</strong></td></tr>
+    <tr><td>ICMS comércio (deflacionado)</td><td>SEFAZ-RR — por atividade econômica</td><td>Valor nominal deflacionado</td><td><strong>20%</strong></td></tr>
+    <tr><td>Emprego CAGED G</td><td>FTP MTE — seção G</td><td>Insumo (estoque)</td><td><strong>20%</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>Nota metodológica sobre ICMS:</strong> séries baseadas em ICMS requerem monitoramento contínuo de alterações de alíquota, benefícios fiscais e mudanças de regime tributário (Decretos SEFAZ-RR / Diário Oficial de RR). Cada quebra estrutural identificada deve receber variável dummy no script para evitar saltos artificiais na série.</p>
+
+<h4 id="transportes">Transportes, Armazenagem e Correio (1,92% do VAB 2023)</h4>
+<p>Proxy composta com pesos otimizados (pesos ad hoc 40%/30%/30% revisados para 55%/0%/45%):
+</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Componente</th><th>Fonte</th><th>Tipo</th><th>Peso adotado</th></tr></thead>
+  <tbody>
+    <tr><td>Passageiros ANAC (SBBV)</td><td>Microdados ANAC, aeroporto de Boa Vista</td><td>Volume físico</td><td><strong>55%</strong></td></tr>
+    <tr><td>Carga aérea ANAC (SBBV)</td><td>Microdados ANAC</td><td>Volume físico</td><td><strong>0%</strong> (eliminada)</td></tr>
+    <tr><td>Vendas de diesel ANP (RR)</td><td>ANP — dados abertos por UF</td><td>Volume físico</td><td><strong>45%</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>Por que carga aérea foi eliminada?</strong> A movimentação de carga no SBBV é dominada por eventos esporádicos (operações humanitárias, fretamentos) que não refletem o nível regular de atividade do setor. O critério de variância do Denton confirmou quantitativamente a eliminação. O diesel captura transporte rodoviário; passageiros captam o segmento aéreo (fortemente influenciado por servidores federais, categoria dominante em RR).</p>
+
+<h4 id="financeiro">Atividades Financeiras (2,78% do VAB 2023)</h4>
+<p>Proxy composta. Pesos ad hoc originais (70% concessões / 30% depósitos) foram <em>invertidos</em> pelo critério Denton, com melhoria de 90,5%:</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Componente</th><th>Fonte</th><th>Tipo</th><th>Peso adotado</th></tr></thead>
+  <tbody>
+    <tr><td>Concessões de crédito (volume deflacionado)</td><td>BCB — Nota de Crédito por UF (SCR)</td><td>Fluxo deflacionado</td><td><strong>40%</strong></td></tr>
+    <tr><td>Depósitos bancários (volume deflacionado)</td><td>BCB Estban — verbete 160</td><td>Estoque deflacionado</td><td><strong>60%</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<p>Ambas as séries são deflacionadas pelo IPCA nacional. Concessões de crédito recebem suavização por média móvel de 3 meses antes do cálculo do índice (alta volatilidade mensal). Os dados do BCB Estban e SCR foram obtidos por download manual de arquivos ZIP.</p>
+
+<h4 id="imobiliario">Atividades Imobiliárias (7,68% do VAB 2023)</h4>
+<p><span class="badge badge-fraca">Proxy fraca mas necessária</span> Em grande parte representa <strong>aluguel imputado de imóveis próprios</strong> nas Contas Nacionais — variável sem proxy observable de alta frequência. Tratada como tendência linear interpolada entre os benchmarks anuais das Contas Regionais, com extrapolação de tendência para 2024–2025.</p>
+
+<h4 id="outros">Outros Serviços e Demais Subsetores</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Subsetor</th><th>Proxy</th><th>Fonte</th></tr></thead>
+  <tbody>
+    <tr><td>Outros serviços (7,63%)</td><td>CAGED I + M+N + P+Q, pesos por estoque 2020</td><td>FTP MTE</td></tr>
+    <tr><td>Informação e comunicação (1,01%)</td><td>Emprego CAGED J (TI, telecom, mídia)</td><td>FTP MTE</td></tr>
+    <tr><td>Indústrias extrativas (0,05%)</td><td>Interpolação linear CR (peso negligenciável)</td><td>IBGE CR</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ─── 7. PESOS ─── -->
+<section id="pesos">
+<h2><span class="sec-num">7</span>Otimização de Pesos — Critério de Variância do Denton</h2>
+
+<p>Quatro setores do IAET-RR usam proxies compostas: Indústria de Transformação, Comércio, Transportes e Financeiro. Até abril de 2026, os pesos dessas composições eram definidos <em>ad hoc</em>, com base em julgamento qualitativo. O script <code>R/05b_sensibilidade_pesos.R</code> substituiu esse julgamento por um <strong>critério quantitativo objetivo, interno à metodologia e consistente com o Denton-Cholette</strong>.</p>
+
+<h3>Por que não usar regressão?</h3>
+<p>A abordagem de mínimos quadrados é inviável: com apenas 4 observações anuais de benchmark (2020–2023) e 2–3 regressores por setor, qualquer combinação de pesos produz $R^2 = 1$. O OLS sobreajusta trivialmente sem discriminar combinações.</p>
+
+<h3>Critério adotado</h3>
+<p>Os <strong>pesos ótimos são aqueles que minimizam a função-objetivo do Denton</strong> calculada sobre o período de benchmark 2020–2023 (16 trimestres):</p>
+
+<div class="formula-box">
+$$\underset{w_1,\ldots,w_k}{\arg\min}\; \sum_{t=2}^{T} \left(\frac{p_t(w)}{x_t(w)} - \frac{p_{t-1}(w)}{x_{t-1}(w)}\right)^2 \quad \text{com} \quad \sum_i w_i = 1,\; w_i \geq 0$$
+</div>
+
+<p>onde $x_t(w) = \sum_i w_i \cdot \tilde{c}_{it}$ é a proxy composta com pesos $w$ e $p_t(w)$ é a série Denton resultante.</p>
+
+<h3>Procedimento de busca em grade</h3>
+<p>Passo de 5 pontos percentuais: 21 combinações para 2 componentes, 231 para 3 componentes. Total: <strong>504 combinações avaliadas</strong> nos 4 setores. Para cada combinação: constrói proxy → aplica Denton → calcula objetivo.</p>
+
+<h3>Resultados</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Setor</th><th>Pesos anteriores (ad hoc)</th><th>Pesos ótimos</th><th>Pesos adotados</th><th>Melhoria</th><th>Decisão</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Ind. Transformação</td>
+      <td>Energia 70% / CAGED C 30%</td>
+      <td>Energia 55% / CAGED C 45%</td>
+      <td><strong>55% / 45%</strong></td>
+      <td><strong>59,9%</strong></td>
+      <td>✅ Aplicado</td>
+    </tr>
+    <tr>
+      <td>Comércio</td>
+      <td>Energia 40% / ICMS 40% / CAGED G 20%</td>
+      <td>Energia 100% / ICMS 0% / CAGED G 0%</td>
+      <td><strong>60% / 20% / 20%</strong></td>
+      <td>93,6% (ótimo)</td>
+      <td>⚠️ Conservador (ICMS histórico curto)</td>
+    </tr>
+    <tr>
+      <td>Transportes</td>
+      <td>Pax 40% / Carga 30% / Diesel 30%</td>
+      <td>Pax 55% / Carga 0% / Diesel 45%</td>
+      <td><strong>55% / 0% / 45%</strong></td>
+      <td><strong>41,7%</strong></td>
+      <td>✅ Aplicado</td>
+    </tr>
+    <tr>
+      <td>Financeiro</td>
+      <td>Concessões 70% / Depósitos 30%</td>
+      <td>Concessões 40% / Depósitos 60%</td>
+      <td><strong>40% / 60%</strong></td>
+      <td><strong>90,5%</strong></td>
+      <td>✅ Aplicado</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-warn">
+  <span class="icon">⚠</span>
+  <div><strong>Limitação do critério</strong><br>
+  O critério de variância do Denton é <em>interno à metodologia</em> — mede a consistência da proxy com o benchmark anual, não sua relação causal com o fenômeno econômico. Uma proxy "lisa" pode ser menos informativa que uma mais volátil. O critério complementa, não substitui, o julgamento econômico.<br><br>
+  <strong>Agenda de revisão:</strong> re-rodar <code>05b_sensibilidade_pesos.R</code> quando as CR 2024 forem publicadas (previsão: outubro de 2026), expandindo o período de benchmark de 4 para 5 anos.</div>
+</div>
+</section>
+
+<!-- ─── 8. PIB NOMINAL ─── -->
+<section id="pib-nominal">
+<h2><span class="sec-num">8</span>PIB Nominal Trimestral</h2>
+
+<p>O PIB nominal trimestral de Roraima é construído em duas etapas: (1) geração do VAB nominal trimestral por bloco; (2) adição dos impostos líquidos sobre produtos (ILP).</p>
+
+<h3>VAB Nominal Trimestral — <code>05f_vab_nominal.R</code></h3>
+<div class="formula-box">
+$$\text{Índice nominal}_t = \text{Índice real}_t \times \frac{\text{Deflator implícito}_t}{100}$$
+</div>
+
+<p>O deflator implícito anual do total é extraído diretamente das Contas Regionais do IBGE como:</p>
+
+<div class="formula-box">
+$$\text{Deflator anual} = \frac{\text{Índice nominal total CR}}{\text{Índice real total CR}}$$
+</div>
+
+<p>e desagregado para frequência trimestral via Denton-Cholette (<code>conversion = "sum"</code>), usando o IPCA como proxy trimestral do deflator.</p>
+
+<div class="callout callout-ok">
+  <span class="icon">✔</span>
+  <div><strong>Fechamento anual exato com as Contas Regionais em 2020–2023</strong><br>
+  Após reforma do script (uso do deflator implícito direto do VAB total em vez de média ponderada de deflatores setoriais), o VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R$ mi em todos os anos com benchmark.</div>
+</div>
+
+<h3>VAB Nominal Setorial — <code>05h_vab_nominal_setorial.R</code></h3>
+<p>Para os 4 blocos analíticos (Agropecuária, AAPP, Indústria, Serviços), o VAB nominal trimestral é gerado para 2020–2023 pelo procedimento:</p>
+<ol style="padding-left:1.4rem;margin:.5rem 0;">
+  <li>Benchmark nominal anual por bloco (soma das atividades correspondentes nas CR).</li>
+  <li>Índice anual de volume por bloco (agregado com pesos de 2020 dentro do bloco).</li>
+  <li>Deflator anual implícito por bloco: índice nominal / índice real.</li>
+  <li>Denton-Cholette (<code>conversion = "mean"</code>) para o deflator trimestral, usando IPCA como proxy.</li>
+  <li>Denton-Cholette (<code>conversion = "sum"</code>) para distribuir o VAB nominal anual em R$ milhões a partir do indicador nominal trimestral.</li>
+</ol>
+
+<h3>Impostos Líquidos sobre Produtos (ILP) — <code>05g_pib_nominal.R</code></h3>
+<p>O ILP é estimado a partir do <strong>ICMS estadual mensal</strong> (SEFAZ-RR), deflacionado e escalado por um fator de benchmark anual derivado das Contas Regionais:</p>
+
+<div class="formula-box">
+$$\text{ILP trimestral} = \text{ICMS deflacionado}_t \times k_j$$
+</div>
+
+<p>onde $k_j$ é o fator de escala anual que garante que $\sum_q \text{ILP}_{j,q}$ coincida com o ILP anual das Contas Regionais no ano $j$. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.</p>
+
+<div class="formula-box">
+$$\text{PIB nominal}_t = \text{VAB nominal}_t + \text{ILP}_t$$
+</div>
+</section>
+
+<!-- ─── 9. PIB REAL ─── -->
+<section id="pib-real">
+<h2><span class="sec-num">9</span>PIB Real Trimestral</h2>
+
+<p>O PIB real trimestral de Roraima é gerado pelo script <code>05i_pib_real.R</code> em R$ milhões de 2020, com ancoragem ao benchmark anual oficial do PIB real das Contas Regionais em 2020–2023.</p>
+
+<div class="formula-box">
+$$\text{PIB real}_t = \frac{\text{Índice PIB real}_t}{100} \times \text{PIB real médio anual 2020}$$
+</div>
+
+<p>O índice do PIB real é construído como o IAET-RR, mas com benchmark das <strong>taxas de crescimento real oficiais do PIB</strong> das Contas Regionais (não o VAB total das atividades — o PIB inclui os impostos sobre produtos). A ancoragem anual via Denton-Cholette garante que a taxa de crescimento real anual do projeto coincida exatamente com a taxa oficial do IBGE nos anos com benchmark.</p>
+
+<h3>PIB Real Anual — <code>pib_real_anual_rr.csv</code></h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ano</th><th>PIB Real RR (%)</th><th>Tipo</th></tr></thead>
+  <tbody>
+    <tr><td>2021</td><td class="match">+8,4%</td><td>Ancorado (CR IBGE)</td></tr>
+    <tr><td>2022</td><td class="match">+11,3%</td><td>Ancorado (CR IBGE)</td></tr>
+    <tr><td>2023</td><td class="match">+4,2%</td><td>Ancorado (CR IBGE)</td></tr>
+    <tr><td>2024</td><td>+6,9%</td><td>Preliminar (sem benchmark)</td></tr>
+    <tr><td>2025</td><td>+7,2%</td><td>Preliminar (sem benchmark)</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ─── 10. VALIDAÇÃO ─── -->
+<section id="validacao">
+<h2><span class="sec-num">10</span>Resultados de Validação</h2>
+
+<h3>VAB nominal total vs. Contas Regionais</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ano</th><th>Projeto (R$ mi)</th><th>CR IBGE (R$ mi)</th><th>Diferença</th></tr></thead>
+  <tbody>
+    <tr><td>2020</td><td>14.524,24</td><td>14.524,24</td><td class="match">−0,000001 ✓</td></tr>
+    <tr><td>2021</td><td>16.309,70</td><td>16.309,70</td><td class="match">0,000000 ✓</td></tr>
+    <tr><td>2022</td><td>19.117,27</td><td>19.117,27</td><td class="match">0,000000 ✓</td></tr>
+    <tr><td>2023</td><td>23.003,07</td><td>23.003,07</td><td class="match">+0,000001 ✓</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>VAB real total — taxa de crescimento</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ano</th><th>Projeto (%)</th><th>CR IBGE (%)</th><th>Diferença (p.p.)</th></tr></thead>
+  <tbody>
+    <tr><td>2021</td><td>8,19%</td><td>8,19%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2022</td><td>10,86%</td><td>10,72%</td><td>+0,15</td></tr>
+    <tr><td>2023</td><td>4,34%</td><td>3,92%</td><td>+0,42</td></tr>
+  </tbody>
+</table>
+</div>
+<p>A diferença residual em 2022–2023 é compatível com a operação em blocos trimestrais e ancoragem anual. O índice geral é ancorado ao VAB total de volume das CR, mas opera como uma média ponderada de índices setoriais que foram individualmente ancorados ao seus benchmarks setoriais.</p>
+
+<h3>PIB real — taxa de crescimento anual</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ano</th><th>Projeto (%)</th><th>CR IBGE (%)</th><th>Diferença (p.p.)</th></tr></thead>
+  <tbody>
+    <tr><td>2021</td><td class="match">8,40%</td><td class="match">8,40%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2022</td><td class="match">11,30%</td><td class="match">11,30%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2023</td><td class="match">4,20%</td><td class="match">4,20%</td><td class="match">0,00 ✓</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Validação setorial (variação real anual — 2021–2023)</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Bloco</th><th>Ano</th><th>Projeto (%)</th><th>CR IBGE (%)</th><th>Dif. (p.p.)</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="3"><strong>Agropecuária</strong></td><td>2021</td><td class="match">24,81%</td><td class="match">24,81%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2022</td><td class="match">28,03%</td><td class="match">28,03%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2023</td><td class="match">17,49%</td><td class="match">17,49%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td rowspan="3"><strong>AAPP</strong></td><td>2021</td><td class="match">3,19%</td><td class="match">3,19%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2022</td><td class="match">4,12%</td><td class="match">4,12%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2023</td><td class="match">2,37%</td><td class="match">2,37%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td rowspan="3"><strong>Indústria</strong></td><td>2021</td><td class="match">10,62%</td><td class="match">10,62%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2022</td><td class="match">20,59%</td><td class="match">20,59%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td>2023</td><td class="match">9,43%</td><td class="match">9,43%</td><td class="match">0,00 ✓</td></tr>
+    <tr><td rowspan="3"><strong>Serviços</strong></td><td>2021</td><td>10,54%</td><td>10,45%</td><td>+0,08</td></tr>
+    <tr><td>2022</td><td>12,25%</td><td>12,26%</td><td>−0,01</td></tr>
+    <tr><td>2023</td><td>2,81%</td><td>2,61%</td><td>+0,21</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ─── 11. QUALIDADE ─── -->
+<section id="qualidade">
+<h2><span class="sec-num">11</span>Qualidade das Proxies e Cobertura</h2>
+
+<div class="quality-legend">
+  <span class="badge badge-forte">Forte</span> Mede diretamente volume físico ou é a mesma variável usada pelo IBGE
+  <span class="badge badge-aceit">Aceitável</span> Correlacionada com a atividade, mas contaminada por preço, estoque ou informalidade
+  <span class="badge badge-fraca">Fraca mas necessária</span> Melhor opção disponível, com limitações documentadas
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Atividade</th><th>% VAB 2023</th><th>Proxy principal</th><th>Qualidade</th></tr></thead>
+  <tbody>
+    <tr><td>Adm. Pública</td><td>46,21%</td><td>Folha de pessoal ativo (SIAPE + estadual + municipal)</td><td><span class="badge badge-forte">Forte</span></td></tr>
+    <tr><td>Comércio</td><td>12,25%</td><td>Energia comercial ANEEL (60%) + ICMS comércio (20%) + CAGED G (20%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
+    <tr><td>Agropecuária</td><td>8,87%</td><td>PAM/LSPA + coef. de colheita + abate + ovos</td><td><span class="badge badge-forte">Forte</span></td></tr>
+    <tr><td>Atividades imobiliárias</td><td>7,68%</td><td>Interpolação linear CR IBGE</td><td><span class="badge badge-fraca">Fraca mas necessária</span></td></tr>
+    <tr><td>Outros serviços</td><td>7,63%</td><td>CAGED I + M+N + P+Q</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
+    <tr><td>SIUP</td><td>5,40%</td><td>Energia elétrica total distribuída (kWh), ANEEL SAMP</td><td><span class="badge badge-forte">Forte</span></td></tr>
+    <tr><td>Construção</td><td>4,89%</td><td>Estoque acumulado CAGED F (± SNIC cimento)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
+    <tr><td>Financeiro</td><td>2,78%</td><td>Concessões BCB (40%) + Depósitos Estban (60%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
+    <tr><td>Transportes</td><td>1,92%</td><td>Passageiros ANAC SBBV (55%) + Diesel ANP (45%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
+    <tr><td>Ind. de Transformação</td><td>1,31%</td><td>Energia industrial ANEEL (55%) + CAGED C (45%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
+    <tr><td>Informação e comunicação</td><td>1,01%</td><td>CAGED J (TI, telecom)</td><td><span class="badge badge-fraca">Fraca mas necessária</span></td></tr>
+    <tr><td>Ind. extrativas</td><td>0,05%</td><td>Interpolação linear CR</td><td><span class="badge badge-fraca">Fraca mas necessária</span></td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ─── 12. LIMITAÇÕES ─── -->
+<section id="limitacoes">
+<h2><span class="sec-num">12</span>Limitações e Agenda de Revisão</h2>
+
+<div class="card card-azul">
+  <h4 style="margin-top:0">Limitações estruturais</h4>
+  <ol style="padding-left:1.2rem;font-size:14px;">
+    <li><strong>Ausência de IPCA estadual:</strong> o IPCA nacional é usado como deflator de todas as séries nominais. Diferenças entre inflação de Roraima e inflação nacional podem introduzir viés de deflação, especialmente em serviços.</li>
+    <li><strong>Ausência de PIM-PF:</strong> a indústria de transformação usa proxies de segundo grau (energia industrial + emprego). Com peso de 1,31% no VAB total, o impacto no índice agregado é limitado.</li>
+    <li><strong>Benchmark reduzido (2020–2023):</strong> quatro anos de benchmark para estimação de pesos e validação. As decisões metodológicas ganharão maior robustez à medida que novas Contas Regionais forem publicadas.</li>
+    <li><strong>Descontinuidade do CAGED:</strong> a adoção do Novo CAGED pós-eSocial (2020) cria uma descontinuidade com as séries anteriores, impedindo a extensão da cobertura temporal para antes de 2020.</li>
+    <li><strong>SIAPE sem automação plena:</strong> o endpoint do Portal da Transparência não sustenta download automatizado. A folha federal requer processamento local de arquivos mensais ZIP.</li>
+    <li><strong>Volatilidade do SIUP em RR:</strong> o VAB do SIUP em Roraima é estruturalmente volátil (reflexo das mudanças na geração e distribuição de energia), o que amplifica a variância do índice industrial.</li>
+  </ol>
+</div>
+
+<h3>Agenda de revisão</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Evento</th><th>Previsão</th><th>Ação</th></tr></thead>
+  <tbody>
+    <tr><td>Publicação CR 2024 (IBGE)</td><td>Outubro de 2026</td><td>Substituir extrapolações 2024; re-ancorar índices via Denton; re-rodar otimização de pesos com benchmark 2020–2024; atualizar pesos Laspeyres</td></tr>
+    <tr><td>Publicação CR 2025 (IBGE)</td><td>Outubro de 2027</td><td>Idem para 2025; pesos ótimos mais robustos para setores com 3 componentes</td></tr>
+    <tr><td>2 anos de ICMS por atividade (2022+)</td><td>Contínuo</td><td>Re-avaliar peso do ICMS no Comércio; verificar quebras tributárias (Decretos SEFAZ-RR)</td></tr>
+    <tr><td>Disponibilidade de SNIC cimento</td><td>Contínuo</td><td>Incorporar vendas de cimento em Construção quando disponível via download manual</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<!-- ─── 13. REFERÊNCIAS ─── -->
+<section id="referencias">
+<h2><span class="sec-num">13</span>Referências</h2>
+
+<ul style="padding-left:1.4rem;line-height:2;">
+  <li>Cholette, P. A.; Dagum, E. B. (2006). <em>Benchmarking, Temporal Distribution, and Reconciliation Methods for Time Series.</em> Springer.</li>
+  <li>Denton, F. T. (1971). Adjustment of monthly or quarterly series to annual totals: An approach based on quadratic minimization. <em>Journal of the American Statistical Association</em>, 66(333), 99–102.</li>
+  <li>IBGE. <em>Contas Regionais do Brasil.</em> Edições 2020–2023 (publicadas out/2025). Instituto Brasileiro de Geografia e Estatística.</li>
+  <li>IBGE. <em>Metodologia das Contas Nacionais do Brasil.</em> Série Relatórios Metodológicos, vol. 24. Rio de Janeiro: IBGE.</li>
+  <li>Banco Central do Brasil. <em>Nota Metodológica do IBCR — Índice de Atividade Econômica Regional.</em></li>
+  <li>Sax, C.; Steiner, P. (2023). <em>tempdisagg: Methods for Temporal Disaggregation and Interpolation of Time Series.</em> R package version 1.1.1.</li>
+  <li>Findley, D. F. et al. (1998). New Capabilities and Methods of the X-12-ARIMA Seasonal-Adjustment Program. <em>Journal of Business &amp; Economic Statistics</em>, 16(2), 127–152.</li>
+  <li>U.S. Census Bureau. <em>X-13ARIMA-SEATS Reference Manual</em>. Version 1.1. Washington, DC.</li>
+</ul>
+
+<hr style="margin:2rem 0;border:none;border-top:1px solid var(--borda);">
+<p style="font-size:12.5px;color:var(--muted);text-align:center;">
+  Secretaria de Planejamento e Orçamento de Roraima — SEPLAN/RR<br>
+  Coordenação-Geral de Estudos Econômicos e Sociais — CGEES · Divisão de Estudos e Análises Sociais — DIEAS<br>
+  <em>Yuri Cesar de Lima e Silva</em> · Coordenador da Equipe do PIB do Estado de Roraima<br>
+  Versão 1.0 · Abril de 2026
+</p>
+</section>
+
+</main>
+</div>
+</body>
+</html>

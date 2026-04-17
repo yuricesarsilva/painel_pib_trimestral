@@ -6,6 +6,12 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e 
 
 ---
 
+## Documentação técnica
+
+> [**Nota Metodológica completa**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/yuricesarsilva/painel_pib_trimestral/main/metodologia.html) — arquitetura do sistema, fórmulas, proxies setoriais, otimização de pesos e resultados de validação.
+
+---
+
 ## Estado atual do projeto
 
 **Pipeline de produção: operacional e atualizado.**
@@ -24,7 +30,7 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e 
 | PIB Nominal trimestral (`05g_pib_nominal.R`) | ✅ Operacional | 2020T1–2025T4 |
 | VAB Nominal setorial (`05h_vab_nominal_setorial.R`) | ✅ Operacional | 2020T1–2023T4 |
 | PIB Real anual (`05i_pib_real.R`) | ✅ Operacional | 2020–2025 |
-| Dashboard interativo (`dashboard/app.R`) | ✅ Operacional | — |
+| Dashboard interativo (`dashboard/app.R`) | ✅ [Publicado](https://yuricesar.shinyapps.io/pib-trimestral-rr/) | — |
 | Nota técnica | ⬜ Não iniciada | — |
 
 **Últimas taxas de crescimento do PIB real de Roraima (base 2020 = 100):**
@@ -46,7 +52,7 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e 
 | Prioridade | Tarefa | Dependência |
 |---|---|---|
 | 🔴 Alta | Incorporar CR IBGE 2024 quando publicada (out/2026): substituir extrapolações 2024 por dados reais | Publicação IBGE |
-| 🔴 Alta | Testar dashboard em diferentes tamanhos de tela e publicar em ambiente institucional | Infraestrutura SEPLAN/RR ou Shinyapps.io |
+| 🔴 Alta | Migrar dashboard para ambiente institucional (shinyapps.io free: 25 h/mês) | Infraestrutura SEPLAN/RR |
 | 🟡 Média | Redigir nota técnica metodológica (`notas/nota_tecnica.qmd`) | — |
 | 🟡 Média | Re-estimar pesos ótimos das proxies compostas após publicação das CR 2024 (out/2026) — re-rodar `R/05b_sensibilidade_pesos.R` com benchmark 2020–2024 | Publicação IBGE |
 | 🟢 Baixa | Revisão periódica do calendário de colheita SEADI-RR (sensibilidade alta à soja) | SEADI-RR |
