@@ -1,5 +1,7 @@
 # PIB Trimestral de Roraima
 
+> **[Dashboard interativo](https://yuricesar.shinyapps.io/pib-trimestral-rr/)** · **[Nota Metodológica](https://yuricesarsilva.github.io/painel_pib_trimestral/metodologia.html)**
+
 Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Roraima (SEPLAN/RR)**, este projeto produz as **estimativas trimestrais do PIB de Roraima** — em termos reais e nominais — a partir de 2020.
 
 O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e o **PIB real** (índice e taxa de crescimento, base média de 2020 = 100). O instrumento metodológico que sustenta essas estimativas é o **Indicador de Atividade Econômica Trimestral de Roraima (IAET-RR)**, um índice encadeado de volume construído com proxies setoriais e ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette.
