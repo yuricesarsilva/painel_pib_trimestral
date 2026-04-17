@@ -377,7 +377,7 @@ tbody td:first-child { font-weight: 500; }
   </span>
   <span>&nbsp;&times;&nbsp;100</span>
 </div>
-<p>onde $w_i$ é o peso do setor $i$ (participação no VAB nominal de 2020), $\tilde{x}_{it}$ é o índice de volume do setor $i$ no trimestre $t$, e $\tilde{x}_{i,0}$ é o valor médio de 2020 (= 100 por construção).</p>
+<p>onde <i>w<sub>i</sub></i> é o peso do setor <i>i</i> (participação no VAB nominal de 2020), <i>x&#771;<sub>it</sub></i> é o índice de volume do setor <i>i</i> no trimestre <i>t</i>, e <i>x&#771;<sub>i,0</sub></i> é o valor médio de 2020 (= 100 por construção).</p>
 
 <h3>Encadeamento anual</h3>
 <p>Os pesos são calculados a partir do <strong>VAB nominal de 2020</strong> (ano-base do índice) e permanecem fixos até que novas Contas Regionais sejam publicadas. A cada nova publicação anual do IBGE (tipicamente com dois anos de defasagem), os pesos são revisados dinamicamente pelo script <code>00_dados_referencia.R</code>.</p>
@@ -428,9 +428,9 @@ tbody td:first-child { font-weight: 500; }
   &nbsp;=&nbsp;B<sub>j</sub>
   &nbsp;&nbsp;&forall;j
 </div>
-<p>onde $p_t$ é o valor trimestral estimado, $x_t$ é o indicador proxy no trimestre $t$, e $B_j$ é o benchmark anual (índice de volume das Contas Regionais) do ano $j$.</p>
+<p>onde <i>p<sub>t</sub></i> é o valor trimestral estimado, <i>x<sub>t</sub></i> é o indicador proxy no trimestre <i>t</i>, e <i>B<sub>j</sub></i> é o benchmark anual (índice de volume das Contas Regionais) do ano <i>j</i>.</p>
 
-<p><strong>Interpretação:</strong> a razão $p_t / x_t$ representa o fator de escala entre a série estimada e a proxy. Quando a proxy captura perfeitamente o perfil intra-anual, esse fator é constante ao longo do tempo (o Denton não precisa corrigir nada). Quanto mais a razão varia, mais a proxy se afasta do comportamento real do setor.</p>
+<p><strong>Interpretação:</strong> a razão <i>p<sub>t</sub> / x<sub>t</sub></i> representa o fator de escala entre a série estimada e a proxy. Quando a proxy captura perfeitamente o perfil intra-anual, esse fator é constante ao longo do tempo (o Denton não precisa corrigir nada). Quanto mais a razão varia, mais a proxy se afasta do comportamento real do setor.</p>
 
 <h3>Implementação em R</h3>
 <div class="formula-box" style="text-align:left;font-family:Consolas,monospace;font-size:13px;">
@@ -739,7 +739,7 @@ tbody td:first-child { font-weight: 500; }
 <p>Quatro setores do IAET-RR usam proxies compostas: Indústria de Transformação, Comércio, Transportes e Financeiro. Até abril de 2026, os pesos dessas composições eram definidos <em>ad hoc</em>, com base em julgamento qualitativo. O script <code>R/05b_sensibilidade_pesos.R</code> substituiu esse julgamento por um <strong>critério quantitativo objetivo, interno à metodologia e consistente com o Denton-Cholette</strong>.</p>
 
 <h3>Por que não usar regressão?</h3>
-<p>A abordagem de mínimos quadrados é inviável: com apenas 4 observações anuais de benchmark (2020–2023) e 2–3 regressores por setor, qualquer combinação de pesos produz $R^2 = 1$. O OLS sobreajusta trivialmente sem discriminar combinações.</p>
+<p>A abordagem de mínimos quadrados é inviável: com apenas 4 observações anuais de benchmark (2020–2023) e 2–3 regressores por setor, qualquer combinação de pesos produz <i>R</i>² = 1. O OLS sobreajusta trivialmente sem discriminar combinações.</p>
 
 <h3>Critério adotado</h3>
 <p>Os <strong>pesos ótimos são aqueles que minimizam a função-objetivo do Denton</strong> calculada sobre o período de benchmark 2020–2023 (16 trimestres):</p>
@@ -760,7 +760,7 @@ tbody td:first-child { font-weight: 500; }
   &sum;<sub>i</sub> w<sub>i</sub> = 1&nbsp;,&nbsp; w<sub>i</sub> &ge; 0
 </div>
 
-<p>onde $x_t(w) = \sum_i w_i \cdot \tilde{c}_{it}$ é a proxy composta com pesos $w$ e $p_t(w)$ é a série Denton resultante.</p>
+<p>onde <i>x<sub>t</sub>(w) = &sum;<sub>i</sub> w<sub>i</sub> &middot; c&#771;<sub>it</sub></i> é a proxy composta com pesos <i>w</i> e <i>p<sub>t</sub>(w)</i> é a série Denton resultante.</p>
 
 <h3>Procedimento de busca em grade</h3>
 <p>Passo de 5 pontos percentuais: 21 combinações para 2 componentes, 231 para 3 componentes. Total: <strong>504 combinações avaliadas</strong> nos 4 setores. Para cada combinação: constrói proxy → aplica Denton → calcula objetivo.</p>
@@ -861,7 +861,7 @@ tbody td:first-child { font-weight: 500; }
   ILP trimestral<sub>t</sub> &nbsp;=&nbsp; ICMS deflacionado<sub>t</sub> &nbsp;&times;&nbsp; k<sub>j</sub>
 </div>
 
-<p>onde $k_j$ é o fator de escala anual que garante que $\sum_q \text{ILP}_{j,q}$ coincida com o ILP anual das Contas Regionais no ano $j$. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.</p>
+<p>onde <i>k<sub>j</sub></i> é o fator de escala anual que garante que &sum;<sub>q</sub> ILP<sub>j,q</sub> coincida com o ILP anual das Contas Regionais no ano <i>j</i>. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.</p>
 
 <div class="formula-box">
   PIB nominal<sub>t</sub> &nbsp;=&nbsp; VAB nominal<sub>t</sub> &nbsp;+&nbsp; ILP<sub>t</sub>
