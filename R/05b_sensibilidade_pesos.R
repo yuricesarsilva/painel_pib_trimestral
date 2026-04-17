@@ -18,11 +18,17 @@
 #   para bater o benchmark anual. O objetivo mede essa oscilação.
 #   Pesos ótimos = proxy que o Denton menos distorce.
 #
-# Setores analisados (pesos ad hoc atuais):
+# Setores analisados — pesos anteriores à otimização (ad hoc, pré-2026-04-15):
 #   - Ind. Transformação : energia industrial 70% + CAGED C 30%
 #   - Comércio           : energia com. 40% + ICMS 40% + CAGED G 20%
 #   - Transportes        : pax ANAC 40% + carga ANAC 30% + diesel 30%
 #   - Financeiro         : concessões BCB 70% + depósitos Estban 30%
+#
+# Pesos adotados após otimização (aplicados em produção desde 2026-04-15):
+#   - Ind. Transformação : energia industrial 55% + CAGED C 45%
+#   - Comércio           : energia com. 60% + ICMS 20% + CAGED G 20% (conservador)
+#   - Transportes        : pax ANAC 55% + carga ANAC 0% + diesel 45%
+#   - Financeiro         : concessões BCB 40% + depósitos Estban 60%
 #
 # Entrada : data/output/sensibilidade/proxies_transformacao.csv
 #            data/output/sensibilidade/proxies_servicos.csv

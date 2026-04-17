@@ -9,10 +9,12 @@
 #     SEFAZ-RR deflacionado pelo IPCA (20%) + CAGED G (20%).
 #     Pesos conservadores: ótimo Denton aponta 100% energia, mas ICMS
 #     tem histórico curto (2020+); mantidos 3 componentes.
-#   Transportes (1,92%): passageiros ANAC (40%) + carga ANAC (30%)
-#     + diesel ANP (30%).
-#   Financeiro (2,78%): concessões de crédito BCB (70%) +
-#     depósitos BCB Estban (30%), ambos deflacionados pelo IPCA.
+#   Transportes (1,92%): passageiros ANAC (55%) + diesel ANP (45%).
+#     Pesos otimizados por minimização da variância do Denton (2026-04-15);
+#     carga ANAC removida (peso ótimo = 0).
+#   Financeiro (2,78%): depósitos BCB Estban (60%) +
+#     concessões de crédito BCB (40%), ambos deflacionados pelo IPCA.
+#     Pesos otimizados por minimização da variância do Denton (2026-04-15).
 #   Imobiliário (7,68%): tendência linear interpolada entre
 #     benchmarks anuais das Contas Regionais IBGE.
 #   Outros serviços (7,63%): CAGED I (aloj./alim.) + M+N (prof./
@@ -46,9 +48,11 @@
 #   - BCB Estban: OData, UF=14, verbete 160 (depósitos totais).
 #   - BCB Concessões: OData NotaCredito. Se indisponível, fallback
 #     para Estban com aviso.
-#   - Comércio: 3 componentes (energia 40% + ICMS SEFAZ-RR 40% + CAGED G 20%).
+#   - Comércio: 3 componentes (energia 60% + ICMS SEFAZ-RR 20% + CAGED G 20%).
+#     Pesos conservadores: ótimo Denton aponta 100% energia, mas mantém ICMS
+#     para dar robustez quando o histórico de ICMS por atividade for maior.
 #     Fallback automático para 2 componentes se icms_sefaz_rr_trimestral.csv
-#     não estiver disponível (energia 67% + CAGED G 33%).
+#     não estiver disponível (energia 75% + CAGED G 25%).
 # ============================================================
 
 source("R/utils.R")
@@ -1098,8 +1102,9 @@ message(sprintf("Comércio — %d trimestres Denton (base 2020=100)",
 
 # ============================================================
 # ETAPA 4.9 — TRANSPORTES (1,92% do VAB)
-# ANAC pax (40%) + ANAC carga (30%) + ANP diesel (30%)
-# Tipo: volume (pax/carga/combustível) | Qualidade: média
+# ANAC pax (55%) + ANP diesel (45%) — pesos otimizados Denton (2026-04-15)
+# ANAC carga removida (peso ótimo = 0, melhoria 41,7% vs. ad hoc 40/30/30)
+# Tipo: volume (pax/combustível) | Qualidade: média
 # ============================================================
 
 message("\n=== ETAPA 4.9: Transportes — ANAC + ANP diesel ===\n")
@@ -1233,7 +1238,9 @@ if (!tem_anac && !tem_anp) {
 
 # ============================================================
 # ETAPA 4.10 — FINANCEIRO (2,78% do VAB)
-# Concessões de crédito BCB (70%) + depósitos Estban (30%)
+# Depósitos Estban BCB (60%) + concessões de crédito BCB (40%)
+# Pesos otimizados por minimização da variância do Denton (2026-04-15)
+# Melhoria de 90,5% vs. ad hoc anterior (concessões 70% + depósitos 30%)
 # Ambos deflacionados pelo IPCA antes do cálculo do índice
 # Suavização: média móvel de 3 meses (alta volatilidade mensal)
 # Tipo: fluxo deflacionado (concessões) + estoque deflacionado (dep.)
@@ -1836,10 +1843,10 @@ message(sprintf("  Cobertura: %dT%d – %dT%d",
 message("
 === NOTAS PARA REVISÃO ===
 
-1. COMÉRCIO (sem ICMS): pesos atuais = energia 67% + CAGED G 33%.
-   Ao integrar ICMS por atividade (SEFAZ-RR):
-   → pesos = energia 40%, ICMS deflacionado 40%, CAGED G 20%
-   → adicionar dummy para quebras tributárias (alterar alíquota)
+1. COMÉRCIO: pesos adotados = energia 60% + ICMS SEFAZ-RR 20% + CAGED G 20%.
+   ICMS por atividade já integrado via icms_sefaz_rr_trimestral.csv.
+   Fallback (sem ICMS): energia 75% + CAGED G 25%.
+   Revisar pesos quando histórico de ICMS por atividade superar 3 anos (2022+).
 
 2. ANAC: verificar cobertura dos dados. Se VRA indisponível para
    algum mês, conferir manualmente no portal ANAC e re-executar.

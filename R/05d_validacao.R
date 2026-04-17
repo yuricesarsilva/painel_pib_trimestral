@@ -13,13 +13,14 @@
 #   4. Consistência interna: correlações entre componentes, direção dos movimentos
 #
 # NOTA METODOLÓGICA SOBRE O BENCHMARK:
-#   O índice é de VOLUME (base 2020=100), enquanto o VAB das Contas Regionais é
-#   NOMINAL (R$ correntes). O Denton-Cholette ancora o ÍNDICE ao VAB NOMINAL,
-#   o que implica que a variação do índice captura tanto variação real quanto
-#   de preços relativos entre setores. Essa é uma limitação metodológica
-#   conhecida (Roraima não tem IPCA estadual); o IPCA nacional é aplicado nas
-#   séries nominais de cada componente, mas o benchmark final é o VAB nominal.
-#   O efeito é pequeno quando a estrutura setorial de preços não muda muito.
+#   A partir da reforma de 2026-04-13, o Denton-Cholette ancora o ÍNDICE GERAL
+#   ao ÍNDICE ENCADEADO DE VOLUME total das Contas Regionais (base 2020=100),
+#   e não mais ao VAB nominal. Os benchmarks setoriais (01–04) também usam o
+#   índice de volume por atividade (contas_regionais_RR_volume.csv).
+#   Consequência: a variação anual do índice geral captura exclusivamente
+#   crescimento REAL, diretamente comparável ao IBCR do Banco Central.
+#   A comparação no Eixo 1 com o VAB nominal das CR ainda é exibida como
+#   referência histórica, mas diferenças são esperadas (efeito preço).
 #
 # Entrada : data/output/indice_geral_rr.csv
 #            data/processed/contas_regionais_RR_serie.csv
