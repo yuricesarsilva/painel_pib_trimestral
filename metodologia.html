@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metodologia — PIB Trimestral de Roraima · SEPLAN/RR</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 <style>
 :root {
   --azul:    #123B72;
@@ -370,14 +376,9 @@ tbody td:first-child { font-weight: 500; }
 
 <h3>Fórmula base (Laspeyres)</h3>
 <div class="formula-box">
-  <span>I<sub>t</sub> &nbsp;=&nbsp;</span>
-  <span class="mf">
-    <span class="n">&sum;<sub>i</sub> w<sub>i</sub> &middot; x&#771;<sub>it</sub></span>
-    <span class="d">&sum;<sub>i</sub> w<sub>i</sub> &middot; x&#771;<sub>i,0</sub></span>
-  </span>
-  <span>&nbsp;&times;&nbsp;100</span>
+$$I_t = \frac{\displaystyle\sum_{i} w_i \cdot \tilde{x}_{it}}{\displaystyle\sum_{i} w_i \cdot \tilde{x}_{i,0}} \times 100$$
 </div>
-<p>onde <i>w<sub>i</sub></i> é o peso do setor <i>i</i> (participação no VAB nominal de 2020), <i>x&#771;<sub>it</sub></i> é o índice de volume do setor <i>i</i> no trimestre <i>t</i>, e <i>x&#771;<sub>i,0</sub></i> é o valor médio de 2020 (= 100 por construção).</p>
+<p>onde $w_i$ é o peso do setor $i$ (participação no VAB nominal de 2020), $\tilde{x}_{it}$ é o índice de volume do setor $i$ no trimestre $t$, e $\tilde{x}_{i,0}$ é o valor médio de 2020 (= 100 por construção).</p>
 
 <h3>Encadeamento anual</h3>
 <p>Os pesos são calculados a partir do <strong>VAB nominal de 2020</strong> (ano-base do índice) e permanecem fixos até que novas Contas Regionais sejam publicadas. A cada nova publicação anual do IBGE (tipicamente com dois anos de defasagem), os pesos são revisados dinamicamente pelo script <code>00_dados_referencia.R</code>.</p>
@@ -410,27 +411,11 @@ tbody td:first-child { font-weight: 500; }
 
 <h3>Função-objetivo</h3>
 <div class="formula-box">
-  <span style="font-size:.85em">min<br><span style="font-size:.85em">p<sub>1</sub>,…,p<sub>T</sub></span></span>
-  &nbsp;
-  <span class="mop">&sum;</span><span style="font-size:.72em;vertical-align:middle"><sup>T</sup><br><sub>t=2</sub></span>
-  &nbsp;
-  <span style="vertical-align:middle;font-size:1.2em">(</span>
-  <span class="mf"><span class="n">p<sub>t</sub></span><span class="d">x<sub>t</sub></span></span>
-  &nbsp;&minus;&nbsp;
-  <span class="mf"><span class="n">p<sub>t&minus;1</sub></span><span class="d">x<sub>t&minus;1</sub></span></span>
-  <span style="vertical-align:middle;font-size:1.2em">)</span><sup>2</sup>
-  &nbsp;&nbsp;&nbsp;
-  <span style="font-size:.9em;color:var(--cinza)">sujeito a</span>
-  &nbsp;&nbsp;
-  <span class="mf"><span class="n">1</span><span class="d">4</span></span>
-  <span class="mop">&sum;</span><span style="font-size:.72em;vertical-align:middle"><sup>4</sup><br><sub>q=1</sub></span>
-  &nbsp;p<sub>4(j&minus;1)+q</sub>
-  &nbsp;=&nbsp;B<sub>j</sub>
-  &nbsp;&nbsp;&forall;j
+$$\min_{p_1,\ldots,p_T} \sum_{t=2}^{T} \left(\frac{p_t}{x_t} - \frac{p_{t-1}}{x_{t-1}}\right)^2 \quad \text{sujeito a} \quad \frac{1}{4}\sum_{q=1}^{4} p_{4(j-1)+q} = B_j \quad \forall\, j$$
 </div>
-<p>onde <i>p<sub>t</sub></i> é o valor trimestral estimado, <i>x<sub>t</sub></i> é o indicador proxy no trimestre <i>t</i>, e <i>B<sub>j</sub></i> é o benchmark anual (índice de volume das Contas Regionais) do ano <i>j</i>.</p>
+<p>onde $p_t$ é o valor trimestral estimado, $x_t$ é o indicador proxy no trimestre $t$, e $B_j$ é o benchmark anual (índice de volume das Contas Regionais) do ano $j$.</p>
 
-<p><strong>Interpretação:</strong> a razão <i>p<sub>t</sub> / x<sub>t</sub></i> representa o fator de escala entre a série estimada e a proxy. Quando a proxy captura perfeitamente o perfil intra-anual, esse fator é constante ao longo do tempo (o Denton não precisa corrigir nada). Quanto mais a razão varia, mais a proxy se afasta do comportamento real do setor.</p>
+<p><strong>Interpretação:</strong> a razão $p_t / x_t$ representa o fator de escala entre a série estimada e a proxy. Quando a proxy captura perfeitamente o perfil intra-anual, esse fator é constante ao longo do tempo (o Denton não precisa corrigir nada). Quanto mais a razão varia, mais a proxy se afasta do comportamento real do setor.</p>
 
 <h3>Implementação em R</h3>
 <div class="formula-box" style="text-align:left;font-family:Consolas,monospace;font-size:13px;">
@@ -592,12 +577,7 @@ tbody td:first-child { font-weight: 500; }
 
 <h4>Deflação e construção do índice de volume</h4>
 <div class="formula-box">
-  <span>Índice de volume<sub>t</sub> &nbsp;=&nbsp;</span>
-  <span class="mf">
-    <span class="n">Folha nominal<sub>t</sub> / IPCA<sub>t</sub></span>
-    <span class="d">Folha nominal<sub>2020</sub> / IPCA<sub>2020</sub></span>
-  </span>
-  <span>&nbsp;&times;&nbsp;100</span>
+$$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}{\text{Folha nominal}_{2020} \;/\; \text{IPCA}_{2020}} \times 100$$
 </div>
 <p>IPCA nacional: SIDRA Tab. 1737, variável 2266 (variação mensal). O script constrói o índice encadeado de preços com base jan/2020 = 1.</p>
 
@@ -745,22 +725,10 @@ tbody td:first-child { font-weight: 500; }
 <p>Os <strong>pesos ótimos são aqueles que minimizam a função-objetivo do Denton</strong> calculada sobre o período de benchmark 2020–2023 (16 trimestres):</p>
 
 <div class="formula-box">
-  <span style="font-size:.85em">arg min<br><span style="font-size:.85em">w<sub>1</sub>,…,w<sub>k</sub></span></span>
-  &nbsp;
-  <span class="mop">&sum;</span><span style="font-size:.72em;vertical-align:middle"><sup>T</sup><br><sub>t=2</sub></span>
-  &nbsp;
-  <span style="vertical-align:middle;font-size:1.2em">(</span>
-  <span class="mf"><span class="n">p<sub>t</sub>(w)</span><span class="d">x<sub>t</sub>(w)</span></span>
-  &nbsp;&minus;&nbsp;
-  <span class="mf"><span class="n">p<sub>t&minus;1</sub>(w)</span><span class="d">x<sub>t&minus;1</sub>(w)</span></span>
-  <span style="vertical-align:middle;font-size:1.2em">)</span><sup>2</sup>
-  &nbsp;&nbsp;&nbsp;
-  <span style="font-size:.9em;color:var(--cinza)">com</span>
-  &nbsp;&nbsp;
-  &sum;<sub>i</sub> w<sub>i</sub> = 1&nbsp;,&nbsp; w<sub>i</sub> &ge; 0
+$$\underset{w_1,\ldots,w_k}{\arg\min} \sum_{t=2}^{T} \left(\frac{p_t(w)}{x_t(w)} - \frac{p_{t-1}(w)}{x_{t-1}(w)}\right)^2 \quad \text{com} \quad \sum_i w_i = 1\,,\quad w_i \geq 0$$
 </div>
 
-<p>onde <i>x<sub>t</sub>(w) = &sum;<sub>i</sub> w<sub>i</sub> &middot; c&#771;<sub>it</sub></i> é a proxy composta com pesos <i>w</i> e <i>p<sub>t</sub>(w)</i> é a série Denton resultante.</p>
+<p>onde $x_t(w) = \sum_i w_i \cdot \tilde{c}_{it}$ é a proxy composta com pesos $w$ e $p_t(w)$ é a série Denton resultante.</p>
 
 <h3>Procedimento de busca em grade</h3>
 <p>Passo de 5 pontos percentuais: 21 combinações para 2 componentes, 231 para 3 componentes. Total: <strong>504 combinações avaliadas</strong> nos 4 setores. Para cada combinação: constrói proxy → aplica Denton → calcula objetivo.</p>
@@ -822,18 +790,13 @@ tbody td:first-child { font-weight: 500; }
 
 <h3>VAB Nominal Trimestral — <code>05f_vab_nominal.R</code></h3>
 <div class="formula-box">
-  Índice nominal<sub>t</sub> &nbsp;=&nbsp; Índice real<sub>t</sub> &nbsp;&times;&nbsp;
-  <span class="mf"><span class="n">Deflator implícito<sub>t</sub></span><span class="d">100</span></span>
+$$\text{Índice nominal}_t = \text{Índice real}_t \times \frac{\text{Deflator implícito}_t}{100}$$
 </div>
 
 <p>O deflator implícito anual do total é extraído diretamente das Contas Regionais do IBGE como:</p>
 
 <div class="formula-box">
-  Deflator anual &nbsp;=&nbsp;
-  <span class="mf">
-    <span class="n">Índice nominal total (CR)</span>
-    <span class="d">Índice real total (CR)</span>
-  </span>
+$$\text{Deflator anual} = \frac{\text{Índice nominal total (CR)}}{\text{Índice real total (CR)}}$$
 </div>
 
 <p>e desagregado para frequência trimestral via Denton-Cholette (<code>conversion = "sum"</code>), usando o IPCA como proxy trimestral do deflator.</p>
@@ -858,13 +821,13 @@ tbody td:first-child { font-weight: 500; }
 <p>O ILP é estimado a partir do <strong>ICMS estadual mensal</strong> (SEFAZ-RR), deflacionado e escalado por um fator de benchmark anual derivado das Contas Regionais:</p>
 
 <div class="formula-box">
-  ILP trimestral<sub>t</sub> &nbsp;=&nbsp; ICMS deflacionado<sub>t</sub> &nbsp;&times;&nbsp; k<sub>j</sub>
+$$\text{ILP trimestral}_t = \text{ICMS deflacionado}_t \times k_j$$
 </div>
 
-<p>onde <i>k<sub>j</sub></i> é o fator de escala anual que garante que &sum;<sub>q</sub> ILP<sub>j,q</sub> coincida com o ILP anual das Contas Regionais no ano <i>j</i>. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.</p>
+<p>onde $k_j$ é o fator de escala anual que garante que $\sum_q \text{ILP}_{j,q}$ coincida com o ILP anual das Contas Regionais no ano $j$. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.</p>
 
 <div class="formula-box">
-  PIB nominal<sub>t</sub> &nbsp;=&nbsp; VAB nominal<sub>t</sub> &nbsp;+&nbsp; ILP<sub>t</sub>
+$$\text{PIB nominal}_t = \text{VAB nominal}_t + \text{ILP}_t$$
 </div>
 </section>
 
@@ -875,9 +838,7 @@ tbody td:first-child { font-weight: 500; }
 <p>O PIB real trimestral de Roraima é gerado pelo script <code>05i_pib_real.R</code> em R$ milhões de 2020, com ancoragem ao benchmark anual oficial do PIB real das Contas Regionais em 2020–2023.</p>
 
 <div class="formula-box">
-  PIB real<sub>t</sub> &nbsp;=&nbsp;
-  <span class="mf"><span class="n">Índice PIB real<sub>t</sub></span><span class="d">100</span></span>
-  &nbsp;&times;&nbsp; PIB real médio anual<sub>2020</sub>
+$$\text{PIB real}_t = \frac{\text{Índice PIB real}_t}{100} \times \text{PIB real médio anual}_{2020}$$
 </div>
 
 <p>O índice do PIB real é construído como o IAET-RR, mas com benchmark das <strong>taxas de crescimento real oficiais do PIB</strong> das Contas Regionais (não o VAB total das atividades — o PIB inclui os impostos sobre produtos). A ancoragem anual via Denton-Cholette garante que a taxa de crescimento real anual do projeto coincida exatamente com a taxa oficial do IBGE nos anos com benchmark.</p>

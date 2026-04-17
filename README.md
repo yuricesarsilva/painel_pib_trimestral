@@ -8,7 +8,7 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e 
 
 ## Documentação técnica
 
-> [**Nota Metodológica completa**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/yuricesarsilva/painel_pib_trimestral/main/metodologia.html) — arquitetura do sistema, fórmulas, proxies setoriais, otimização de pesos e resultados de validação.
+> [**Nota Metodológica completa**](https://yuricesarsilva.github.io/painel_pib_trimestral/metodologia.html) — arquitetura do sistema, fórmulas, proxies setoriais, otimização de pesos e resultados de validação.
 
 ---
 
