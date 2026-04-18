@@ -146,13 +146,13 @@ O que é feito com ela: consolida a remuneração mensal dos servidores federais
 
 Output gerado: `data/raw/siape_rr_mensal.csv` e `data/output/indice_adm_publica.csv`.
 
-### 2. Folha estadual bimestral acumulada
+### 2. Folha estadual mensal
 
-Fonte: STN / SICONFI.
+Fonte: FIPLAN / SEPLAN-RR.
 
-Especificação exata no código: endpoint `https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo`, com `no_anexo = "RREO-Anexo 06"`, `co_esfera = "E"`, `co_uf = "RR"`, `id_ente = 14`, filtro `cod_conta == "RREO6PessoalEEncargosSociais"` e seleção da coluna de `DESPESAS LIQUIDADAS`; cache em `data/raw/folha_estadual_rr_mensal.csv`.
+Especificação exata no código: arquivos `.xls` manuais em `bases_baixadas_manualmente/dados_folha_rr_fip855/`, leitura do relatório `FIP 855 - Resumo Mensal da Despesa Liquidada`, com a proxy estadual definida como a soma das rubricas `3190.1100`, `3190.1200` e `3190.1300`; cache em `data/raw/folha_estadual_rr_mensal.csv`.
 
-O que é feito com ela: extrai a despesa com pessoal do estado, converte o bimestral acumulado em valor incremental e depois em série trimestral.
+O que é feito com ela: extrai a despesa mensal de pessoal do estado a partir do FIPLAN e agrega diretamente para série trimestral.
 
 Output gerado: `data/raw/folha_estadual_rr_mensal.csv` e `data/output/indice_adm_publica.csv`.
 
@@ -160,7 +160,7 @@ Output gerado: `data/raw/folha_estadual_rr_mensal.csv` e `data/output/indice_adm
 
 Fonte: STN / SICONFI.
 
-Especificação exata no código: mesmo endpoint e mesmo anexo do estado, com `id_ente` de cada município de RR, usando o mesmo filtro `RREO6PessoalEEncargosSociais` com `DESPESAS LIQUIDADAS`; cache em `data/raw/folha_municipal_rr.csv`.
+Especificação exata no código: endpoint `https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo`, com `no_anexo = "RREO-Anexo 06"` e `id_ente` de cada município de RR, usando o filtro `RREO6PessoalEEncargosSociais` com `DESPESAS LIQUIDADAS`; cache em `data/raw/folha_municipal_rr.csv`.
 
 O que é feito com ela: consolida as folhas dos 15 municípios, soma os valores e converte o bimestral acumulado para série trimestral.
 
@@ -635,6 +635,6 @@ Output gerado: não gera output próprio.
 ## Observações rápidas
 
 - O monitoramento acima está alinhado ao que o código usa hoje, não ao desenho metodológico futuro.
-- Em `AAPP`, a variável estadual e municipal atualmente implementada no SICONFI é `RREO6PessoalEEncargosSociais` com `DESPESAS LIQUIDADAS`.
+- Em `AAPP`, a proxy estadual atual vem do FIPLAN mensal (`FIP 855`, soma de `3190.1100`, `3190.1200` e `3190.1300`), enquanto a proxy municipal permanece no SICONFI com `RREO6PessoalEEncargosSociais` e `DESPESAS LIQUIDADAS`.
 - Em `Serviços`, o arquivo `icms_sefaz_rr_trimestral.csv` já aparece como input operacional do bloco `Comércio`.
 - Alguns scripts usam caches locais para evitar redownload; nesses casos, a fonte original e o arquivo cacheado aparecem juntos.

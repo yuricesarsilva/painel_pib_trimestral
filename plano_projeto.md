@@ -162,7 +162,7 @@ frango para RR; por isso esses componentes não entram na proxy pecuária.
 
 | Proxy | Fonte | API / Endpoint | Frequência | Status |
 |---|---|---|---|---|
-| Folha estadual — pessoal ativo (elemento 31) | SICONFI/STN — RREO Anexo 06 | `apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo` | Bimestral acumulado | **Disponível** |
+| Folha estadual — proxy mensal de pessoal | FIPLAN / SEPLAN-RR — FIP 855 | Arquivos `.xls` manuais em `bases_baixadas_manualmente/dados_folha_rr_fip855/` | Mensal | **Disponível** |
 | Folha municipal — pessoal ativo (15 municípios) | SICONFI/STN — RREO Anexo 06 | Mesmo endpoint, id_ente = cod IBGE município | Bimestral acumulado | **Disponível** |
 | Folha federal (SIAPE) | Portal da Transparência | Arquivos mensais `.zip` processados localmente | Mensal | **Obrigatória em produção** |
 
@@ -172,19 +172,19 @@ O IBGE mensura o produto de Administração Pública nas Contas Regionais pela *
 capital fixo. O componente dominante é a folha de pessoal ativo. A folha é, portanto, **a mesma
 variável que o IBGE usa como insumo de cálculo** — não um proxy, mas o próprio dado de base.
 
-**Escopo do elemento 31 (pessoal ativo):**
-O RREO Anexo 06 registra despesas com pessoal e encargos sociais. O alinhamento com a metodologia
-do IBGE exige usar apenas o pessoal ativo (elemento 31) — aposentados e pensionistas são
-*transferências*, não remuneração de fator de produção, e não entram no VAB de AAPP nas Contas
-Nacionais. A conta utilizada no SICONFI é `RREO6PessoalEEncargosSociais`, coluna "DESPESAS
-LIQUIDADAS" (valor acumulado do bimestre).
+**Escopo da proxy estadual e municipal:**
+No estado, a proxy mensal é construída no FIPLAN como a soma das rubricas `3190.1100`
+(`Vencimentos e Vantagens Fixas - Pessoal Civil`), `3190.1200`
+(`Vencimentos e Vantagens Fixas - Pessoal Militar`) e `3190.1300`
+(`Obrigações Patronais`) do relatório **FIP 855 — Resumo Mensal da Despesa Liquidada**.
+Nos municípios, permanece o uso do RREO Anexo 06 do SICONFI, conta
+`RREO6PessoalEEncargosSociais`, coluna `DESPESAS LIQUIDADAS` (valor acumulado do bimestre).
 
-**Procedimento de conversão bimestral → trimestral:**
-O RREO é publicado em bimestres acumulados (bimestre 1 = jan+fev acumulado, bimestre 2 = jan+abr
-acumulado, etc.). O processo de conversão é:
-1. Diferença entre bimestres consecutivos → valor incremental por bimestre
-2. Distribuição uniforme dos 2 meses do bimestre → valor mensal estimado
-3. Agregação por trimestre (3 meses) → valor trimestral
+**Procedimento de conversão para trimestre:**
+1. Estado: agregação direta da série mensal do FIPLAN por trimestre
+2. Municípios: diferença entre bimestres consecutivos do RREO → valor incremental por bimestre
+3. Municípios: distribuição uniforme dos 2 meses do bimestre → valor mensal estimado
+4. Municípios: agregação por trimestre (3 meses) → valor trimestral
 
 **Situação do SIAPE (folha federal):**
 O endpoint `/remuneracao-servidores-ativos` do Portal da Transparência não sustenta o fluxo
@@ -407,11 +407,11 @@ entre benchmarks anuais do IBGE. Não justifica proxy específico.
 ## Mapa de pesos e prioridades
 
 Pesos extraídos das **Contas Regionais do IBGE — Roraima 2023** (VAB a preços correntes,
-publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
+publicação IBGE out/2025). VAB total = R\$ 23,0 bilhões.
 
-| Atividade (IBGE) | % VAB 2023 | VAB (R$ mi) | Qualidade do proxy | Prioridade |
+| Atividade (IBGE) | % VAB 2023 | VAB (R\$ mi) | Qualidade do proxy | Prioridade |
 |---|---|---|---|---|
-| Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (folha estadual + municipal via SICONFI; federal implícito via Denton) | **2ª fase** ✅ |
+| Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (folha estadual via FIPLAN, municipal via SICONFI e federal observada) | **2ª fase** ✅ |
 | Comércio e reparação de veículos | 12,25% | 2.817 | Média-alta (ICMS + CAGED + energia comercial) | 4ª fase |
 | Agropecuária | 8,87% | 2.040 | Alta (PAM/LSPA + Censo 2006 + abate + ovos) | **1ª fase** ✅ |
 | Atividades imobiliárias | 7,68% | 1.767 | Baixa (tendência suavizada) | 4ª fase |
@@ -482,11 +482,11 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - O script falha explicitamente se a base federal não existir
 
 **Etapa 2.2 — Folha estadual** ✅
-- SICONFI: `GET apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo`
-- Parâmetros: `an_exercicio`, `nr_periodo` (bimestre 1–6), `no_anexo="RREO-Anexo 06"`, `id_ente=14`
-- Conta: `cod_conta = "RREO6PessoalEEncargosSociais"`, `coluna = "DESPESAS LIQUIDADAS"`
-- Cobertura: 2020–2026T1 (37 bimestres)
-- Arquivo: `data/raw/folha_estadual_rr_mensal.csv`
+- FIPLAN / SEPLAN-RR: relatório `FIP 855 - Resumo Mensal da Despesa Liquidada`
+- Arquivos manuais `.xls` em `bases_baixadas_manualmente/dados_folha_rr_fip855/`
+- Proxy estadual: soma de `3190.1100`, `3190.1200` e `3190.1300`
+- Cobertura operacional atual: 2020–2025 (72 meses)
+- Cache: `data/raw/folha_estadual_rr_mensal.csv`
 
 **Etapa 2.3 — Folha municipal** ✅
 - Mesmo endpoint SICONFI, `id_ente` = cod IBGE de cada município (15 municípios de RR)
@@ -541,7 +541,7 @@ descartados pelo filtro de trimestres completos.
 | 2025 | +19,2% |
 
 **Nota sobre SIUP:** o VAB do setor nas Contas Regionais é extremamente volátil em RR
-(R$799M em 2020 → R$369M em 2022 → R$1.243M em 2023), reflexo das mudanças estruturais
+(R\$799M em 2020 → R\$369M em 2022 → R\$1.243M em 2023), reflexo das mudanças estruturais
 na geração e distribuição de energia do estado (conexão ao SIN, revisão tarifária). A
 volatilidade do índice composto em 2023 é fiel ao dado do IBGE — não é artefato do script.
 Para 2024–2025 (sem benchmark), o script usa o indicador bruto.
@@ -657,7 +657,7 @@ para os anos com benchmark das Contas Regionais (`2020–2023`). O procedimento 
 - índice anual de volume por bloco, agregado com pesos de 2020 dentro de cada bloco;
 - deflator anual por bloco, calculado como `índice nominal / índice real`;
 - Denton-Cholette com `conversion = "mean"` para o deflator trimestral, usando IPCA como proxy;
-- Denton-Cholette com `conversion = "sum"` para distribuir o `VAB nominal` anual em R$ milhões
+- Denton-Cholette com `conversion = "sum"` para distribuir o `VAB nominal` anual em R\$ milhões
   a partir do indicador nominal trimestral (`índice real × deflator trimestral / 100`).
 
 Essa etapa fecha a comparação nominal por bloco com o IBGE sem depender apenas do
@@ -727,8 +727,8 @@ Cada proxy deve ter seu tipo documentado explicitamente:
 | Tipo | Exemplos no projeto |
 |---|---|
 | **Volume físico** | Cimento (t), energia elétrica (MWh), produção agrícola (t) |
-| **Valor nominal** | ICMS (R$) — requer deflação pelo IPCA |
-| **Fluxo** | Concessões de crédito (R$), emissão de notas fiscais |
+| **Valor nominal** | ICMS (R\$) — requer deflação pelo IPCA |
+| **Fluxo** | Concessões de crédito (R\$), emissão de notas fiscais |
 | **Estoque** | Saldo de depósitos, vínculos de emprego (CAGED acumulado) |
 | **Insumo** | Vínculos ativos CAGED (proxy de emprego, não de produção) |
 
@@ -802,14 +802,16 @@ Na Fase 5 (agregação), gerar duas versões do índice:
    fórmula com intercepto (`~ indicador`) cria matriz RHS que o algoritmo Denton rejeita. O
    parâmetro `conversion = "mean"` é obrigatório para índices (a média dos 4 trimestres deve
    igualar o benchmark anual, não a soma).
-11. **Elemento 31 (pessoal ativo) para AAPP**: alinhado com a metodologia do IBGE — aposentados
-   e pensionistas são transferências, não remuneração de fator, e não integram o VAB de AAPP nas
-   Contas Nacionais. O SICONFI (RREO Anexo 06) é a fonte oficial para estado e municípios.
+11. **Proxy de pessoal para AAPP**: no estado, a série operacional usa o FIPLAN mensal
+   (`FIP 855`, soma de `3190.1100`, `3190.1200` e `3190.1300`); nos municípios, permanece o
+   SICONFI (RREO Anexo 06). O objetivo é aproximar a remuneração observada do trabalho público,
+   insumo central do VAB de AAPP nas Contas Nacionais.
 12. **SIAPE obrigatório na produção**: o endpoint `/remuneracao-servidores-ativos` do Portal da
    Transparência não sustenta o fluxo automatizado direto. O projeto usa os arquivos mensais do
    Portal processados localmente e o script de AAPP falha explicitamente se a base federal não existir.
-13. **RREO bimestral acumulado → trimestral**: diferença entre bimestres consecutivos → valor
-   incremental; distribuição uniforme em 2 meses; agregação por trimestre.
+13. **Conversão para trimestre em AAPP**: no estado, agregação direta da série mensal do FIPLAN;
+   nos municípios, diferença entre bimestres consecutivos do RREO → valor incremental;
+   distribuição uniforme em 2 meses; agregação por trimestre.
 14. **Ausência de PIM-PF**: compensada por CAGED C + energia industrial ANEEL; peso < 2% no total.
 15. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
 16. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.

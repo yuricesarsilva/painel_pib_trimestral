@@ -8,24 +8,27 @@
 #               manuais do Portal da Transparência processados localmente.
 #               Sem SIAPE observado, o script para com erro explícito.
 #   Etapa 2.2 — Folha estadual:
-#               SICONFI/STN — RREO Anexo 06, governo do estado de RR.
+#               FIPLAN/SEPLAN-RR — FIP 855, governo do estado de RR.
 #   Etapa 2.3 — Folha municipal: SICONFI/STN — RREO Anexo 06,
 #               todos os 15 municípios de RR.
 #   Etapa 2.4 — Série real anual, Denton-Cholette e validação.
-# Entrada : API SICONFI/STN (pública, sem autenticação)
+# Entrada : arquivos manuais FIPLAN/SEPLAN-RR (FIP 855)
+#            API SICONFI/STN (pública, sem autenticação)
 #            data/processed/contas_regionais_RR_volume.csv
 # Saída   : data/raw/folha_estadual_rr_mensal.csv
 #            data/raw/folha_municipal_rr.csv
 #            data/output/indice_adm_publica.csv
 # Depende : httr2, jsonlite, dplyr, tidyr, lubridate, tempdisagg
+#            xml2, rvest
 #            R/utils.R
-# Nota    : RREO Anexo 06 é bimestral (acumulado). Diferença entre
-#           bimestres fornece o valor incremental por bimestre.
-#           Bimestres são convertidos para trimestres por agregação.
-#           A extração estadual e municipal hoje usa a conta
-#           `RREO6PessoalEEncargosSociais`, coluna `DESPESAS
-#           LIQUIDADAS`. O benchmark anual do Denton vem da série
-#           de volume das Contas Regionais.
+# Nota    : A série estadual mensal é lida do FIP 855 do FIPLAN e
+#           construída como a soma de `3190.1100` (Vencimentos e
+#           Vantagens Fixas - Pessoal Civil), `3190.1200`
+#           (Vencimentos e Vantagens Fixas - Pessoal Militar) e
+#           `3190.1300` (Obrigações Patronais). A série municipal
+#           segue no RREO Anexo 06 do SICONFI (bimestral acumulado).
+#           O benchmark anual do Denton vem da série de volume das
+#           Contas Regionais.
 # ============================================================
 
 source("R/utils.R")
@@ -36,6 +39,8 @@ library(dplyr)
 library(tidyr)
 library(lubridate)
 library(data.table)
+library(xml2)
+library(rvest)
 
 # --- Caminhos -----------------------------------------------
 
@@ -53,6 +58,7 @@ arq_municipal <- file.path(dir_raw, "folha_municipal_rr.csv")
 arq_ipca      <- file.path(dir_raw, "ipca_mensal.csv")
 arq_indice    <- file.path(dir_output, "indice_adm_publica.csv")
 arq_vol_serie <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
+dir_fiplan    <- file.path("bases_baixadas_manualmente", "dados_folha_rr_fip855")
 
 # --- Parâmetros ---------------------------------------------
 
@@ -84,6 +90,8 @@ municipios_rr <- c(
 )
 
 anos_peso <- 2018:2022
+
+rubricas_fiplan_proxy <- c("3190.1100", "3190.1200", "3190.1300")
 
 # --- Funções auxiliares -------------------------------------
 
@@ -167,6 +175,72 @@ bimestral_para_trimestral <- function(df) {
     mutate(trimestre = ceiling(mes / 3L)) |>
     group_by(ano, trimestre) |>
     summarise(valor_trim = sum(valor_mes, na.rm = TRUE), .groups = "drop")
+}
+
+numero_ptbr_para_numeric <- function(x) {
+  x <- gsub("\\.", "", x)
+  x <- gsub(",", ".", x, fixed = TRUE)
+  suppressWarnings(as.numeric(x))
+}
+
+ler_fip855_ano <- function(caminho_xls) {
+  tabela <- read_html(caminho_xls, encoding = "ISO-8859-1") |>
+    html_element("table") |>
+    html_table(fill = TRUE)
+
+  idx_header <- which(trimws(tabela[[1]]) == "NATUREZA")[1]
+  if (is.na(idx_header)) {
+    stop("Cabeçalho 'NATUREZA' não encontrado em ", caminho_xls)
+  }
+
+  nomes <- trimws(as.character(unlist(tabela[idx_header, ], use.names = FALSE)))
+  dados <- tabela[(idx_header + 1):nrow(tabela), , drop = FALSE]
+  names(dados) <- nomes
+
+  col_natureza  <- names(dados)[1]
+  col_descricao <- names(dados)[2]
+  cols_meses    <- grep("^[0-9]{2}/[0-9]{4}$", names(dados), value = TRUE)
+
+  if (length(cols_meses) == 0) {
+    stop("Nenhuma coluna mensal encontrada em ", caminho_xls)
+  }
+
+  dados |>
+    mutate(
+      natureza  = trimws(.data[[col_natureza]]),
+      descricao = trimws(.data[[col_descricao]])
+    ) |>
+    filter(natureza %in% rubricas_fiplan_proxy) |>
+    select(natureza, descricao, all_of(cols_meses)) |>
+    pivot_longer(
+      cols = all_of(cols_meses),
+      names_to = "competencia",
+      values_to = "valor_chr"
+    ) |>
+    mutate(
+      mes = as.integer(substr(competencia, 1, 2)),
+      ano = as.integer(substr(competencia, 4, 7)),
+      valor = numero_ptbr_para_numeric(valor_chr)
+    ) |>
+    group_by(ano, mes) |>
+    summarise(valor_mes = sum(valor, na.rm = TRUE), .groups = "drop") |>
+    arrange(ano, mes)
+}
+
+ler_fiplan_estadual <- function(dir_fiplan) {
+  if (!dir.exists(dir_fiplan)) {
+    stop("Pasta do FIPLAN não encontrada: ", dir_fiplan)
+  }
+
+  arquivos <- list.files(dir_fiplan, pattern = "\\.xls$", full.names = TRUE, ignore.case = TRUE)
+  if (length(arquivos) == 0) {
+    stop("Nenhum arquivo .xls do FIP 855 encontrado em ", dir_fiplan)
+  }
+
+  arquivos <- arquivos[order(arquivos)]
+  bind_rows(lapply(arquivos, ler_fip855_ano)) |>
+    distinct(ano, mes, .keep_all = TRUE) |>
+    arrange(ano, mes)
 }
 
 # ============================================================
@@ -365,58 +439,36 @@ if (file.exists(arq_siape)) {
 }
 
 # ============================================================
-# ETAPA 2.2 — Folha Estadual (SICONFI — RREO Anexo 06)
+# ETAPA 2.2 — Folha Estadual (FIPLAN/SEPLAN-RR — FIP 855)
 # ============================================================
 
-message("\n=== ETAPA 2.2: Folha Estadual — SICONFI/STN ===\n")
+message("\n=== ETAPA 2.2: Folha Estadual — FIPLAN/SEPLAN-RR (FIP 855) ===\n")
 
-if (!file.exists(arq_estadual)) {
-  message("Coletando RREO Anexo 06 para o Estado de RR (id_ente=14)...")
+cache_estadual_valido <- FALSE
 
-  folha_est_lista <- list()
+if (file.exists(arq_estadual)) {
+  folha_estadual_mensal <- read.csv(arq_estadual, stringsAsFactors = FALSE)
+  cache_estadual_valido <- all(c("ano", "mes", "valor_mes") %in% names(folha_estadual_mensal))
 
-  for (ano in anos_serie) {
-    for (bim in 1:6) {
-      df_bim <- siconfi_get(
-        an_exercicio          = ano,
-        nr_periodo            = bim,
-        co_tipo_demonstrativo = "RREO",
-        no_anexo              = "RREO-Anexo 06",
-        co_esfera             = "E",
-        co_uf                 = "RR",
-        id_ente               = ID_ENTE_RR_ESTADO
-      )
-
-      val <- extrair_pessoal(df_bim)
-      if (length(val) > 0 && !is.na(val)) {
-        folha_est_lista[[length(folha_est_lista) + 1]] <- data.frame(
-          ano        = ano,
-          bimestre   = bim,
-          valor_acum = as.numeric(val),
-          stringsAsFactors = FALSE
-        )
-        log_msg(sprintf("Estado RR — %d bim%d: R$ %.0f mi", ano, bim, as.numeric(val)/1e6))
-      } else {
-        message(sprintf("  Estado RR — %d bim%d: sem dado", ano, bim))
-      }
-      Sys.sleep(0.2)   # respeitar rate limit SICONFI
-    }
+  if (!cache_estadual_valido) {
+    message("Folha estadual: cache legado incompatível encontrado — reconstruindo a partir do FIPLAN.")
   }
+}
 
-  folha_estadual_acum <- do.call(rbind, folha_est_lista)
+if (!file.exists(arq_estadual) || !cache_estadual_valido) {
+  message("Lendo FIP 855 da SEPLAN-RR em ", dir_fiplan, " ...")
+  folha_estadual_mensal <- ler_fiplan_estadual(dir_fiplan) |>
+    filter(ano >= ano_inicio)
 
-  if (nrow(folha_estadual_acum) > 0) {
-    # Converter acumulado → incremental → trimestral
-    folha_estadual_bim <- acumulado_para_incremental(folha_estadual_acum)
-    write.csv(folha_estadual_bim, arq_estadual, row.names = FALSE)
-    message(sprintf("Folha estadual salva: %s (%d bimestres)", arq_estadual, nrow(folha_estadual_bim)))
+  if (nrow(folha_estadual_mensal) > 0) {
+    write.csv(folha_estadual_mensal, arq_estadual, row.names = FALSE)
+    message(sprintf("Folha estadual salva: %s (%d meses)", arq_estadual, nrow(folha_estadual_mensal)))
   } else {
-    message("AVISO: nenhum dado da folha estadual obtido do SICONFI.")
-    folha_estadual_bim <- NULL
+    message("AVISO: nenhum dado da folha estadual obtido do FIPLAN.")
+    folha_estadual_mensal <- NULL
   }
 } else {
   message("Folha estadual: usando cache (", arq_estadual, ")")
-  folha_estadual_bim <- read.csv(arq_estadual, stringsAsFactors = FALSE)
 }
 
 # ============================================================
@@ -495,13 +547,15 @@ message("\n=== ETAPA 2.4: Série de volume e benchmarking ===\n")
 
 # --- Verificar disponibilidade dos componentes --------------
 
-if (is.null(folha_estadual_bim) || nrow(folha_estadual_bim) == 0) {
+if (is.null(folha_estadual_mensal) || nrow(folha_estadual_mensal) == 0) {
   stop("Folha estadual indisponível — não é possível calcular o índice de AAPP.")
 }
 
-# Componente estadual (principal): bimestral → trimestral
-folha_est_trim <- bimestral_para_trimestral(folha_estadual_bim) |>
-  rename(estadual = valor_trim)
+# Componente estadual (principal): mensal → trimestral
+folha_est_trim <- folha_estadual_mensal |>
+  mutate(trimestre = ceiling(mes / 3L)) |>
+  group_by(ano, trimestre) |>
+  summarise(estadual = sum(valor_mes, na.rm = TRUE), .groups = "drop")
 
 # Componente municipal: agregar municípios, depois bimestral → trimestral
 if (!is.null(folha_mun_bim) && nrow(folha_mun_bim) > 0) {

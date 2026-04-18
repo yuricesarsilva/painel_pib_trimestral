@@ -43,8 +43,8 @@ A solução adotada é construir um **índice encadeado de volume sem unidade mo
 
 **Produtos estatísticos gerados:**
 
-- PIB nominal trimestral de Roraima em R$ milhões (VAB + impostos líquidos sobre produtos)
-- PIB real trimestral em R$ milhões de 2020 e índice encadeado de volume (base média 2020 = 100)
+- PIB nominal trimestral de Roraima em R\$ milhões (VAB + impostos líquidos sobre produtos)
+- PIB real trimestral em R\$ milhões de 2020 e índice encadeado de volume (base média 2020 = 100)
 - IAET-RR: índice agregado e por bloco setorial, com e sem ajuste sazonal
 - Dashboard interativo com download CSV/XLSX
 - Cobertura: 2020T1–2025T4 (2020–2023 com benchmark oficial; 2024–2025 preliminar)
@@ -128,7 +128,7 @@ tempdisagg::td(benchmark ~ 0 + indicador, conversion = "mean")
 
 > ⚠️ **Detalhes de implementação críticos**  
 > (a) **Fórmula sem intercepto obrigatória**: `~ 0 + indicador`. A forma com intercepto `~ indicador` gera uma matriz RHS que o algoritmo Denton rejeita.  
-> (b) **`conversion = "mean"` obrigatório para índices**: a média dos quatro trimestres deve igualar o benchmark anual, não a soma. A opção `"sum"` seria correta para variáveis de fluxo (e.g., VAB nominal em R$ milhões).
+> (b) **`conversion = "mean"` obrigatório para índices**: a média dos quatro trimestres deve igualar o benchmark anual, não a soma. A opção `"sum"` seria correta para variáveis de fluxo (e.g., VAB nominal em R\$ milhões).
 
 ### Decisão sobre o benchmark: volume, não nominal
 
@@ -235,16 +235,16 @@ O IBGE mensura o produto de AAPP nas Contas Regionais pela **abordagem de custo*
 | Esfera | Fonte | Endpoint / Arquivo | Cobertura |
 |---|---|---|---|
 | Federal (SIAPE) | Portal da Transparência — arquivos mensais .zip | Download manual; cache: `data/raw/siape_rr_mensal.csv` | 2020–2026T1 |
-| Estadual | SICONFI/STN — RREO Anexo 06, `id_ente=14` | `apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo` | 2020–2026T1 (37 bimestres) |
+| Estadual | FIPLAN / SEPLAN-RR — FIP 855 | Arquivos `.xls` manuais em `bases_baixadas_manualmente/dados_folha_rr_fip855/`; cache: `data/raw/folha_estadual_rr_mensal.csv` | 2020–2025 (72 meses) |
 | Municipal (15 municípios) | SICONFI/STN — RREO Anexo 06 | Mesmo endpoint, `id_ente` = código IBGE de cada município | 30–37 bimestres por município |
 
 #### Escopo da variável observada
 
-No estado e nos municípios, a série é extraída do SICONFI/STN, **RREO Anexo 06**, conta `RREO6PessoalEEncargosSociais`, coluna **DESPESAS LIQUIDADAS**. Trata-se da melhor série padronizada, pública e recorrente disponível no projeto para acompanhar a despesa com pessoal da Administração Pública subnacional em Roraima.
+No componente estadual, a série é extraída do **FIP 855 — Resumo Mensal da Despesa Liquidada** do FIPLAN/SEPLAN-RR e construída como a soma das rubricas `3190.1100` (Vencimentos e Vantagens Fixas - Pessoal Civil), `3190.1200` (Vencimentos e Vantagens Fixas - Pessoal Militar) e `3190.1300` (Obrigações Patronais). Nos municípios, a série segue extraída do SICONFI/STN, **RREO Anexo 06**, conta `RREO6PessoalEEncargosSociais`, coluna **DESPESAS LIQUIDADAS**.
 
-#### Conversão bimestral → trimestral
+#### Conversão mensal e bimestral → trimestral
 
-O RREO é publicado em bimestres acumulados. O procedimento de conversão é:
+No estado, a série do FIPLAN já é mensal, então a conversão consiste em agregar os meses por trimestre. Nos municípios, o RREO é publicado em bimestres acumulados. O procedimento municipal de conversão é:
 
 1. Diferença entre bimestres consecutivos → valor incremental por bimestre (2 meses).
 2. Distribuição uniforme entre os 2 meses do bimestre → valor mensal estimado.
@@ -267,9 +267,9 @@ IPCA nacional: SIDRA Tab. 1737, variável 2266 (variação mensal). O script con
 
 **Peso no VAB de 2020: 11,63%.** O bloco industrial é composto por três subsetores com pesos internos derivados do VAB nominal de 2020 das Contas Regionais.
 
-| Subsetor | VAB 2020 (R$ mi) | Peso interno | Peso no total |
+| Subsetor | VAB 2020 (R\$ mi) | Peso interno | Peso no total |
 |---|---|---|---|
-| SIUP (energia, gás, água, esgoto) | R$ 799 mi | 47,4% | 5,51% |
+| SIUP (energia, gás, água, esgoto) | R\$ 799 mi | 47,4% | 5,51% |
 | Construção civil | — | 42,8% | 4,98% |
 | Indústria de Transformação | — | 9,9% | 1,15% |
 
@@ -413,7 +413,7 @@ $$\text{Deflator anual} = \frac{\text{Índice nominal total (CR)}}{\text{Índice
 e desagregado para frequência trimestral via Denton-Cholette (`conversion = "sum"`), usando o IPCA como proxy trimestral do deflator.
 
 > ✅ **Fechamento anual exato com as Contas Regionais em 2020–2023**  
-> Após reforma do script (uso do deflator implícito direto do VAB total em vez de média ponderada de deflatores setoriais), o VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R$ mi em todos os anos com benchmark.
+> Após reforma do script (uso do deflator implícito direto do VAB total em vez de média ponderada de deflatores setoriais), o VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R\$ mi em todos os anos com benchmark.
 
 ### VAB Nominal Setorial — `05h_vab_nominal_setorial.R`
 
@@ -423,7 +423,7 @@ Para os 4 blocos analíticos (Agropecuária, AAPP, Indústria, Serviços), o VAB
 2. Índice anual de volume por bloco (agregado com pesos de 2020 dentro do bloco).
 3. Deflator anual implícito por bloco: índice nominal / índice real.
 4. Denton-Cholette (`conversion = "mean"`) para o deflator trimestral, usando IPCA como proxy.
-5. Denton-Cholette (`conversion = "sum"`) para distribuir o VAB nominal anual em R$ milhões.
+5. Denton-Cholette (`conversion = "sum"`) para distribuir o VAB nominal anual em R\$ milhões.
 
 ### Impostos Líquidos sobre Produtos (ILP) — `05g_pib_nominal.R`
 
@@ -439,7 +439,7 @@ $$\text{PIB nominal}_t = \text{VAB nominal}_t + \text{ILP}_t$$
 
 ## 9. PIB Real Trimestral
 
-O PIB real trimestral de Roraima é gerado pelo script `05i_pib_real.R` em R$ milhões de 2020, com ancoragem ao benchmark anual oficial do PIB real das Contas Regionais em 2020–2023.
+O PIB real trimestral de Roraima é gerado pelo script `05i_pib_real.R` em R\$ milhões de 2020, com ancoragem ao benchmark anual oficial do PIB real das Contas Regionais em 2020–2023.
 
 $$\text{PIB real}_t = \frac{\text{Índice PIB real}_t}{100} \times \text{PIB real médio anual}_{2020}$$
 
@@ -461,7 +461,7 @@ O índice do PIB real é construído como o IAET-RR, mas com benchmark das **tax
 
 ### VAB nominal total vs. Contas Regionais
 
-| Ano | Projeto (R$ mi) | CR IBGE (R$ mi) | Diferença |
+| Ano | Projeto (R\$ mi) | CR IBGE (R\$ mi) | Diferença |
 |---|---|---|---|
 | 2020 | 14.524,24 | 14.524,24 | −0,000001 ✓ |
 | 2021 | 16.309,70 | 16.309,70 | 0,000000 ✓ |
