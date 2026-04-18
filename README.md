@@ -195,12 +195,12 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 |---|---|---|---|
 | Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual FIPLAN + municipal) | Portal da Transparência / SEPLAN-RR FIPLAN / STN–SICONFI |
 | Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE–CAGED |
-| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA) + pecuária trimestral observada (abate de bovinos + ovos), com calibração estrutural anual específica para os subsetores da agropecuária e exigência de cobertura trimestral completa no período operacional | IBGE/SIDRA + parâmetro interno |
+| Agropecuária | 8,87% | Produção física lavouras (PAM definitivo / LSPA leitura mais recente disponível) + pecuária trimestral observada (abate de bovinos + ovos), com calibração estrutural anual e cobertura trimestral completa exigida | IBGE/SIDRA + parâmetro interno |
 | Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | IBGE – CR |
 | Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE–CAGED |
 | Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL (SAMP) |
 | Construção | 4,89% | Estoque acumulado de emprego CAGED F | MTE–CAGED |
-| Atividades financeiras e de seguros | 2,78% | Depósitos Estban BCB (60%) + concessões de crédito BCB (40%) | BCB (Estban / SCR) |
+| Atividades financeiras e de seguros | 2,78% | Depósitos Estban BCB (60%) + carteira de crédito ativa BCB/SCR (40%) | BCB (Estban / SCR) |
 | Transporte, armazenagem e correio | 1,92% | Passageiros ANAC (55%) + diesel ANP (45%) | ANAC / ANP |
 | Indústrias de transformação | 1,31% | Energia industrial ANEEL (55%) + emprego CAGED C (45%) | ANEEL (SAMP) / MTE–CAGED |
 | Informação e comunicação | 1,01% | Emprego em TI/telecom (CAGED J) | MTE–CAGED |
@@ -329,7 +329,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 | MTE / CAGED | Microdados de emprego formal por seção CNAE (UF=14) | FTP MTE `ftp.mtps.gov.br` — download automático (~2,5 GB) |
 | ANAC | Passageiros e carga aérea — aeroporto de Boa Vista (SBBV) | Download manual de ZIPs mensais; `bases_baixadas_manualmente/microdados_anac_mensal_.../` |
 | ANP | Vendas de diesel por UF | Download automático — CSV dados abertos `gov.br/anp` |
-| BCB Estban | Depósitos bancários totais em RR (verbete 160) | Download manual de ZIPs; `bases_baixadas_manualmente/dados_estban_bcb/` |
+| BCB Estban | Depósitos bancários em RR — poupança (verbete 420) + depósitos a prazo (verbete 432) | Download manual de ZIPs; `bases_baixadas_manualmente/dados_estban_bcb/` |
 | BCB SCR | Carteira de crédito ativa em RR (dados abertos agregados) | Download manual de ZIPs; `bases_baixadas_manualmente/dados_bcb_src_2020_2025/` |
 | SEFAZ-RR | ICMS estadual mensal (proxy do ILP) e ICMS por atividade trimestral (componente do bloco Comércio) | Download manual; `data/processed/icms_sefaz_rr_mensal.csv` e `icms_sefaz_rr_trimestral.csv` |
 
