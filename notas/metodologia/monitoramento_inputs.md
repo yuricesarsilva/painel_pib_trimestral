@@ -804,29 +804,29 @@ Output gerado: `data/output/validacao_relatorio.csv`.
 
 ## `R/05e_exportacao.R`
 
-Fonte dos inputs: `data/output/indice_geral_rr.csv`, `data/output/indice_geral_rr_sa.csv`, `data/output/fatores_sazonais.csv` e `logs/fontes_utilizadas.csv`.
+Fonte dos inputs: `data/output/indice_geral_rr.csv`, `data/output/indice_geral_rr_sa.csv`, `data/output/fatores_sazonais.csv`, `logs/fontes_utilizadas.csv` e `config/release.R`.
 
-Especificação exata no código: prepara abas de série geral, componentes, dessazonalizado, fatores sazonais e metadados.
+Especificação exata no código: lê `trimestre_publicado` de `config/release.R` imediatamente após carregar as séries e aplica um filtro — `df[df$ano < ano_pub | (df$ano == ano_pub & df$trimestre <= trim_pub), ]` — sobre as séries `nsa`, `sa` e `fat` antes de montar qualquer arquivo de saída pública.
 
 Periodicidade da base: trimestral na maior parte das séries exportadas, com anexos anuais e metadados.
 
-Periodicidade operacional atual: trimestral na publicação principal.
+Periodicidade operacional atual: trimestral na publicação principal, filtrada ao `trimestre_publicado` definido em `config/release.R`.
 
-O que é feito com ela: monta a planilha final de publicação e os CSVs resumidos.
+O que é feito com ela: monta a planilha final de publicação e os CSVs resumidos, garantindo que nenhum dado além do trimestre oficialmente publicado saia nos arquivos de distribuição externa.
 
 Output gerado: `data/output/IAET_RR_series.xlsx`, `data/output/IAET_RR_geral.csv`, `data/output/IAET_RR_componentes.csv` e `data/output/IAET_RR_dessazonalizado.csv`.
 
 ## `R/run_all.R`
 
-Fonte dos inputs: não possui input de dados próprio; apenas chama os demais scripts em ordem.
+Fonte dos inputs: `config/release.R`; demais inputs chegam indiretamente via os scripts chamados em sequência.
 
-Especificação exata no código: sequência obrigatória de execução das etapas do pipeline.
+Especificação exata no código: carrega `config/release.R` logo após a verificação do diretório de trabalho, exibe `trimestre_publicado` no cabeçalho e no resumo final, e executa a sequência obrigatória de 14 etapas do pipeline.
 
 Periodicidade da base: não se aplica; é um orquestrador.
 
 Periodicidade operacional atual: não se aplica.
 
-O que é feito com ela: orquestra a execução completa do projeto. No estado atual do pipeline, a execução completa depende de `pdftools` para a leitura dos PDFs de ICMS por atividade em `R/00b_icms_sefaz_atividade.R`.
+O que é feito com ela: orquestra a execução completa do projeto. No estado atual do pipeline, a execução completa depende de `pdftools` para a leitura dos PDFs de ICMS por atividade em `R/00b_icms_sefaz_atividade.R`. O `trimestre_publicado` lido do config determina o filtro aplicado pela exportação (`05e_exportacao.R`).
 
 Output gerado: não gera output próprio.
 
@@ -844,6 +844,52 @@ O que é feito com ela: fornece infraestrutura comum para os demais scripts.
 
 Output gerado: não gera output próprio.
 
+## `config/release.R`
+
+Fonte dos inputs: não possui input de dados; é um arquivo de configuração editado pelo script `06_avanca_publicacao.R` (nunca manualmente fora desse fluxo).
+
+Especificação exata no código: define a variável `trimestre_publicado <- "2025T4"`. Lido por `run_all.R`, `05e_exportacao.R` e `06_coleta_fontes.R`.
+
+Periodicidade da base: não se aplica; é um parâmetro de publicação.
+
+Periodicidade operacional atual: atualizado uma vez por trimestre, via `06_avanca_publicacao.R`, após o checklist de publicação ser concluído.
+
+O que é feito com ela: define o gate de publicação. A exportação pública (`05e_exportacao.R`) filtra os outputs até esse trimestre.
+
+Output gerado: não gera output próprio.
+
+## `R/06_coleta_fontes.R`
+
+Fonte dos inputs: `config/release.R` (determina o trimestre alvo); caches locais de cada fonte para checar cobertura atual.
+
+Especificação exata no código: calcula `trimestre_alvo` como o próximo após `trimestre_publicado`. Executa sequencialmente:
+- SIDRA: PAM (5457), LSPA (6588), abate bovino (1092), ovos (7524), IPCA (1737) e PIB anual (5938) com `atualizar_sidra <- TRUE` via `sidrar`.
+- ANP: download inline do CSV de dados abertos (vendas de diesel por UF), filtrando `UF = RR`, com cache em `data/raw/anp/anp_diesel_rr_mensal.csv`.
+- ANEEL: apaga `data/raw/aneel/aneel_energia_rr_{ano_atual}.csv`, `data/raw/aneel/aneel_energia_rr_{ano_alvo}.csv` e `data/raw/aneel/aneel_energia_rr.csv` para forçar re-download no próximo `run_all.R`.
+- Relatório de cobertura: detecta o fim de cada cache (via funções `max_sidra_trim`, `max_aneel_cob`, `max_caged_cob`, `max_ano_mes`, `max_pam_cob`, `max_lspa_cob`) e imprime uma tabela comparando a cobertura atual com o trimestre alvo, sinalizando o que ainda falta.
+
+Periodicidade da base: executado no início de cada ciclo trimestral de atualização.
+
+Periodicidade operacional atual: trimestral, antes de `run_all.R`.
+
+O que é feito com ela: centraliza em um único comando a atualização das fontes automatizáveis e produz um diagnóstico claro do que ainda precisa ser baixado manualmente.
+
+Output gerado: atualiza caches em `data/raw/sidra/`, `data/raw/anp/`; apaga caches ANEEL para forçar re-download; imprime relatório de cobertura no console. Não gera nenhum arquivo de output do pipeline.
+
+## `R/06_avanca_publicacao.R`
+
+Fonte dos inputs: `config/release.R`.
+
+Especificação exata no código: lê `trimestre_publicado`, calcula o próximo trimestre (`proximo`) e o rótulo da tag git (`v{ano}-Q{trim}`). Apresenta checklist de 6 itens via `readline()` (dados conferidos, `run_all.R` sem erros, validações sem alertas críticos, dashboard verificado, informativos aprovados, imprensa comunicada). Só prossegue se todos os itens forem confirmados com `"s"`. Ao final: regrava `config/release.R` com o novo `trimestre_publicado`, executa `git add config/release.R && git commit && git tag`.
+
+Periodicidade da base: não se aplica; é um script interativo de publicação.
+
+Periodicidade operacional atual: uma vez por ciclo trimestral, após inspeção interna dos outputs e comunicação à imprensa.
+
+O que é feito com ela: avança formalmente o gate de publicação do pipeline, garantindo que o avanço só ocorra após confirmação explícita de todos os pré-requisitos.
+
+Output gerado: regrava `config/release.R`; cria commit git e tag (ex: `v2026-Q1`). Não gera output de dados.
+
 ## Observações rápidas
 
 - O monitoramento acima está alinhado ao que o código usa hoje, não ao desenho metodológico futuro.
@@ -859,7 +905,7 @@ A tabela abaixo mostra o estado atual de cada input e o que falta para rodar `20
 |---|---|---:|---|
 | PAM temporárias | anual | 2024 | Nada. Insumo estrutural anual; cobre o período. |
 | PAM permanentes | anual | 2024 | Nada. Insumo estrutural anual; cobre o período. |
-| LSPA | mensal (mês mais recente por ano) | 2026M02 (fev/2026, mais recente no cache) | Para 2025: usa dez/2025 (definitivo). Para 2026: usa o mês mais recente disponível como estimativa provisória da safra anual. Atualizar cache com `atualizar_sidra <- TRUE` para pegar leituras mais recentes. |
+| LSPA | mensal (mês mais recente por ano) | 2026M03 (mar/2026, mais recente no cache) | Para 2025: usa dez/2025 (definitivo). Para 2026: usa o mês mais recente disponível como estimativa provisória da safra anual. Atualizar cache com `atualizar_sidra <- TRUE` para pegar leituras mais recentes. |
 | Abate bovino | trimestral | 2025T4 | `2026T1` completo. |
 | Ovos | trimestral | 2025T4 | `2026T1` completo. |
 | Calibração estrutural agro | anual | 2023 | Nada. É parâmetro de pesos fixo; não precisa cobrir `2026`. |
@@ -899,7 +945,7 @@ Dado que o pipeline já roda `2025T4`, os únicos gargalos para produzir `2026T1
 **Bases que já cobrem `2026T1` e não precisam de ação:**
 
 - `PAM` (temporárias e permanentes)
-- `LSPA` — usa mês mais recente disponível; para 2026 usará a leitura mais atual do cache (atualizar com `atualizar_sidra <- TRUE`)
+- `LSPA` — usa mês mais recente disponível; para 2026 usa mar/2026 (cache atualizado em 2026-04-18 com `atualizar_sidra <- TRUE`)
 - `IPCA`
 - `ICMS por atividade SEFAZ`
 - `Contas Regionais RR` (nominal e volume)
