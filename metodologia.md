@@ -2,9 +2,10 @@
 ### Indicador de Atividade Econômica Trimestral — IAET-RR
 
 **Autoria:** Yuri Cesar de Lima e Silva · SEPLAN/RR — CGEES/DIEAS  
-**Versão:** 1.0 · Abril/2026  
+**Versão:** 1.1 · Abril/2026  
 **Cobertura:** 2020T1 – 2025T4  
-**Benchmark:** Contas Regionais IBGE 2020–2023
+**Benchmark:** Contas Regionais IBGE 2020–2023  
+**Trimestre publicado:** 2025T4 (gate em `config/release.R`)
 
 ---
 
@@ -25,8 +26,9 @@
 9. [PIB Real Trimestral](#9-pib-real-trimestral)
 10. [Resultados de Validação](#10-resultados-de-validação)
 11. [Qualidade das Proxies e Cobertura](#11-qualidade-das-proxies-e-cobertura)
-12. [Limitações e Agenda de Revisão](#12-limitações-e-agenda-de-revisão)
-13. [Referências](#13-referências)
+12. [Ciclo de Manutenção Trimestral](#12-ciclo-de-manutenção-trimestral)
+13. [Limitações e Agenda de Revisão](#13-limitações-e-agenda-de-revisão)
+14. [Referências](#14-referências)
 
 ---
 
@@ -53,17 +55,22 @@ A solução adotada é construir um **índice encadeado de volume sem unidade mo
 
 ## 2. Arquitetura do Sistema
 
-O pipeline é composto por cinco fases sequenciais, implementadas em R. A estrutura garante reprodutibilidade total: dado o mesmo conjunto de entradas, o pipeline reaplica todo o processamento e gera as mesmas saídas.
+O pipeline é composto por seis fases sequenciais, implementadas em R. A estrutura garante reprodutibilidade total: dado o mesmo conjunto de entradas, o pipeline reaplica todo o processamento e gera as mesmas saídas.
 
-**Fase 1: Agropecuária → Fase 2: Adm. Pública → Fase 3: Indústria → Fase 4: Serviços → Fase 5: Agregação, Ajuste Sazonal e Publicação**
+**Fase 1: Agropecuária → Fase 2: Adm. Pública → Fase 3: Indústria → Fase 4: Serviços → Fase 5: Agregação, Ajuste Sazonal e Publicação → Fase 6: Manutenção Trimestral**
 
-Cada fase produz um índice setorial com base média 2020 = 100, ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette. A Fase 5 agrega os quatro blocos setoriais com pesos Laspeyres de 2020, produz o índice geral, aplica X-13ARIMA-SEATS e deriva o PIB nominal e real.
+Cada fase produz um índice setorial com base média 2020 = 100, ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette. A Fase 5 agrega os quatro blocos setoriais com pesos Laspeyres de 2020, produz o índice geral, aplica X-13ARIMA-SEATS e deriva o PIB nominal e real. A Fase 6 gerencia o ciclo trimestral de atualização de dados e o gate de publicação oficial.
+
+### Gate de publicação — `config/release.R`
+
+A variável `trimestre_publicado` em `config/release.R` controla qual trimestre está oficialmente publicado. O script `05e_exportacao.R` lê este parâmetro e filtra todas as saídas públicas (Excel e CSVs) até esse limite. O avanço do trimestre publicado só ocorre via `06_avanca_publicacao.R`, após checklist interativo confirmado.
 
 ### Scripts do pipeline
 
 | Script | Fase | Saída principal |
 |---|---|---|
 | `00_dados_referencia.R` | Pré-processamento | Pesos nominais e benchmarks de volume (CR IBGE) |
+| `00b_icms_sefaz_atividade.R` | Pré-processamento | `icms_sefaz_rr_trimestral.csv` (shares SEFAZ-RR) |
 | `01_agropecuaria.R` | 1 | `indice_agropecuaria.csv` |
 | `02_adm_publica.R` | 2 | `indice_adm_publica.csv` |
 | `03_industria.R` | 3 | `indice_industria.csv` |
@@ -72,11 +79,13 @@ Cada fase produz um índice setorial com base média 2020 = 100, ancorado anualm
 | `05b_sensibilidade_pesos.R` | 5.2 | Grid de pesos ótimos (504 combinações) |
 | `05c_ajuste_sazonal.R` | 5.3 | `indice_geral_rr_sa.csv`, `fatores_sazonais.csv` |
 | `05d_validacao.R` | 5.4 | `validacao_relatorio.csv` |
-| `05e_exportacao.R` | 5.5 | `IAET_RR_series.xlsx` |
+| `05e_exportacao.R` | 5.5 | `IAET_RR_series.xlsx` (filtrado por `trimestre_publicado`) |
 | `05f_vab_nominal.R` | 5.6 | `indice_nominal_rr.csv` |
 | `05g_pib_nominal.R` | 5.7 | `pib_nominal_rr.csv` |
 | `05h_vab_nominal_setorial.R` | 5.8 | `vab_nominal_setorial_rr.csv` |
 | `05i_pib_real.R` | 5.9 | `pib_real_rr.csv`, `pib_real_anual_rr.csv` |
+| `06_coleta_fontes.R` | 6 | Atualiza caches SIDRA/ANP/ANEEL; relatório de cobertura |
+| `06_avanca_publicacao.R` | 6 | Avança `config/release.R`; commit + tag git |
 
 ---
 
@@ -139,7 +148,11 @@ tempdisagg::td(benchmark ~ 0 + indicador, conversion = "mean")
 
 ### Tratamento de anos sem benchmark
 
-Para os anos 2024 e 2025 (sem Contas Regionais publicadas), o índice agregado usa **extrapolação por tendência geométrica** com base no biênio 2022–2023. Os índices setoriais de AAPP e Agropecuária usam taxas anuais estimadas (AAPP: +20%/ano; Agropecuária: +12%/ano). Esses valores serão substituídos quando as CR 2024 forem divulgadas pelo IBGE (previsão: outubro de 2026).
+Para os anos 2024 e 2025 (sem Contas Regionais publicadas), a função `estender_benchmark()` em `utils.R` calcula a **taxa de crescimento geométrica dos últimos 3 anos disponíveis** da série de volume das CR e projeta o benchmark para os anos extras. O cálculo é:
+
+$$\hat{B}_{j} = B_{\text{último}} \times (1 + \hat{g})^{j - \text{último}}, \qquad \hat{g} = \left(\frac{B_{\text{último}}}{B_{\text{último}-n+1}}\right)^{1/(n-1)} - 1$$
+
+onde $n$ é o número de anos de referência (padrão: 3) e $\hat{g}$ é a taxa geométrica anual implícita. O log de execução registra a taxa calculada por setor. Esses valores serão substituídos quando as CR 2024 forem divulgadas pelo IBGE (previsão: outubro de 2026).
 
 ---
 
@@ -169,9 +182,10 @@ No estado atual do pipeline, o script usa os caches locais do SIDRA por padrão 
 | Situação | Fonte | SIDRA | Critério |
 |---|---|---|---|
 | Ano com PAM disponível | Produção Agrícola Municipal (PAM) | Tab. 5457 (c782) | Dado consolidado definitivo |
-| Ano corrente sem PAM | Levantamento Sistemático (LSPA — dezembro) | Tab. 6588 (c48) | Estimativa provisória; substituída quando PAM for publicada |
+| Ano corrente sem PAM | Levantamento Sistemático (LSPA — leitura mais recente disponível) | Tab. 6588 (c48) | Estimativa provisória; substituída automaticamente quando PAM for publicada |
 
-> ℹ️ A LSPA não é um fluxo mensal — ela publica revisões mensais da *projeção anual* de produção. A desagregação intra-anual é sempre derivada dos coeficientes de colheita, tanto para PAM quanto para LSPA.
+> ℹ️ **Como a LSPA é usada no pipeline**  
+> A LSPA não é um fluxo mensal — ela publica revisões mensais da *projeção anual* de produção. Para cada combinação (produto, ano), o script seleciona o mês mais recente disponível no cache (`slice_max(mes_num)`). Se dezembro já foi publicado, usa-se o fechamento definitivo; se o ano ainda está em curso, usa-se o mês mais recente como melhor estimativa provisória da safra anual. O log de execução registra qual mês está sendo usado para cada ano ("fechamento de dez (definitivo)" ou "provisório — leitura de [mês]"). A desagregação intra-anual é sempre derivada dos coeficientes de colheita, tanto para PAM quanto para LSPA.
 
 **Método de desagregação intra-anual:**
 
@@ -256,10 +270,12 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
 
 IPCA nacional: SIDRA Tab. 1737, variável 2266 (variação mensal). O script constrói o índice encadeado de preços com base jan/2020 = 1.
 
-> ✅ **Validação perfeita contra Contas Regionais (2021–2023)**  
-> 2021: +9,7% (projeto) = +9,7% (CR IBGE) ✓  
-> 2022: +25,6% = +25,6% ✓  
-> 2023: +18,0% = +18,0% ✓
+> ✅ **Validação perfeita contra Contas Regionais — índice de volume (2021–2023)**  
+> 2021: +3,19% (projeto) = +3,19% (CR IBGE volume) ✓  
+> 2022: +4,12% = +4,12% ✓  
+> 2023: +2,37% = +2,37% ✓  
+>
+> *Após a reforma metodológica de 2026-04-13, o benchmark do Denton passou a usar o índice de volume das CR (não o VAB nominal). As taxas de crescimento refletem crescimento real da folha deflacionada.*
 
 ---
 
@@ -341,10 +357,14 @@ Proxy composta. Pesos ad hoc originais (70% concessões / 30% depósitos) foram 
 
 | Componente | Fonte | Tipo | Peso adotado |
 |---|---|---|---|
-| Concessões de crédito (deflacionado) | BCB — Nota de Crédito por UF (SCR) | Fluxo deflacionado | **40%** |
-| Depósitos bancários (deflacionado) | BCB Estban — verbete 160 | Estoque deflacionado | **60%** |
+| Carteira de crédito ativa (deflacionada) | BCB SCR — dados abertos agregados por UF | Estoque deflacionado | **40%** |
+| Depósitos bancários (deflacionado) | BCB Estban — verbetes 420 (poupança) + 432 (CDB/RDB) | Estoque deflacionado | **60%** |
 
-Ambas as séries são deflacionadas pelo IPCA nacional. Concessões recebem suavização por média móvel de 3 meses (alta volatilidade mensal).
+> ⚠️ **Verbetes do Estban:** a variável usada é a soma dos verbetes 420 (depósitos de poupança) e 432 (depósitos a prazo). O verbete 160 — que aparece em descrições anteriores — refere-se a operações de crédito (ativo bancário), não a depósitos.
+>
+> **BCB SCR:** a série usada é `carteira_ativa` (estoque total de crédito em RR), extraída dos ZIPs de dados agregados do SCR. Concessões (fluxo) não estão disponíveis neste conjunto de dados na granularidade necessária; o estoque de crédito é usado como proxy de atividade financeira, em simetria ao uso de depósitos no Estban.
+
+Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe suavização por média móvel de 3 meses (alta volatilidade mensal).
 
 #### Atividades Imobiliárias (7,68% do VAB 2023)
 
@@ -522,7 +542,53 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 
 ---
 
-## 12. Limitações e Agenda de Revisão
+## 12. Ciclo de Manutenção Trimestral
+
+A Fase 6 do pipeline formaliza a rotina de atualização trimestral e separa explicitamente *disponibilidade de dados* de *publicação oficial*. O trimestre publicado só avança quando o responsável técnico confirmar um checklist de seis itens — garantindo que nenhum dado preliminar seja divulgado como oficial sem comunicação prévia à imprensa e aprovação interna.
+
+### Fluxo trimestral
+
+```
+1. source("R/06_coleta_fontes.R")
+   → Atualiza SIDRA, ANP e ANEEL automaticamente.
+   → Imprime relatório de cobertura: mostra o que ainda falta por fonte.
+
+2. [Manual] Baixar SIAPE, FIPLAN, ANAC, BCB Estban/SCR e ICMS SEFAZ-RR.
+   → Colocar nas pastas bases_baixadas_manualmente/ corretas.
+
+3. source("R/run_all.R")
+   → Pipeline completo. Exportação filtrada até o trimestre_publicado atual.
+   → Usar para inspeção interna, informativos e rascunho da nota técnica.
+
+4. [Preparação] Informativos internos + comunicação à imprensa.
+
+5. source("R/06_avanca_publicacao.R")
+   → Checklist interativo (6 itens). Avança config/release.R. Commit + tag git.
+
+6. source("R/run_all.R")
+   → Agora exporta oficialmente o novo trimestre.
+```
+
+### Gate de publicação — detalhes técnicos
+
+`config/release.R` define `trimestre_publicado <- "AAAATQ"`. Ao avançar de `2025T4` para `2026T1`, o script `06_avanca_publicacao.R`:
+
+1. Reescreve `config/release.R` com o novo valor.
+2. Executa `git add config/release.R && git commit -m "Avança publicação para 2026T1"`.
+3. Cria a tag git `v2026-Q1` (registrada no histórico do repositório).
+
+O histórico de avanços fica versionado no git, garantindo rastreabilidade de qual trimestre estava publicado em cada data.
+
+### Fontes automatizáveis vs. manuais
+
+| Tipo | Fontes | Comando |
+|---|---|---|
+| Automatizável | SIDRA (PAM, LSPA, abate, ovos, IPCA, PIB), ANP diesel, ANEEL | `06_coleta_fontes.R` |
+| Manual | SIAPE, FIPLAN estadual, ANAC Boa Vista, BCB Estban, BCB SCR, ICMS SEFAZ-RR | Download nas pastas `bases_baixadas_manualmente/` |
+
+---
+
+## 13. Limitações e Agenda de Revisão
 
 ### Limitações estruturais
 
@@ -543,7 +609,7 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 
 ---
 
-## 13. Referências
+## 14. Referências
 
 - Cholette, P. A.; Dagum, E. B. (2006). *Benchmarking, Temporal Distribution, and Reconciliation Methods for Time Series.* Springer.
 - Denton, F. T. (1971). Adjustment of monthly or quarterly series to annual totals: An approach based on quadratic minimization. *Journal of the American Statistical Association*, 66(333), 99–102.
@@ -559,4 +625,4 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 *Secretaria de Planejamento e Orçamento de Roraima — SEPLAN/RR*  
 *Coordenação-Geral de Estudos Econômicos e Sociais — CGEES · Divisão de Estudos e Análises Sociais — DIEAS*  
 *Yuri Cesar de Lima e Silva · Coordenador da Equipe do PIB do Estado de Roraima*  
-*Versão 1.0 · Abril de 2026*
+*Versão 1.1 · Abril de 2026*
