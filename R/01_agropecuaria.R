@@ -10,9 +10,10 @@
 #            definitivo + LSPA dezembro para ano corrente);
 #            Etapa 1.3 — pecuária (abate, leite, ovos via
 #            SIDRA); Etapa 1.4 — índice agregado com Denton-
-#            Cholette contra VAB agropecuário anual do IBGE.
+#            Cholette contra o índice anual de volume da
+#            agropecuária nas Contas Regionais do IBGE.
 # Entrada : SIDRA IBGE — tabs 5457, 6588, 3939, 1092, 74, 915;
-#            data/processed/contas_regionais_RR_serie.csv
+#            data/processed/contas_regionais_RR_volume.csv
 # Saída   : data/processed/cobertura_lspa_pam.csv
 #            data/processed/coef_sazonais_colheita.csv
 #            data/processed/serie_lavouras_trimestral.csv
@@ -75,7 +76,6 @@ arq_pecuaria  <- file.path(dir_processed, "serie_pecuaria_trimestral.csv")
 # Se `arq_indice` já existir no ambiente (ex: caminho alternativo para teste A/B),
 # o valor externo é preservado.
 if (!exists("arq_indice")) arq_indice <- file.path(dir_output, "indice_agropecuaria.csv")
-arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 arq_vol_serie <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 
 # --- Culturas de interesse ----------------------------------
@@ -126,9 +126,6 @@ padroes_lspa <- list(
 
 # Ordem canônica das culturas (igual ao calendário de colheita)
 culturas_ord <- names(padroes_lspa)
-
-# Anos para cálculo dos pesos Laspeyres
-anos_peso <- 2018:2022
 
 # --- Função: download idempotente via SIDRA -----------------
 
@@ -195,7 +192,27 @@ pam_vbp <- pam %>% filter(grepl("Valor", variavel, ignore.case = TRUE))
 message(sprintf("PAM: %d obs. quantidade | %d obs. VBP | %d produtos distintos",
                 nrow(pam_qtd), nrow(pam_vbp), length(unique(pam$produto))))
 
-# --- Cobertura: VBP médio 2018–2022 -------------------------
+# Janela móvel para pesos Laspeyres: últimos 4 anos disponíveis na PAM.
+# Mantém os pesos aderentes à estrutura mais recente observada pelo IBGE,
+# sem depender de um único ano potencialmente atípico.
+anos_pam_disponiveis <- sort(unique(pam_vbp$ano))
+if (length(anos_pam_disponiveis) == 0) {
+  stop("PAM VBP sem anos válidos. Verificar extração da tabela 5457.")
+}
+if (length(anos_pam_disponiveis) >= 4) {
+  anos_peso <- tail(anos_pam_disponiveis, 4)
+} else {
+  anos_peso <- anos_pam_disponiveis
+  warning(sprintf(
+    "PAM com apenas %d ano(s) disponível(is) para pesos. Usando janela reduzida: %s",
+    length(anos_peso),
+    paste(anos_peso, collapse = ", ")
+  ))
+}
+message(sprintf("Pesos Laspeyres das lavouras: usando PAM %d-%d.",
+                min(anos_peso), max(anos_peso)))
+
+# --- Cobertura: VBP médio na janela móvel da PAM ------------
 
 vbp_all <- pam_vbp %>%
   filter(ano %in% anos_peso) %>%
@@ -385,7 +402,7 @@ qtd_total <- bind_rows(qtd_pam, qtd_lspa) %>% arrange(nome_curto, ano)
 message(sprintf("Total de registros de produção: %d (culturas × anos)",
                 nrow(qtd_total)))
 
-# --- 1.2c. Pesos Laspeyres: VBP médio 2018–2022 -------------
+# --- 1.2c. Pesos Laspeyres: VBP médio na janela móvel -------
 
 vbp_pesos <- pam_vbp %>%
   filter(produto %in% culturas_pam, ano %in% anos_peso) %>%
@@ -395,7 +412,8 @@ vbp_pesos <- pam_vbp %>%
   summarise(vbp_medio = mean(valor, na.rm = TRUE), .groups = "drop") %>%
   mutate(peso = vbp_medio / sum(vbp_medio, na.rm = TRUE))
 
-cat("\nPesos Laspeyres (VBP médio 2018–2022):\n")
+cat(sprintf("\nPesos Laspeyres (VBP médio %d–%d):\n",
+            min(anos_peso), max(anos_peso)))
 for (i in seq_len(nrow(vbp_pesos))) {
   cat(sprintf("  %-10s  %.4f  (VBP médio: %.0f mil R$)\n",
               vbp_pesos$nome_curto[i], vbp_pesos$peso[i], vbp_pesos$vbp_medio[i]))

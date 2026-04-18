@@ -77,7 +77,7 @@ A produção anual não tem desagregação mensal publicada. Para obter um fluxo
 2. Aplicar **coeficientes mensais de colheita** como pesos de distribuição ao longo dos 12 meses
    → produção mensal estimada por cultura
 3. Agregar meses em trimestres
-4. Calcular índice de Laspeyres com pesos VBP (médio 2018–2022)
+4. Calcular índice de Laspeyres com pesos VBP dos **4 últimos anos disponíveis da PAM**
 5. Aplicar Denton-Cholette contra o VAB agropecuário anual das Contas Regionais
 
 **Fonte dos coeficientes de colheita — três versões disponíveis (parâmetro `versao_calendario`):**
@@ -116,17 +116,17 @@ linhas separadas por safra. O script agrega por ano antes de usar os valores.
 
 | Cultura | SIDRA PAM/LSPA | Cobertura do VBP total de RR |
 |---|---|---|
-| Soja | Tab. 5457 / 6588 | ~48% |
-| Milho | Tab. 5457 / 6588 | ~11% |
-| Arroz | Tab. 5457 / 6588 | ~11% |
-| Banana | Tab. 5457 / 6588 | ~10% |
-| Mandioca | Tab. 5457 / 6588 | ~5% |
+| Soja | Tab. 5457 / 6588 | ~54,3% |
+| Milho | Tab. 5457 / 6588 | ~10,6% |
+| Arroz | Tab. 5457 / 6588 | ~9,5% |
+| Banana | Tab. 5457 / 6588 | ~8,0% |
+| Mandioca | Tab. 5457 / 6588 | ~4,6% |
 | Laranja | Tab. 5457 / 6588 | ~2% |
-| Feijão | Tab. 5457 / 6588 | ~2% |
-| Cana-de-açúcar | Tab. 5457 / 6588 | ~1% |
+| Feijão | Tab. 5457 / 6588 | <1% |
+| Cana-de-açúcar | Tab. 5457 / 6588 | <1% |
 | Tomate | Tab. 5457 / 6588 | <1% |
 | Cacau | Tab. 5457 / 6588 | <1% |
-| **Total coberto** | | **~90,4% do VBP de lavouras** |
+| **Total coberto** | | **~90,5% do VBP de lavouras** |
 
 #### 1b. Pecuária — disponibilidade verificada para RR
 
@@ -141,9 +141,9 @@ linhas separadas por safra. O script agrega por ano antes de usar os valores.
 animal). A Tab. 3939 (PPM efetivo de rebanhos) não contém a variável de valor necessária para
 ponderação.
 
-**Estrutura de pesos lavouras × pecuária** (VBP médio 2018–2022):
-- Lavouras: **93,0%**
-- Pecuária: **7,0%** (abate + ovos; leite excluído por falta de série para RR)
+**Estrutura de pesos lavouras × pecuária** (janela móvel com os 4 últimos anos disponíveis; no processamento atual, **2021–2024**):
+- Lavouras: **93,2%**
+- Pecuária: **6,8%** (abate + ovos; leite excluído por falta de série para RR)
 
 ---
 
@@ -424,7 +424,7 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 
 **Etapa 1.0 — Análise de cobertura** ✅
 - PAM via `sidrar` Tab. 5457 (c782) — cobre todas as lavouras temp. e perm. numa única consulta
-- Cobertura calculada: **90,4% do VBP total de lavouras** de RR coberto pelas 10 culturas
+- Cobertura calculada: **~90,5% do VBP total de lavouras** de RR coberto pelas 10 culturas, usando a janela corrente `2021–2024`
 - Soja (48%) domina; os demais em ordem: milho, arroz, banana, mandioca, laranja, feijão
 - Arquivo: `data/processed/cobertura_lspa_pam.csv`
 
@@ -440,7 +440,7 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - PAM: Tab. 5457, c782 → cobre RR até 2024
 - LSPA: Tab. 6588, c48, filtrar `grepl("^dezembro", mes_txt)` → provisório para 2025
 - Feijão (3 safras) e milho (2 safras) na LSPA: agregar por ano antes de usar
-- Índice de Laspeyres, pesos VBP PAM médio 2018–2022
+- Índice de Laspeyres com pesos VBP da janela móvel dos 4 últimos anos disponíveis da PAM
 - Arquivo: `data/processed/serie_lavouras_trimestral.csv`
 
 **Etapa 1.3 — Pecuária** ✅
@@ -448,7 +448,7 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Ovos (Tab. 915): disponível para RR, trimestral — incluído
 - Leite (Tab. 74, trimestral): **sem cobertura para RR** — excluído
 - Pesos VBP: Tab. 74 v215 (valor da produção animal)
-- Resultado: lavouras 93%, pecuária 7% no índice agropecuário total
+- Resultado atual: lavouras 93,2%, pecuária 6,8% no índice agropecuário total
 - Arquivo: `data/processed/serie_pecuaria_trimestral.csv`
 
 **Etapa 1.4 — Denton-Cholette** ✅
@@ -768,11 +768,13 @@ Na Fase 5 (agregação), gerar duas versões do índice:
    é substituído. A distribuição intra-anual é feita da mesma forma: coeficientes do Censo 2006.
 2. **LSPA não é fluxo mensal**: a LSPA publica revisões mensais da projeção de produção anual —
    não a produção mês a mês. A desagregação mensal é sempre derivada dos coeficientes do Censo.
-3. **Cobertura das culturas no índice agropecuário**: **90,4%** do VBP total de lavouras de
-   Roraima (calculado via PAM, média 2018–2022). Soja representa 48% do VBP.
+3. **Cobertura das culturas no índice agropecuário**: cerca de **90,5%** do VBP total de
+   lavouras de Roraima, calculado com a janela móvel dos **4 últimos anos disponíveis da PAM**.
+   No processamento atual (`2021–2024`), a soja representa cerca de **54,3%** do VBP total da cesta.
 4. **Leite excluído da pecuária**: a pesquisa de produção de leite (IBGE, Tab. 74) não tem
    cobertura trimestral para Roraima. O índice pecuário cobre abate (Tab. 1092) e ovos (Tab. 915).
-5. **Pesos lavouras × pecuária**: 93% e 7% respectivamente, com base no VBP médio 2018–2022.
+5. **Pesos lavouras × pecuária**: 93,2% e 6,8% respectivamente na configuração atual, com base na
+   janela móvel dos **4 últimos anos disponíveis** nas bases anuais.
    Leite excluído não distorce — seu peso seria incorporado via ponderação Laspeyres com zero.
 6. **Denton-Cholette — fórmula sem intercepto obrigatória**: `td(bench ~ 0 + indicador)`. A
    fórmula com intercepto (`~ indicador`) cria matriz RHS que o algoritmo Denton rejeita. O

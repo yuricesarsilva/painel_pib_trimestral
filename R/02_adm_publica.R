@@ -7,13 +7,13 @@
 #   Etapa 2.1 — Folha federal (SIAPE): obrigatória, via arquivos
 #               manuais do Portal da Transparência processados localmente.
 #               Sem SIAPE observado, o script para com erro explícito.
-#   Etapa 2.2 — Folha estadual (elemento 31 — pessoal ativo):
+#   Etapa 2.2 — Folha estadual:
 #               SICONFI/STN — RREO Anexo 06, governo do estado de RR.
 #   Etapa 2.3 — Folha municipal: SICONFI/STN — RREO Anexo 06,
-#               todos os 15 municípios de RR, elemento pessoal.
-#   Etapa 2.4 — Série de volume, Denton-Cholette e validação.
+#               todos os 15 municípios de RR.
+#   Etapa 2.4 — Série real anual, Denton-Cholette e validação.
 # Entrada : API SICONFI/STN (pública, sem autenticação)
-#            data/processed/contas_regionais_RR_serie.csv
+#            data/processed/contas_regionais_RR_volume.csv
 # Saída   : data/raw/folha_estadual_rr_mensal.csv
 #            data/raw/folha_municipal_rr.csv
 #            data/output/indice_adm_publica.csv
@@ -22,8 +22,10 @@
 # Nota    : RREO Anexo 06 é bimestral (acumulado). Diferença entre
 #           bimestres fornece o valor incremental por bimestre.
 #           Bimestres são convertidos para trimestres por agregação.
-#           Elemento 31 (Pessoal Ativo) alinhado com metodologia
-#           do IBGE para cálculo do VAB de AAPP.
+#           A extração estadual e municipal hoje usa a conta
+#           `RREO6PessoalEEncargosSociais`, coluna `DESPESAS
+#           LIQUIDADAS`. O benchmark anual do Denton vem da série
+#           de volume das Contas Regionais.
 # ============================================================
 
 source("R/utils.R")
@@ -50,7 +52,6 @@ arq_estadual  <- file.path(dir_raw, "folha_estadual_rr_mensal.csv")
 arq_municipal <- file.path(dir_raw, "folha_municipal_rr.csv")
 arq_ipca      <- file.path(dir_raw, "ipca_mensal.csv")
 arq_indice    <- file.path(dir_output, "indice_adm_publica.csv")
-arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 arq_vol_serie <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
 
 # --- Parâmetros ---------------------------------------------

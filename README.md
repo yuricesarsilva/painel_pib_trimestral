@@ -100,7 +100,7 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 |---|---|---|---|
 | Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual + municipal) | Portal da Transparência / STN–SICONFI |
 | Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE–CAGED |
-| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA) + pecuária (PPM/abate) | IBGE/SIDRA |
+| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA, com pesos VBP da janela PAM 2021–2024) + pecuária (PPM/abate) | IBGE/SIDRA |
 | Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | IBGE – CR |
 | Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE–CAGED |
 | Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL (SAMP) |
