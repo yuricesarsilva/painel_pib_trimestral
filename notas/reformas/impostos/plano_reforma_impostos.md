@@ -20,7 +20,7 @@ O projeto já dispõe de quatro insumos críticos:
 - `data/output/indice_nominal_rr.csv` — índice trimestral do VAB nominal, base 2020 = 100;
 - `data/processed/contas_regionais_RR_serie.csv` — VAB nominal anual por atividade;
 - `data/processed/icms_sefaz_rr_mensal.csv` — série mensal de ICMS, jan/2020–mar/2026 (**já disponível**);
-- `ideia_pib.md` — registro inicial da proposta (supersedido por este plano).
+- `notas/metodologia/ideia_pib.md` — registro inicial da proposta (supersedido por este plano).
 
 O benchmark anual do PIB nominal de Roraima é obtido no SIDRA/IBGE (Tabela 5938), e o ILP anual
 é calculado diretamente como:

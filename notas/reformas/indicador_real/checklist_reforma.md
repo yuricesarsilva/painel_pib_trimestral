@@ -1,6 +1,6 @@
 # Checklist da Reforma Metodológica — Ancoragem ao VAB Real
 
-> Referência: [`plano_reforma_indicador_real.md`](plano_reforma_indicador_real.md)
+> Referência: [`plano_reforma_indicador_real.md`](./plano_reforma_indicador_real.md)
 >
 > Este checklist rastreia a implementação da correção de ancoragem Denton: substituição do VAB
 > nominal (Tabela 5 IBGE) pelo índice de volume real (Tabela 6 IBGE) como benchmark trimestral.

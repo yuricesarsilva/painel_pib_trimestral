@@ -305,7 +305,7 @@ R/05i_pib_real.R                 → Fase 5.10 — PIB Real anual (R$ 2020)
 Os arquivos abaixo documentam a reforma metodológica de ancoragem ao VAB real (iniciada em
 2026-04-12). Eles devem ser mantidos atualizados sempre que houver mudanças relacionadas.
 
-### `plano_reforma_indicador_real.md`
+### `notas/reformas/indicador_real/plano_reforma_indicador_real.md`
 
 Atualizar sempre que:
 - A estratégia de ancoragem ao volume real for revisada (ex: mudança de Tabela 6 para outra fonte)
@@ -313,7 +313,7 @@ Atualizar sempre que:
 - O mapeamento de atividades IBGE × setores do projeto for corrigido
 - As taxas de crescimento esperadas após a reforma forem verificadas e diferirem do previsto
 
-### `checklist_reforma.md`
+### `notas/reformas/indicador_real/checklist_reforma.md`
 
 Atualizar imediatamente sempre que:
 - Uma etapa ou subetapa for concluída → marcar com `[x]`
@@ -322,7 +322,7 @@ Atualizar imediatamente sempre que:
 - O status geral da tabela ao final do arquivo mudar
 
 **Regra**: nunca encerrar uma sessão que modifique scripts da reforma (00, 01, 02, 03, 04, 05)
-sem antes atualizar o `checklist_reforma.md`.
+sem antes atualizar o `notas/reformas/indicador_real/checklist_reforma.md`.
 
 ---
 
@@ -331,7 +331,7 @@ sem antes atualizar o `checklist_reforma.md`.
 Os arquivos abaixo documentam a frente de construção do ILP trimestral e do PIB nominal
 trimestral de Roraima. Eles devem ser mantidos atualizados sempre que houver mudanças relacionadas.
 
-### `plano_reforma_impostos.md`
+### `notas/reformas/impostos/plano_reforma_impostos.md`
 
 Atualizar sempre que:
 - A estratégia do ILP trimestral mudar (ex: deixar de usar `ICMS + ISS` como núcleo inicial)
@@ -340,7 +340,7 @@ Atualizar sempre que:
 - A fórmula de agregação do proxy trimestral for alterada
 - A política de publicação do PIB nominal trimestral mudar (ex: produto oficial, interno ou experimental)
 
-### `checklist_reforma_impostos.md`
+### `notas/reformas/impostos/checklist_reforma_impostos.md`
 
 Atualizar imediatamente sempre que:
 - Uma etapa ou subetapa for concluída → marcar com `[x]`
@@ -348,9 +348,10 @@ Atualizar imediatamente sempre que:
 - Uma nova subetapa não prevista for identificada → adicionar ao checklist
 - O status geral ao final do arquivo mudar
 
-**Regra**: nunca encerrar uma sessão que modifique `ideia_pib.md`, `plano_reforma_impostos.md`,
-`checklist_reforma_impostos.md` ou o futuro `R/05g_pib_nominal.R` sem antes atualizar o
-`checklist_reforma_impostos.md`.
+**Regra**: nunca encerrar uma sessão que modifique `notas/metodologia/ideia_pib.md`,
+`notas/reformas/impostos/plano_reforma_impostos.md`,
+`notas/reformas/impostos/checklist_reforma_impostos.md` ou o futuro `R/05g_pib_nominal.R`
+sem antes atualizar o `notas/reformas/impostos/checklist_reforma_impostos.md`.
 
 ---
 

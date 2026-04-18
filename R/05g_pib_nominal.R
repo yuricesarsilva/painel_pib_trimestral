@@ -358,7 +358,7 @@ if (!file.exists(arq_excel)) {
     "NOTA: ILP trimestral = Denton-Cholette(ILP anual, ICMS trimestral). ",
     "Benchmark anual: PIB (SIDRA 5938) - VAB nominal (Contas Regionais IBGE). ",
     "Para 2024–2025, o ILP anual foi extrapolado pela taxa anual do ICMS da SEFAZ-RR. ",
-    "Proxy adotada: ICMS estadual exclusivamente; ISS e bloco federal foram descartados por limitações documentadas em plano_reforma_impostos.md."
+    "Proxy adotada: ICMS estadual exclusivamente; ISS e bloco federal foram descartados por limitações documentadas em notas/reformas/impostos/plano_reforma_impostos.md."
   )
   writeData(wb, "PIB Nominal", nota_txt, startRow = nota_row, startCol = 1)
   nota_style <- createStyle(fontName = "Calibri", fontSize = 9, fontColour = "#595959", wrapText = TRUE)

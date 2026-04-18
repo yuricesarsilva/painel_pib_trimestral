@@ -38,7 +38,7 @@ frente ao referencial oficial do IBGE.
 > — ancorá-las ao VAB nominal introduzia inflação setorial no índice real, gerando crescimentos
 > artificialmente elevados (+20% em 2023 vs. +4% real). Com a ancoragem ao volume, as taxas anuais
 > passaram a refletir crescimento real: 2021 +8,2%, 2022 +10,9%, 2023 +4,3%.
-> Referência completa: `plano_reforma_indicador_real.md` e `checklist_reforma.md`.
+> Referência completa: `notas/reformas/indicador_real/plano_reforma_indicador_real.md` e `notas/reformas/indicador_real/checklist_reforma.md`.
 
 ### Ajuste sazonal
 

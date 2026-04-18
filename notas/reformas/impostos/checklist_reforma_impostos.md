@@ -1,6 +1,6 @@
 # Checklist da Reforma de Impostos — ILP e PIB nominal trimestral
 
-> Referência: [`plano_reforma_impostos.md`](plano_reforma_impostos.md)
+> Referência: [`plano_reforma_impostos.md`](./plano_reforma_impostos.md)
 >
 > Este checklist rastreia a implementação da frente de impostos sobre produtos, ILP trimestral e
 > PIB nominal trimestral de Roraima. Atualizar imediatamente sempre que uma etapa for concluída ou

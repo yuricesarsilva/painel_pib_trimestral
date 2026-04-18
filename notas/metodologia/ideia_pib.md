@@ -1,6 +1,6 @@
 # Ideia: PIB Nominal Trimestral de RR
 
-> **Este documento foi supersedido por [`plano_reforma_impostos.md`](plano_reforma_impostos.md).**
+> **Este documento foi supersedido por [`plano_reforma_impostos.md`](../reformas/impostos/plano_reforma_impostos.md).**
 >
 > Registrado em 2026-04-13. Mantido apenas como referência histórica e pela tabela de ILP anual.
 >

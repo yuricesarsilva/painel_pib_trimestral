@@ -159,7 +159,7 @@ documentação.
 
 **O que foi feito:**
 
-Foi criado o arquivo **`sugestoes1.md`** com uma avaliação crítica das proxies escolhidas para cada
+Foi criado o arquivo **`notas/metodologia/sugestoes1.md`** com uma avaliação crítica das proxies escolhidas para cada
 setor do indicador.
 
 O documento não altera a metodologia oficial do projeto neste momento. Ele funciona como um caderno
@@ -174,7 +174,7 @@ fortes, onde estão mais frágeis e quais complementos poderiam melhorar a quali
 - sugestões de reforço para comércio, construção, transportes, outros serviços e setor financeiro.
 
 **Arquivo criado:**
-- `sugestoes1.md` — observações e recomendações metodológicas para evolução futura do indicador
+- `notas/metodologia/sugestoes1.md` — observações e recomendações metodológicas para evolução futura do indicador
 
 ---
 
@@ -182,7 +182,7 @@ fortes, onde estão mais frágeis e quais complementos poderiam melhorar a quali
 
 **O que foi feito:**
 
-Foi criado o arquivo **`sugestoes1.md`** com uma avaliação crítica das proxies escolhidas para cada
+Foi criado o arquivo **`notas/metodologia/sugestoes1.md`** com uma avaliação crítica das proxies escolhidas para cada
 setor do indicador.
 
 O documento não altera a metodologia oficial do projeto neste momento. Ele funciona como um caderno
@@ -197,7 +197,7 @@ fortes, onde estão mais frágeis e quais complementos poderiam melhorar a quali
 - sugestões de reforço para comércio, construção, transportes, outros serviços e setor financeiro.
 
 **Arquivo criado:**
-- `sugestoes1.md` — observações e recomendações metodológicas para evolução futura do indicador
+- `notas/metodologia/sugestoes1.md` — observações e recomendações metodológicas para evolução futura do indicador
 
 ---
 
@@ -243,7 +243,7 @@ usando o calendário agrícola do Censo Agropecuário de 2006 (que mostra em qua
 
 **O que foi feito:**
 
-Fizemos uma análise detalhada das sugestões registradas em `sugestoes1.md`, avaliando cada
+Fizemos uma análise detalhada das sugestões registradas em `notas/metodologia/sugestoes1.md`, avaliando cada
 proposta do ponto de vista metodológico e da viabilidade de dados para Roraima. Incorporamos
 as sugestões que representavam ganho real sem custo excessivo de coleta; descartamos as que não
 têm dado disponível ou que poderiam introduzir ruído sem benefício equivalente.
@@ -951,7 +951,7 @@ como fonte dos coeficientes.
 
 **O que foi feito:**
 
-Exploração completa na pasta de laboratório `teste_calendario_colheita_censo_agro_2006/`,
+Exploração completa na pasta de laboratório `notas/experimentos/teste_calendario_colheita_censo_agro_2006/`,
 que derivou três versões de calendário usando fontes distintas:
 
 - **Versão A (SEADI-RR)** — Calendário Agrícola oficial da Secretaria de Agricultura do estado
@@ -1508,8 +1508,8 @@ líquidos sobre produtos (ILP)**.
 
 **O que foi definido:**
 
-- foi criado `plano_reforma_impostos.md`, com a estratégia metodológica da nova frente;
-- foi criado `checklist_reforma_impostos.md`, com as etapas de mapeamento, coleta, script,
+- foi criado `notas/reformas/impostos/plano_reforma_impostos.md`, com a estratégia metodológica da nova frente;
+- foi criado `notas/reformas/impostos/checklist_reforma_impostos.md`, com as etapas de mapeamento, coleta, script,
   validação e versionamento;
 - ficou definido que a primeira versão recomendada do ILP trimestral deve começar com
   **ICMS estadual + ISS municipal**;
@@ -1525,8 +1525,8 @@ com o conceito mais restrito de `impostos sobre produtos` usado pelo IBGE. A nov
 evita esse risco e organiza a implementação futura do `R/05g_pib_nominal.R`.
 
 **Arquivos criados:**
-- `plano_reforma_impostos.md`
-- `checklist_reforma_impostos.md`
+- `notas/reformas/impostos/plano_reforma_impostos.md`
+- `notas/reformas/impostos/checklist_reforma_impostos.md`
 
 **Arquivo atualizado:**
 - `regras.md` — ganhou uma seção específica para manutenção obrigatória dos documentos da reforma
@@ -1597,7 +1597,7 @@ brutas locais, especialmente arquivos em `bases_baixadas_manualmente/`.
 - o índice foi normalizado para eliminar falsos "arquivos modificados";
 - o `.gitignore` foi atualizado para ignorar explicitamente:
   - `bases_baixadas_manualmente/`
-  - `teste_calendario_colheita_censo_agro_2006/`
+  - `notas/experimentos/teste_calendario_colheita_censo_agro_2006/`
   - `.claude/`
 
 **Resultado prático:**
@@ -2023,7 +2023,7 @@ nominal, não só no total.
 
 **O que foi feito:**
 
-Foi criada a nota `notas/relatorio_comparacao_projeto_vs_cr.md`, reunindo em um texto curto a
+Foi criada a nota `notas/metodologia/relatorio_comparacao_projeto_vs_cr.md`, reunindo em um texto curto a
 comparação entre as séries do projeto e as Contas Regionais do IBGE.
 
 **O que entrou no relatório:**

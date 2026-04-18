@@ -16,7 +16,7 @@
 - [x] Definir deflator para séries nominais (IPCA nacional)
 - [x] Mapear proxies por setor e respectivas fontes
 - [x] Documentar decisões metodológicas no plano
-- [x] Registrar sugestões de aprimoramento das proxies em `sugestoes1.md`
+- [x] Registrar sugestões de aprimoramento das proxies em `notas/metodologia/sugestoes1.md`
 
 ### 0.2 Infraestrutura do projeto
 - [x] Criar estrutura de pastas (`data/`, `R/`, `dashboard/`, `notas/`)
@@ -99,7 +99,7 @@
 - [x] Localizar tabelas de "época de colheita" do Censo Agropecuário 2006 para Roraima
 - [x] Verificar se o Censo Agropecuário 2017 publicou tabela equivalente
   - [x] Censo 2017 não publicou tabela equivalente — mantido como referência metodológica secundária
-- [x] Construir três versões do calendário (laboratório `teste_calendario_colheita_censo_agro_2006/`):
+- [x] Construir três versões do calendário (laboratório `notas/experimentos/teste_calendario_colheita_censo_agro_2006/`):
   - [x] Versão A — SEADI-RR: calendário oficial da secretaria estadual (versão de produção)
   - [x] Versão B — Censo Agro 2006, ponderado por área colhida
   - [x] Versão C — Censo Agro 2006, ponderado por nº de estabelecimentos
@@ -338,7 +338,7 @@
   → **REFORMA 2026-04-13**: pesos calculados dinamicamente do VAB nominal de 2020 (base correta do Laspeyres); bug corrigido — linha "Total das Atividades" excluída do denominador (duplicava a soma). Pesos corretos: Agro=6,89% | AAPP=45,01% | Ind=11,63% | Serv=36,46%
 - [x] Calcular índice geral trimestral encadeado (base 2020 = 100)
 - [x] Aplicar Denton-Cholette final contra VAB total de RR das Contas Regionais
-  → **REFORMA 2026-04-13**: benchmark substituído — agora usa índice de **volume** (Especiais IBGE, `tab05.xls`, série encadeada 2002–2023), não VAB nominal (Tabela 5). Ver `plano_reforma_indicador_real.md`.
+  → **REFORMA 2026-04-13**: benchmark substituído — agora usa índice de **volume** (Especiais IBGE, `tab05.xls`, série encadeada 2002–2023), não VAB nominal (Tabela 5). Ver `notas/reformas/indicador_real/plano_reforma_indicador_real.md`.
 - [x] Salvar em `data/output/indice_geral_rr.csv`
   → **CORREÇÃO 2026-04-14**: `extrapolar_tendencia()` corrigida para crescer pelo trimestre homólogo do ano anterior (preserva sazonalidade); todos os scripts setoriais (01–04) passaram a usar Denton sobre o período completo das proxies com benchmark estendido via `estender_benchmark()` em `utils.R` — elimina extrapolação plana que destruía a sazonalidade em 2024–2025
 - [x] Alinhar a documentação interna da agregação ao código vigente
@@ -365,7 +365,7 @@
         *(decisão conservadora: ótimo Denton = 100% energia, mas ICMS tem histórico curto)*
   - [x] Transportes: pax 40%→**55%** / carga 30%→**0%** / diesel 30%→**45%** (melhoria 41,7%)
   - [x] Financeiro: concessões 70%→**40%** / depósitos 30%→**60%** (melhoria 90,5%)
-  - [x] Documentar metodologia e decisões em `notas/otimizacao_pesos_proxies.md`
+  - [x] Documentar metodologia e decisões em `notas/metodologia/otimizacao_pesos_proxies.md`
   - [x] Pesos atualizados nos scripts `R/03_industria.R` e `R/04_servicos.R`
   - [ ] Re-rodar após publicação das CR 2024 (previsão: out/2026) para re-estimar com 5 anos de benchmark
 
@@ -412,7 +412,7 @@
       Queda T2 (-9,8% vs T1); recuperação em T3 por colheita e AAPP estável
 - [x] Documentar e justificar eventuais divergências
 - [x] Montar relatório rápido `projeto x Contas Regionais` com nominal total, nominal setorial, PIB nominal e crescimento real do VAB
-      → **RELATÓRIO 2026-04-14**: nota criada em `notas/relatorio_comparacao_projeto_vs_cr.md`; comparação nominal fechada no total e nos 4 blocos, com nota explícita sobre a lacuna atual de `PIB real`.
+      → **RELATÓRIO 2026-04-14**: nota criada em `notas/metodologia/relatorio_comparacao_projeto_vs_cr.md`; comparação nominal fechada no total e nos 4 blocos, com nota explícita sobre a lacuna atual de `PIB real`.
 
 **Resultado do teste (rerrodado após reforma 2026-04-13):**
 - Crescimento RR 2021–2023 (real): **+8,2%, +10,9%, +4,3%** — antes era +12,3%, +17,2%, +20,3% nominal
@@ -475,9 +475,9 @@
 - [ ] Publicar
 
 ### 5.8 PIB nominal trimestral
-- [x] Registrar desenho metodológico inicial em `ideia_pib.md`
-- [x] Criar `plano_reforma_impostos.md`
-- [x] Criar `checklist_reforma_impostos.md`
+- [x] Registrar desenho metodológico inicial em `notas/metodologia/ideia_pib.md`
+- [x] Criar `notas/reformas/impostos/plano_reforma_impostos.md`
+- [x] Criar `notas/reformas/impostos/checklist_reforma_impostos.md`
 - [x] Investigar `ICMS` estadual, `ISS` municipal e bloco federal como candidatos ao ILP trimestral
 - [x] Definir proxy final: `ICMS` estadual da SEFAZ-RR
 - [x] Criar `R/05g_pib_nominal.R`
