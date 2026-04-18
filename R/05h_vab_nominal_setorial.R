@@ -19,7 +19,8 @@
 #     3. Deflator anual oficial por setor = indice nominal / indice real
 #     4. Deflator anual e VAB nominal anual sao estendidos para os
 #        anos sem benchmark oficial usando o indicador do projeto
-#     5. Deflator trimestral = Denton-Cholette(deflator_anual, IPCA_trim)
+#     5. Deflator trimestral = Denton-Cholette(deflator_anual, IPCA_trim),
+#        com o IPCA servindo apenas de proxy temporal
 #     6. Indicador nominal trimestral = indice_real * deflator_trim / 100
 #     7. VAB nominal trimestral = Denton-Cholette(
 #        VAB_nominal_anual ~ indicador_nominal_trimestral,

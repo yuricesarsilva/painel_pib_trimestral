@@ -220,7 +220,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 | Fonte | Dado | Acesso |
 |---|---|---|
 | IBGE Contas Regionais | VAB nominal e índice de volume por atividade — Roraima (2002–2023) | FTP IBGE — download automático (`00_dados_referencia.R`) |
-| IBGE / SIDRA | Agropecuária: PAM (tab. 5457), LSPA (tab. 6588), PPM/VBP animal (tab. 74), abate de bovinos (tab. 1092) e ovos de galinha (tab. 7524); IPCA (tab. 1737); PIB anual RR (tab. 5938) | API SIDRA via `sidrar`, com caches locais usados por padrão nas etapas operacionais |
+| IBGE / SIDRA | Agropecuária: PAM (tab. 5457), LSPA (tab. 6588), abate de bovinos (tab. 1092) e ovos de galinha (tab. 7524); IPCA (tab. 1737); PIB anual RR (tab. 5938) | API SIDRA via `sidrar`, com caches locais usados por padrão nas etapas operacionais |
 | SEFAZ-RR | PDFs de ICMS por atividade econômica | Download manual; extração local via `pdftools` |
 | Portal da Transparência | Folha federal (SIAPE) — arquivos mensais ZIP por UF | Download manual; `bases_baixadas_manualmente/dados_siape_portal_transparencia/` |
 | SEPLAN-RR / FIPLAN | Folha estadual mensal — FIP 855, com soma das rubricas `3190.1100`, `3190.1200` e `3190.1300` | Download manual; `bases_baixadas_manualmente/dados_folha_rr_fip855/` |

@@ -5,14 +5,17 @@
 # Data    : 2026-04-10
 # Descrição: Índice trimestral de atividade agropecuária de
 #            Roraima. Etapa 1.0 — cobertura PAM; Etapa 1.1 —
-#            calendário de colheita (Censo Agro 2006); Etapa
-#            1.2 — série mensal/trimestral de lavouras (PAM
-#            definitivo + LSPA dezembro para ano corrente);
-#            Etapa 1.3 — pecuária (abate, leite, ovos via
-#            SIDRA); Etapa 1.4 — índice agregado com Denton-
-#            Cholette contra o índice anual de volume da
-#            agropecuária nas Contas Regionais do IBGE.
-# Entrada : SIDRA IBGE — tabs 5457, 6588, 3939, 1092, 74, 7524;
+#            calendário de colheita; Etapa 1.2 — série
+#            mensal/trimestral de lavouras (PAM definitivo +
+#            LSPA dezembro para ano corrente); Etapa 1.3 —
+#            pecuária trimestral observada (abate bovino +
+#            ovos) com exigência de cobertura completa;
+#            Etapa 1.4 — índice agregado com Denton-Cholette
+#            contra o índice anual de volume da agropecuária
+#            nas Contas Regionais do IBGE.
+# Entrada : SIDRA IBGE — tabs 5457, 6588, 1092, 7524;
+#            arquivo manual de calibração estrutural anual dos
+#            subsetores agropecuários;
 #            data/processed/contas_regionais_RR_volume.csv
 # Saída   : data/processed/cobertura_lspa_pam.csv
 #            data/processed/coef_sazonais_colheita.csv
@@ -23,7 +26,10 @@
 #            R/utils.R
 # Nota    : Tab 5457 contém lavouras temporárias e permanentes
 #           (classificação c782). Tab 6588 (LSPA) usa c48 e
-#           retorna período como "dezembro AAAA".
+#           retorna período como "dezembro AAAA". Na pecuária,
+#           o estado atual do pipeline usa apenas abate bovino
+#           (tab 1092) e ovos (tab 7524); leite não entra e
+#           não há fallback para substituir lacunas observadas.
 # ============================================================
 
 source("R/utils.R")
@@ -48,9 +54,7 @@ dir.create(dir_raw_sidra, recursive = TRUE, showWarnings = FALSE)
 
 arq_pam       <- file.path(dir_raw_sidra, "pam_temp_rr.csv")       # tab 5457: todas lavouras
 arq_lspa      <- file.path(dir_raw_sidra, "lspa_rr.csv")           # tab 6588
-arq_ppm       <- file.path(dir_raw_sidra, "ppm_vbp_rr.csv")         # tab 74 v215
 arq_abate     <- file.path(dir_raw_sidra, "abate_rr.csv")          # tab 1092
-arq_leite     <- file.path(dir_raw_sidra, "leite_rr.csv")          # tab 74
 arq_ovos      <- file.path(dir_raw_sidra, "ovos_rr.csv")           # tab 7524
 
 arq_cobertura <- file.path(dir_processed, "cobertura_lspa_pam.csv")
@@ -378,24 +382,40 @@ col_prod_lspa <- detectar_col(lspa_raw, c("Produto das lavouras"))
 col_mes_lspa  <- detectar_col(lspa_raw, c("^Mês$", "Mês e Ano", "Mês"))
 col_val_lspa  <- detectar_col(lspa_raw, c("^Valor$"))
 
-# Extrair dezembro de cada ano: "dezembro AAAA"
-lspa_dez <- lspa_raw %>%
+# Para cada (produto, ano), usar o mês mais recente disponível no LSPA.
+# O LSPA publica todo mês uma previsão atualizada da safra anual completa —
+# não da produção do mês em si. Em dezembro sai o fechamento definitivo do ano.
+# Para anos ainda em curso (sem dezembro publicado), usa-se o mês mais recente,
+# permitindo que o pipeline abra trimestres de um ano corrente sem esperar o fim do ano.
+mes_pt_para_num <- function(mes_txt) {
+  meses_pt <- c("janeiro", "fevereiro", "março", "abril", "maio", "junho",
+                "julho", "agosto", "setembro", "outubro", "novembro", "dezembro")
+  mes_nome <- tolower(trimws(sub("\\s+[12][0-9]{3}.*$", "", mes_txt)))
+  match(mes_nome, meses_pt)
+}
+
+lspa_melhor <- lspa_raw %>%
   transmute(
     produto = .data[[col_prod_lspa]],
     mes_txt = as.character(.data[[col_mes_lspa]]),
     valor   = suppressWarnings(as.numeric(gsub(",", ".", .data[[col_val_lspa]])))
   ) %>%
-  filter(grepl("^dezembro", mes_txt, ignore.case = TRUE),
-         !is.na(valor), valor > 0) %>%
-  mutate(ano = suppressWarnings(
-    as.integer(regmatches(mes_txt, regexpr("[12][0-9]{3}", mes_txt)))
-  )) %>%
-  filter(!is.na(ano))
+  filter(!is.na(valor), valor > 0) %>%
+  mutate(
+    ano     = suppressWarnings(
+      as.integer(regmatches(mes_txt, regexpr("[12][0-9]{3}", mes_txt)))
+    ),
+    mes_num = mes_pt_para_num(mes_txt)
+  ) %>%
+  filter(!is.na(ano), !is.na(mes_num)) %>%
+  group_by(produto, ano) %>%
+  slice_max(mes_num, n = 1, with_ties = FALSE) %>%
+  ungroup()
 
 # Agregar por nome_curto somando safras (feijão 1ª+2ª+3ª, milho 1ª+2ª)
 qtd_lspa <- bind_rows(lapply(names(padroes_lspa), function(nm) {
   pat <- padroes_lspa[[nm]]
-  lspa_dez %>%
+  lspa_melhor %>%
     filter(grepl(pat, produto, ignore.case = FALSE)) %>%
     group_by(ano) %>%
     summarise(qtd_t = sum(valor, na.rm = TRUE), .groups = "drop") %>%
@@ -406,8 +426,17 @@ qtd_lspa <- bind_rows(lapply(names(padroes_lspa), function(nm) {
 
 if (nrow(qtd_lspa) > 0) {
   anos_lspa <- sort(unique(qtd_lspa$ano))
-  message(sprintf("LSPA: dados provisórios para %s (substitui PAM quando publicada)",
-                  paste(anos_lspa, collapse = ", ")))
+  nomes_meses <- c("jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez")
+  resumo_mes <- lspa_melhor %>%
+    filter(ano %in% anos_lspa) %>%
+    group_by(ano) %>%
+    summarise(mes_num = max(mes_num, na.rm = TRUE), .groups = "drop")
+  for (i in seq_len(nrow(resumo_mes))) {
+    m  <- resumo_mes$mes_num[i]
+    tipo <- if (m == 12) "fechamento de dez (definitivo)" else
+      paste0("provisório — leitura de ", nomes_meses[m])
+    message(sprintf("  LSPA %d: %s", resumo_mes$ano[i], tipo))
+  }
 } else {
   message("LSPA: nenhum ano posterior à PAM — usando apenas dados definitivos.")
 }
@@ -489,22 +518,11 @@ message(sprintf("\nSérie de lavouras: %d trimestres (%s a %s)",
 
 message("\n=== ETAPA 1.3: Pecuária — disponibilidade para RR ===\n")
 
-# Tab 74 v/215: Valor da produção de origem animal por tipo de produto (anual)
-# Usado para calcular o peso relativo pecuária / lavouras no índice agropecuário
-ppm_raw <- baixar_sidra(
-  "/t/74/n3/14/v/215/p/all/c80/all",
-  arq_ppm, "VBP pecuário — tab 74 v215"
-)
-
 abate_raw <- tryCatch(
   baixar_sidra("/t/1092/n3/14/v/284/p/all/c12716/all",
                arq_abate, "Abate de animais — RR (tab 1092)"),
   error = function(e) { message("  tab 1092 falhou: ", e$message); NULL }
 )
-
-# Tab 74 é ANUAL — usada apenas para VBP pecuário (pesos), não como série trimestral
-# Para série pecuária trimestral, exigir abate e ovos completos na janela recente.
-leite_raw <- NULL  # Sem série trimestral de leite disponível para RR via SIDRA
 
 ovos_raw <- tryCatch(
   baixar_sidra("/t/7524/n3/14/v/29/p/all",

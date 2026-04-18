@@ -452,14 +452,16 @@ não publicou tabela equivalente de época de colheita, então mantivemos 2006 c
 
 A PAM cobre Roraima até 2024 (definitivo). Para 2025, usamos a projeção de dezembro da LSPA
 (tabela 6588, classificação c48) como valor provisório — será substituído automaticamente
-quando a PAM 2025 for publicada. Índice de Laspeyres com pesos VBP médio 2018–2022.
+quando a PAM 2025 for publicada. No desenho atual do projeto, os pesos das lavouras usam a janela
+móvel dos 4 últimos anos disponíveis da PAM.
 
 **Etapa 1.3 — Pecuária:**
 
-Para Roraima, estão disponíveis no SIDRA: abate de animais (tab 1092, trimestral) e produção
-de ovos (tab 915, trimestral). A produção de leite (tab 74) não tem série trimestral para RR.
-O índice pecuário combina abate + ovos, com pesos a partir do VBP da tab 74 v215. Pecuária
-representa 7% e lavouras 93% do total agropecuário (VBP médio 2018–2022).
+Para Roraima, a configuração atual do projeto usa no SIDRA: abate de bovinos (tab 1092,
+trimestral) e produção de ovos de galinha (tab 7524, trimestral). A produção de leite não entra
+na proxy operacional por falta de cobertura trimestral para RR. O índice pecuário combina abate
+bovino + ovos, com predominância bovina, e a relação entre lavouras e pecuária passou a ser
+calibrada por parâmetro estrutural anual interno.
 
 **Etapa 1.4 — Denton-Cholette e validação:**
 
@@ -486,8 +488,8 @@ do índice coincidem exatamente com as das Contas Regionais em todos os 13 anos 
 **O que foi feito:**
 
 Implementamos o script `R/02_adm_publica.R`, que produz o índice trimestral de Administração
-Pública de Roraima (base 2020 = 100), cobrindo etapas de coleta via API, deflação e ancoragem
-pelo método Denton-Cholette.
+Pública de Roraima (base 2020 = 100), cobrindo etapas de leitura das bases observadas, deflação
+e ancoragem pelo método Denton-Cholette.
 
 **Etapa 2.1 — Folha federal (SIAPE):**
 
@@ -498,15 +500,11 @@ com base estadual + municipal enquanto o token aguarda ativação.
 
 **Etapa 2.2 — Folha estadual:**
 
-Coletamos a folha do Estado de RR via API SICONFI/STN — Relatório Resumido de Execução
-Orçamentária (RREO), Anexo 06. A conta usada é `RREO6PessoalEEncargosSociais`, liquidado,
-que equivale ao elemento 31 (pessoal ativo) — alinhado com a metodologia do IBGE, que inclui
-apenas remuneração de servidores ativos no VAB de Administração Pública (aposentados e
-pensionistas são transferências, não produção).
-
-O RREO é divulgado em formato bimestral acumulado. O script converte para incremental (diferença
-entre bimestres consecutivos), distribui os dois meses uniformemente e agrega por trimestre.
-Cobertura: **2020 a 2026T1** (37 bimestres coletados).
+A proxy estadual atual passou a usar diretamente o **FIPLAN/SEPLAN-RR**, no relatório
+`FIP 855 - Resumo Mensal da Despesa Liquidada`. A série mensal é construída como a soma das
+rubricas `3190.1100`, `3190.1200` e `3190.1300`, que capturam vencimentos fixos civis,
+vencimentos fixos militares e obrigações patronais. Como a base já é mensal, a passagem para
+trimestre ocorre por agregação direta.
 
 **Etapa 2.3 — Folha municipal:**
 
@@ -517,7 +515,7 @@ São João da Baliza, São Luiz e Uiramutã. A cobertura variou entre 12 e 37 bi
 
 **Etapa 2.4 — Deflação, índice e Denton-Cholette:**
 
-A série nominal (folha estadual + municipal) foi deflacionada pelo IPCA nacional (SIDRA tab 1737,
+A série nominal (folha estadual + municipal + federal) foi deflacionada pelo IPCA nacional (SIDRA tab 1737,
 variação mensal), convertido em índice encadeado com base em janeiro de 2020. O índice real foi
 normalizado para 2020 = 100 e submetido ao Denton-Cholette contra o VAB anual de
 "Adm., defesa, educação e saúde públicas e seguridade social" das Contas Regionais.

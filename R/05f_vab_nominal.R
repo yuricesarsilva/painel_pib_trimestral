@@ -8,14 +8,15 @@
 #   (preços correntes, base 2020=100) combinando:
 #     - Índice real trimestral (indice_geral_rr.csv)
 #     - Deflator implícito anual (derivado de CR nominal / CR volume)
-#     - IPCA mensal (BCB/IBGE) como proxy trimestral no Denton
+#     - IPCA mensal do IBGE/SIDRA como proxy trimestral no Denton
 #
 #   Metodologia:
 #     1. Deflator anual: P_t/P_2020 = (VAB_nom_t/VAB_nom_2020)/(Q_t/100)
 #        onde Q_t = índice encadeado de volume (base 2020=100)
 #     2. Deflator total anual: implícito direto do VAB total do IBGE
 #        (índice nominal total / índice real total)
-#     3. Deflator trimestral: Denton-Cholette(deflator_anual, IPCA_trim)
+#     3. Deflator trimestral: Denton-Cholette(deflator_anual, IPCA_trim),
+#        com o IPCA entrando apenas como indicador temporal
 #     4. VAB nominal trimestral = indice_real × deflator / 100
 #
 # Entrada : data/processed/contas_regionais_RR_serie.csv

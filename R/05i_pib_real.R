@@ -15,7 +15,8 @@
 #     1. Ler o PIB nominal trimestral ja construido no projeto
 #     2. Ler o deflator trimestral implicito do projeto
 #        (indice_nominal_rr.csv)
-#     3. PIB real preliminar trimestral = PIB nominal trimestral / (deflator / 100)
+#     3. PIB real preliminar trimestral = PIB nominal trimestral / (deflator / 100),
+#        usando o deflator implicito do proprio projeto
 #     4. Indice preliminar = PIB real preliminar / media de 2020 x 100
 #     5. Ancorar medias anuais de 2020-2023 ao benchmark oficial
 #        do PIB real via Denton-Cholette (conversion = "mean")

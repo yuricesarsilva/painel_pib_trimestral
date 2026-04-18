@@ -6,12 +6,12 @@
 # Descrição: Índice trimestral de Administração Pública de RR.
 #   Etapa 2.1 — Folha federal (SIAPE): obrigatória, via arquivos
 #               manuais do Portal da Transparência processados localmente.
-#               Sem SIAPE observado, o script para com erro explícito.
-#   Etapa 2.2 — Folha estadual:
-#               FIPLAN/SEPLAN-RR — FIP 855, governo do estado de RR.
-#   Etapa 2.3 — Folha municipal: SICONFI/STN — RREO Anexo 06,
-#               todos os 15 municípios de RR.
-#   Etapa 2.4 — Série real anual, Denton-Cholette e validação.
+#   Etapa 2.2 — Folha estadual mensal do FIPLAN/SEPLAN-RR
+#               (FIP 855), usada como proxy principal do estado.
+#   Etapa 2.3 — Folha municipal via SICONFI/STN (RREO Anexo 06),
+#               convertida de bimestral acumulada para trimestral.
+#   Etapa 2.4 — Deflação pelo IPCA, série real, Denton-Cholette
+#               e validação.
 # Entrada : arquivos manuais FIPLAN/SEPLAN-RR (FIP 855)
 #            API SICONFI/STN (pública, sem autenticação)
 #            data/processed/contas_regionais_RR_volume.csv
@@ -25,10 +25,12 @@
 #           construída como a soma de `3190.1100` (Vencimentos e
 #           Vantagens Fixas - Pessoal Civil), `3190.1200`
 #           (Vencimentos e Vantagens Fixas - Pessoal Militar) e
-#           `3190.1300` (Obrigações Patronais). A série municipal
-#           segue no RREO Anexo 06 do SICONFI (bimestral acumulado).
-#           O benchmark anual do Denton vem da série de volume das
-#           Contas Regionais.
+#           `3190.1300` (Obrigações Patronais). A série federal
+#           observada é obrigatória. A série municipal permanece
+#           no RREO Anexo 06 do SICONFI (bimestral acumulado).
+#           A folha nominal total é deflacionada com o IPCA mensal
+#           reescalado para jan/2020 = 1. O benchmark anual do
+#           Denton vem da série de volume das Contas Regionais.
 # ============================================================
 
 source("R/utils.R")
@@ -67,9 +69,6 @@ ano_inicio  <- 2020L
 ano_atual   <- as.integer(format(Sys.Date(), "%Y"))
 anos_serie  <- ano_inicio:ano_atual
 
-# SICONFI: id_ente estado de RR = 14 (código IBGE UF)
-ID_ENTE_RR_ESTADO <- 14L
-
 # SICONFI: cod_ibge dos 15 municípios de RR
 municipios_rr <- c(
   "Amajari"             = 1400027L,
@@ -88,8 +87,6 @@ municipios_rr <- c(
   "São Luiz"            = 1400605L,
   "Uiramutã"            = 1400704L
 )
-
-anos_peso <- 2018:2022
 
 rubricas_fiplan_proxy <- c("3190.1100", "3190.1200", "3190.1300")
 
@@ -651,7 +648,9 @@ for (i in seq_len(nrow(folha_total))) {
 }
 
 # --- Deflacionar pelo IPCA nacional -------------------------
-# Baixar IPCA via SIDRA (tabela 1737, variação mensal)
+# A variável 2266 da tabela 1737 é usada aqui como nível do índice,
+# no mesmo padrão adotado em serviços e nos blocos nominais do projeto.
+# O deflator é a razão entre o nível do mês t e o nível de jan/2020.
 
 if (!file.exists(arq_ipca)) {
   message("\nBaixando IPCA mensal via SIDRA (tab 1737)...")
@@ -692,22 +691,21 @@ ipca_cols <- list(
 parsed <- parse_ipca_periodo(ipca_cols$cod, ipca_cols$txt)
 
 ipca <- data.frame(
-  ano     = parsed$ano,
-  mes     = parsed$mes,
-  var_pct = ipca_cols$val,
+  ano          = parsed$ano,
+  mes          = parsed$mes,
+  indice_nivel = ipca_cols$val,
   stringsAsFactors = FALSE
 ) |>
-  filter(!is.na(var_pct), !is.na(ano), !is.na(mes)) |>
+  filter(!is.na(indice_nivel), indice_nivel > 0, !is.na(ano), !is.na(mes)) |>
   arrange(ano, mes)
 
-# Índice de preços encadeado, base jan/2020 = 1
+# Índice de preços reescalado, base jan/2020 = 1
 idx_jan2020 <- which(ipca$ano == 2020 & ipca$mes == 1)
 if (length(idx_jan2020) == 0) stop("IPCA: janeiro de 2020 não encontrado na série.")
 ipca <- ipca |>
   mutate(
-    fator     = 1 + var_pct / 100,
-    idx_preco = cumprod(fator),
-    idx_preco = idx_preco / idx_preco[idx_jan2020]
+    # Preços acima de jan/2020 implicam deflator > 1 e reduzem a folha real.
+    idx_preco = indice_nivel / indice_nivel[idx_jan2020]
   )
 
 # Deflator trimestral: média dos 3 meses

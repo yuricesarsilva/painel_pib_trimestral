@@ -595,9 +595,10 @@ if (nrow(anp_mensal) > 0) {
 
 
 # ============================================================
-# ETAPA 4.5 — BCB: IPCA mensal (deflator)
+# ETAPA 4.5 — IPCA mensal (deflator)
 # Reutiliza cache da Fase 2 (ipca_mensal.csv via SIDRA)
-# Série IBGE SIDRA Tab. 1737 v2266 — IPCA variação % mensal
+# Série IBGE SIDRA Tab. 1737 v2266 — usada como nível do índice,
+# reescalado para jan/2020 = 1 antes da deflação
 # ============================================================
 
 message("\n=== ETAPA 4.5: IPCA (deflator BCB) ===\n")

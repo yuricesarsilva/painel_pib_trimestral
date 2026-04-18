@@ -212,7 +212,7 @@ No estado atual do pipeline, o script usa os caches locais do SIDRA por padrão 
 | Produção de ovos de galinha | IBGE Ovos, Tab. 7524 | Trimestral | Disponível |
 | Produção de leite | IBGE Leite, Tab. 74 | Trimestral | Indisponível para RR — excluída |
 
-O IBGE não divulga, para Roraima, séries trimestrais equivalentes de abate de suínos e frango no desenho operacional adotado no projeto. Por isso, a proxy de abate usada aqui é estritamente bovina (Tab. 1092).
+O bloco pecuário operacional usa apenas as séries trimestrais efetivamente observáveis para Roraima no pipeline atual: abate bovino (Tab. 1092) e ovos de galinha (Tab. 7524). O IBGE não divulga, para Roraima, séries trimestrais equivalentes de abate de suínos e frango no desenho operacional adotado aqui; por isso, a proxy de abate é estritamente bovina.
 
 Os pesos entre lavouras e pecuária são calibrados a partir de uma tabulação anual específica dos subsetores da agropecuária usada como parâmetro interno do projeto. Dentro da proxy pecuária trimestral, o abate bovino recebe peso predominante sobre ovos.
 
@@ -293,8 +293,6 @@ Detalhes técnicos da API:
 O Novo CAGED (2020+) não está disponível em SIDRA nem via API com filtro por UF. O script baixa o arquivo nacional `CAGEDMOV{yearmonth}.7z` do FTP MTE (`ftp.mtps.gov.br`), extrai com 7-Zip local, filtra `uf == 14` (Roraima) com `data.table::fread`, agrega por seção CNAE e apaga os arquivos grandes. Volume: ~2,5 GB de download na primeira execução (72 meses × ~35 MB); idempotente.
 
 **Estoque acumulado:** o CAGED publica fluxo mensal (admissões − desligamentos = saldo). Para usar como indicador Denton (que requer série de nível), acumula-se o saldo a partir de base 1000 (Jan/2020). O Denton calibra o nível absoluto; apenas o perfil temporal importa.
-
-**SNIC cimento (condicional):** se o arquivo `data/raw/snic_cimento_rr.csv` estiver presente (download manual), Construção usa CAGED F 60% + SNIC 40%. Caso contrário, usa apenas CAGED F.
 
 #### Indústria de Transformação
 
@@ -515,7 +513,7 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 | Atividades imobiliárias | 7,68% | Interpolação linear CR IBGE | Fraca mas necessária |
 | Outros serviços | 7,63% | CAGED I + M+N + P+Q | Aceitável |
 | SIUP | 5,40% | Energia elétrica total distribuída (kWh), ANEEL SAMP | **Forte** |
-| Construção | 4,89% | Estoque acumulado CAGED F (± SNIC cimento) | Aceitável |
+| Construção | 4,89% | Estoque acumulado CAGED F | Aceitável |
 | Financeiro | 2,78% | Concessões BCB (40%) + Depósitos Estban (60%) | Aceitável |
 | Transportes | 1,92% | Passageiros ANAC SBBV (55%) + Diesel ANP (45%) | Aceitável |
 | Ind. de Transformação | 1,31% | Energia industrial ANEEL (55%) + CAGED C (45%) | Aceitável |
@@ -542,7 +540,6 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 | Publicação CR 2024 (IBGE) | Outubro de 2026 | Substituir extrapolações 2024; re-ancorar índices via Denton; re-rodar otimização de pesos com benchmark 2020–2024; atualizar pesos Laspeyres |
 | Publicação CR 2025 (IBGE) | Outubro de 2027 | Idem para 2025; pesos ótimos mais robustos para setores com 3 componentes |
 | 2 anos de ICMS por atividade (2022+) | Contínuo | Re-avaliar peso do ICMS no Comércio; verificar quebras tributárias (Decretos SEFAZ-RR) |
-| Disponibilidade de SNIC cimento | Contínuo | Incorporar vendas de cimento em Construção quando disponível via download manual |
 
 ---
 

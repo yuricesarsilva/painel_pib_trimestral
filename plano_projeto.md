@@ -137,7 +137,7 @@ linhas separadas por safra. O script agrega por ano antes de usar os valores.
 | Produção de leite | IBGE Leite | Tab. 74 | Trimestral | **Indisponível para RR** — excluída |
 | Parâmetro estrutural anual dos subsetores agropecuários | Arquivo manual interno | Planilha anual 2020–2023 | Anual | **Disponível** |
 
-**Nota sobre pesos pecuários**: a proporção estrutural entre `lavouras` e `pecuária` passa a ser calibrada por tabulação anual específica dos subsetores da agropecuária, usada apenas como parâmetro interno do projeto. Isso substitui o uso isolado da PPM como definidora do peso relativo entre os dois blocos.
+**Nota sobre pesos pecuários**: a proporção estrutural entre `lavouras` e `pecuária` é calibrada por tabulação anual específica dos subsetores da agropecuária, usada apenas como parâmetro interno do projeto.
 
 **Nota operacional sobre cache**: no estado atual do script, as consultas do SIDRA na agropecuária usam cache local por padrão. O rebaixamento online das séries só ocorre quando `atualizar_sidra <- TRUE` é definido explicitamente.
 

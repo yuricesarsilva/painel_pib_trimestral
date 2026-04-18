@@ -118,7 +118,7 @@
   - [x] Ano de corte: PAM até 2024, LSPA para **2025** (provisório)
   - [x] Ao publicar nova PAM, substituir valor LSPA automaticamente no script
 - [x] Aplicar coeficientes sazonais do Censo → produção mensal por cultura
-- [x] Calcular índice de Laspeyres de quantidade com pesos PAM (VBP médio 2018–2022)
+- [x] Calcular índice de Laspeyres de quantidade com pesos PAM da janela móvel dos 4 últimos anos disponíveis
 - [x] Agregar série mensal em trimestres
 - [x] Salvar série em `data/processed/serie_lavouras_trimestral.csv`
 
@@ -134,7 +134,7 @@
 
 ### 1.4 Índice agropecuário agregado e benchmarking
 - [x] Combinar lavouras e pecuária com pesos PAM + tab74 v215
-  - [x] Lavouras: **93,0%** | Pecuária: **7,0%** (baseado em VBP médio 2018–2022)
+  - [x] Lavouras e pecuária: calibração estrutural anual atualizada para o desenho vigente do projeto
 - [x] Calcular índice agropecuário trimestral (base 2020 = 100)
 - [x] Aplicar Denton-Cholette (`tempdisagg::td()`, `~ 0 + x`, `conversion="mean"`) contra VAB agropecuário anual
 - [x] Validar: variação anual do índice **coincide exatamente** com Contas Regionais (2011–2023)
@@ -151,12 +151,10 @@
 - [x] Processar SIAPE via arquivos mensais `.zip` do Portal da Transparência
 - [x] Tornar a base federal obrigatória: sem `data/raw/siape_rr_mensal.csv`, o script de AAPP para com erro
 
-### 2.2 Folha estadual (SICONFI/STN — elemento 31)
-- [x] Coletar RREO Anexo 06 via API SICONFI (STN) para o Estado de RR (id_ente=14)
-  - [x] Escopo: elemento Pessoal e Encargos Sociais (cod_conta = RREO6PessoalEEncargosSociais), despesas liquidadas
-  - [x] Alinhamento com IBGE: elemento 31 (pessoal ativo) — inativos e pensionistas são transferências, não VAB
-  - [x] Cobertura: 2020–2026 (37 bimestres), bimestral acumulado
-- [x] Converter acumulado → incremental → trimestral (distribuição uniforme intra-bimestre)
+### 2.2 Folha estadual (FIPLAN/SEPLAN-RR — FIP 855)
+- [x] Ler o relatório `FIP 855 - Resumo Mensal da Despesa Liquidada`
+- [x] Construir a proxy estadual pela soma de `3190.1100` + `3190.1200` + `3190.1300`
+- [x] Usar a série mensal diretamente e agregar por trimestre
 - [x] Salvar em `data/raw/folha_estadual_rr_mensal.csv`
 
 ### 2.3 Folha municipal (SICONFI/STN — 15 municípios de RR)
