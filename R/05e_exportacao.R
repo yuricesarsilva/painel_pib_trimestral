@@ -48,6 +48,31 @@ nsa <- read_csv(arq_geral, show_col_types = FALSE) |> arrange(ano, trimestre)
 sa  <- read_csv(arq_sa,    show_col_types = FALSE) |> arrange(ano, trimestre)
 fat <- read_csv(arq_fatores, show_col_types = FALSE) |> arrange(ano, trimestre)
 
+# --- Gate de publicação: filtrar até trimestre_publicado ----
+# O trimestre publicado é definido em config/release.R e só
+# avança via 06_avanca_publicacao.R, após comunicação à imprensa.
+source("config/release.R")
+ano_pub_exp  <- as.integer(sub("T.*", "", trimestre_publicado))
+trim_pub_exp <- as.integer(sub(".*T", "", trimestre_publicado))
+
+filtrar_pub <- function(df) {
+  df[df$ano < ano_pub_exp | (df$ano == ano_pub_exp & df$trimestre <= trim_pub_exp), ]
+}
+
+n_antes <- nrow(nsa)
+nsa <- filtrar_pub(nsa)
+sa  <- filtrar_pub(sa)
+fat <- filtrar_pub(fat)
+n_retidos <- nrow(nsa)
+
+if (n_antes > n_retidos) {
+  message(sprintf(
+    "Gate de publicação: %d trimestre(s) retido(s) fora do release (publicado: %s).",
+    n_antes - n_retidos, trimestre_publicado
+  ))
+}
+message(sprintf("Exportando %d trimestres (até %s).", n_retidos, trimestre_publicado))
+
 # Variações trimestrais e anuais para o índice geral
 enriquecer_geral <- function(df, col_idx) {
   df |>

@@ -26,6 +26,13 @@ if (!file.exists("R/utils.R")) {
   )
 }
 
+# --- Gate de publicação --------------------------------------
+source("config/release.R")
+cat(sprintf(
+  "\n>>> TRIMESTRE PUBLICADO: %s <<<\n    A exportação oficial será filtrada até este trimestre.\n    Para avançar: source(\"R/06_avanca_publicacao.R\")\n\n",
+  trimestre_publicado
+))
+
 # --- Configuracao do pipeline --------------------------------
 
 # Scripts a executar, na ordem obrigatoria
@@ -140,5 +147,9 @@ for (i in seq_len(nrow(resultados))) {
 }
 
 cat(sprintf(
-  "\nProximos passos:\n  1. Atualizar logs/fontes_utilizadas.csv\n  2. Verificar validacoes manuais (checklist Fase 5.4)\n  3. Commitar e criar tag de release (ver regras.md)\n\n"
+  "\nTrimestre publicado : %s\nExportacao oficial  : filtrada ate %s (IAET_RR_series.xlsx e CSVs publicos)\n",
+  trimestre_publicado, trimestre_publicado
+))
+cat(sprintf(
+  "Para avançar o release: source(\"R/06_avanca_publicacao.R\")\n\nProximos passos:\n  1. Inspecionar outputs em data/output/ para validacao interna\n  2. Atualizar logs/fontes_utilizadas.csv\n  3. Quando pronto para publicar: rodar 06_avanca_publicacao.R\n\n"
 ))
