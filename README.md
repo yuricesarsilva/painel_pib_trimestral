@@ -9,6 +9,98 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R\$ milhões) e
 
 ---
 
+## Como usar o projeto
+
+### Pré-requisitos
+
+- R ≥ 4.4.0 com os pacotes do `renv.lock` instalados (`renv::restore()`)
+- Diretório de trabalho na **raiz do projeto** (abrir o `.Rproj` no RStudio)
+- Bases manuais atualizadas nas pastas corretas (ver seção de atualização trimestral)
+
+---
+
+### Executar o pipeline completo
+
+```r
+source("R/run_all.R")
+```
+
+O orquestrador executa os 14 scripts na ordem correta, registra o tempo de cada etapa e para imediatamente em caso de erro. Ao iniciar, exibe o trimestre oficialmente publicado:
+
+```
+>>> TRIMESTRE PUBLICADO: 2025T4 <<<
+    A exportação oficial será filtrada até este trimestre.
+    Para avançar: source("R/06_avanca_publicacao.R")
+```
+
+Os arquivos de saída são gravados em `data/output/`. A exportação pública (Excel e CSVs) é filtrada até o trimestre publicado em `config/release.R`.
+
+---
+
+### Dashboard interativo
+
+**Versão publicada:** [https://yuricesar.shinyapps.io/pib-trimestral-rr/](https://yuricesar.shinyapps.io/pib-trimestral-rr/)
+
+**Rodar localmente** (lê os outputs gerados pelo pipeline):
+
+```r
+shiny::runApp("dashboard/app.R")
+# ou, estando dentro da pasta dashboard/:
+shiny::runApp()
+```
+
+O app lê os arquivos em `data/output/`. Rode `run_all.R` antes para garantir que os dados estão atualizados.
+
+---
+
+### Rotina de atualização trimestral (Fase 6)
+
+A atualização de um novo trimestre segue quatro passos:
+
+**Passo 1 — Atualizar fontes automatizáveis**
+
+```r
+source("R/06_coleta_fontes.R")
+```
+
+Baixa/atualiza SIDRA (PAM, LSPA, abate, ovos, IPCA, PIB), ANP diesel e apaga o cache ANEEL do ano corrente para forçar re-download. Ao final, imprime um relatório de cobertura por fonte.
+
+**Passo 2 — Atualizar fontes manuais**
+
+Com base no relatório do passo anterior, baixar as fontes que ainda faltam e colocá-las nas pastas corretas:
+
+| Fonte | Pasta de destino |
+|---|---|
+| SIAPE (Portal da Transparência — ZIP mensal por UF) | `bases_baixadas_manualmente/dados_siape_portal_transparencia/` |
+| FIPLAN estadual (FIP 855) | `bases_baixadas_manualmente/dados_folha_rr_fip855/` |
+| ANAC Boa Vista (microdados VRA mensais) | `bases_baixadas_manualmente/microdados_anac_mensal_.../` |
+| BCB Estban (ZIPs mensais) | `bases_baixadas_manualmente/dados_estban_bcb/` |
+| BCB SCR (ZIPs de concessões) | `bases_baixadas_manualmente/dados_bcb_src_2020_2025/` |
+| ICMS SEFAZ-RR (PDFs trimestrais por atividade) | `bases_baixadas_manualmente/dados_icms_por_atividade/` |
+
+**Passo 3 — Rodar o pipeline e validar internamente**
+
+```r
+source("R/run_all.R")
+```
+
+Neste momento, `config/release.R` ainda aponta para o trimestre anterior. O pipeline processa todos os dados disponíveis, mas a exportação pública (Excel/CSVs) é filtrada até o trimestre publicado. Use esta execução para inspeção interna, geração de informativos e rascunho da nota técnica.
+
+**Passo 4 — Avançar o trimestre publicado (após comunicação à imprensa)**
+
+```r
+source("R/06_avanca_publicacao.R")
+```
+
+Script interativo com checklist de 6 itens (dados conferidos, pipeline sem erros, validações ok, dashboard verificado, informativos aprovados, imprensa comunicada). Após confirmação:
+- Atualiza `config/release.R` com o novo trimestre
+- Cria commit git com mensagem padronizada
+- Cria tag git (ex: `v2026-Q1`)
+
+Em seguida, rode `run_all.R` novamente para gerar a exportação oficial do novo trimestre.
+
+---
+
 ## Documentação técnica
 
 > [**Nota Metodológica completa**](https://yuricesarsilva.github.io/painel_pib_trimestral/metodologia.html) — arquitetura do sistema, fórmulas, proxies setoriais, otimização de pesos e resultados de validação.
@@ -28,11 +120,13 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R\$ milhões) e
 | Índice Geral agregado (`05_agregacao.R`) | ✅ Operacional | 2020T1–2025T4 |
 | Ajuste sazonal (`05c_ajuste_sazonal.R`) | ✅ Operacional | 2020T1–2025T4 |
 | Validação final (`05d_validacao.R`) | ✅ Operacional | 2020T1–2025T4 |
-| Exportação (`05e_exportacao.R`) | ✅ Operacional | 2020T1–2025T4 |
+| Exportação (`05e_exportacao.R`) | ✅ Operacional | até `trimestre_publicado` |
 | VAB Nominal trimestral (`05f_vab_nominal.R`) | ✅ Operacional | 2020T1–2025T4 |
 | PIB Nominal trimestral (`05g_pib_nominal.R`) | ✅ Operacional | 2020T1–2025T4 |
 | VAB Nominal setorial (`05h_vab_nominal_setorial.R`) | ✅ Operacional | 2020T1–2023T4 |
-| PIB Real anual (`05i_pib_real.R`) | ✅ Operacional | 2020–2025 |
+| PIB Real trimestral e anual (`05i_pib_real.R`) | ✅ Operacional | 2020T1–2025T4 / 2020–2025 |
+| Coleta de fontes (`06_coleta_fontes.R`) | ✅ Operacional | — |
+| Avanço de publicação (`06_avanca_publicacao.R`) | ✅ Operacional | — |
 | Dashboard interativo (`dashboard/app.R`) | ✅ [Publicado](https://yuricesar.shinyapps.io/pib-trimestral-rr/) | — |
 | Nota técnica | ⬜ Não iniciada | — |
 
@@ -140,11 +234,14 @@ ancoragem ao benchmark oficial do PIB real das Contas Regionais em `2020–2023`
 ## Estrutura do repositório
 
 ```
+├── config/
+│   └── release.R                 # gate de publicação: define trimestre_publicado
 ├── R/
 │   ├── utils.R                   # funções auxiliares: denton(), validar_serie()
 │   ├── run_all.R                 # orquestrador do pipeline completo
 │   ├── 00_dados_referencia.R     # CR IBGE: pesos nominais e benchmarks de volume
-│   ├── 01_agropecuaria.R         # lavouras (PAM/LSPA) e pecuária
+│   ├── 00b_icms_sefaz_atividade.R # shares trimestrais de ICMS por atividade (SEFAZ-RR)
+│   ├── 01_agropecuaria.R         # lavouras (PAM/LSPA — leitura mais recente) e pecuária
 │   ├── 02_adm_publica.R          # folha pública federal + estadual + municipal
 │   ├── 03_industria.R            # construção, SIUP, transformação
 │   ├── 04_servicos.R             # comércio, transportes, financeiro, outros
@@ -153,18 +250,21 @@ ancoragem ao benchmark oficial do PIB real das Contas Regionais em `2020–2023`
 │   ├── 05b_sensibilidade_*.R     # demais testes de sensibilidade (calendário agrícola)
 │   ├── 05c_ajuste_sazonal.R      # X-13ARIMA-SEATS
 │   ├── 05d_validacao.R           # validação: CR IBGE, IBCR Norte, IBC-Br
-│   ├── 05e_exportacao.R          # exportação Excel e CSVs de publicação
+│   ├── 05e_exportacao.R          # exportação Excel e CSVs (filtrada por trimestre_publicado)
 │   ├── 05f_vab_nominal.R         # deflator implícito e índice nominal trimestral
 │   ├── 05g_pib_nominal.R         # ILP trimestral via ICMS e PIB nominal trimestral
 │   ├── 05h_vab_nominal_setorial.R # VAB nominal trimestral dos 4 blocos (2020–2023)
 │   ├── 05i_pib_real.R            # PIB real trimestral e anual em R\$ 2020 (ancorado ao CR IBGE)
+│   ├── 06_coleta_fontes.R        # Fase 6: atualiza fontes automatizáveis + relatório de cobertura
+│   ├── 06_avanca_publicacao.R    # Fase 6: checklist interativo + avanço do trimestre publicado
 │   └── exploratorio/             # scripts históricos de inspeção de dados
 ├── data/
 │   └── referencias/              # calendários de colheita e referências versionadas
 │   (raw/, processed/, output/ — mantidos localmente, não versionados)
 ├── logs/
 │   └── fontes_utilizadas.csv     # rastreabilidade das fontes por release
-├── dashboard/                    # app Shiny e arquivos da publicação
+├── dashboard/
+│   └── app.R                     # app Shiny (bslib v5 + plotly + DT)
 ├── bases_baixadas_manualmente/   # bases manuais lidas diretamente pelos scripts R
 ├── plano_projeto.md              # plano metodológico detalhado
 ├── checklist.md                  # checklist geral do projeto

@@ -500,16 +500,51 @@
 
 ## Fase 6 — Manutenção e atualização trimestral
 
-### A cada trimestre (rotina de atualização)
-- [ ] Atualizar dados de todas as fontes no script de cada setor (CAGED, ANEEL, SIAPE, ANAC, ANP, BCB, ICMS)
-- [ ] Rodar pipeline completo via `R/run_all.R` (sequência: 00 → 01 → 02 → 03 → 04 → 05 → 05c → 05d → 05e → 05f → 00b → 05g → 05h → 05i)
+### 6.1 Infraestrutura de manutenção (implementada em 2026-04-18)
+- [x] Criar `config/release.R` com variável `trimestre_publicado` (gate de publicação)
+  - [x] Lido por `05e_exportacao.R` para filtrar a exportação pública
+  - [x] Lido por `run_all.R` para exibir o trimestre publicado no cabeçalho e no resumo
+- [x] Criar `R/06_coleta_fontes.R` — atualiza todas as fontes automatizáveis em um único comando
+  - [x] SIDRA: PAM (5457), LSPA (6588), abate (1092), ovos (7524), IPCA (1737), PIB (5938)
+  - [x] ANP: vendas de diesel RR (dados abertos, download inline)
+  - [x] ANEEL: apaga cache do ano corrente para forçar re-download no próximo `run_all.R`
+  - [x] Relatório de cobertura por fonte (automatizáveis e manuais) ao final
+- [x] Criar `R/06_avanca_publicacao.R` — gate interativo para avanço do trimestre
+  - [x] Checklist de 6 itens obrigatórios via `readline()` (todos devem ser confirmados)
+  - [x] Atualiza `config/release.R` com o próximo trimestre
+  - [x] Cria commit git com mensagem padronizada + tag (ex: `v2026-Q1`)
+  - [x] Orienta a rodar `run_all.R` para exportação oficial
+
+### 6.2 Rotina a cada trimestre (repetir para cada novo release)
+
+**Etapa 1 — Atualizar fontes:**
+- [ ] Rodar `source("R/06_coleta_fontes.R")` para atualizar SIDRA, ANP e ANEEL
+- [ ] Baixar SIAPE (Portal da Transparência — ZIP mensal por UF) e colocar em `bases_baixadas_manualmente/dados_siape_portal_transparencia/`
+- [ ] Baixar FIPLAN estadual (FIP 855) e colocar em `bases_baixadas_manualmente/dados_folha_rr_fip855/`
+- [ ] Baixar ANAC Boa Vista (microdados VRA mensais) e colocar em `bases_baixadas_manualmente/microdados_anac_mensal_.../`
+- [ ] Baixar BCB Estban (ZIPs mensais) e colocar em `bases_baixadas_manualmente/dados_estban_bcb/`
+- [ ] Baixar BCB SCR (ZIPs de concessões) e colocar em `bases_baixadas_manualmente/dados_bcb_src_2020_2025/`
+- [ ] Baixar ICMS SEFAZ-RR (PDFs por atividade) e colocar em `bases_baixadas_manualmente/dados_icms_por_atividade/`
+
+**Etapa 2 — Verificar cobertura:**
+- [ ] Re-rodar `source("R/06_coleta_fontes.R")` e confirmar que todas as fontes mostram OK para o trimestre alvo
+
+**Etapa 3 — Modelagem e validação interna:**
+- [ ] Rodar `source("R/run_all.R")` — pipeline completo (exportação ainda filtrada ao trimestre anterior)
+- [ ] Confirmar que todas as validações automáticas passaram (`05d_validacao.R` sem alertas críticos)
 - [ ] Verificar se há revisões nas Contas Regionais do IBGE e atualizar benchmarks se necessário
-- [ ] Confirmar que todas as validações automáticas passaram (`05d_validacao.R`)
-- [ ] Atualizar `logs/fontes_utilizadas.csv` com as fontes do release
-- [ ] Atualizar dashboard e verificar visualmente as novas séries
-- [ ] Redigir nova nota técnica conjuntural
-- [ ] Fazer commit no GitHub com tag da versão (ex: `v2026-Q1`)
-- [ ] Atualizar `historico_simples.md`
+- [ ] Inspecionar outputs em `data/output/` e atualizar `logs/fontes_utilizadas.csv`
+- [ ] Atualizar dashboard localmente e verificar visualmente as novas séries
+
+**Etapa 4 — Publicação:**
+- [ ] Gerar informativos internos SEPLAN e obter aprovação
+- [ ] Redigir nota técnica conjuntural
+- [ ] Realizar comunicação à imprensa
+- [ ] Rodar `source("R/06_avanca_publicacao.R")` — checklist interativo avança `config/release.R`, cria commit e tag
+- [ ] Rodar `source("R/run_all.R")` novamente — exportação oficial do novo trimestre gerada
+- [ ] Distribuir: `data/output/IAET_RR_series.xlsx`, `IAET_RR_geral.csv`, `IAET_RR_componentes.csv`
+- [ ] Atualizar `historico_simples.md` com o release
+- [ ] Fazer `git push && git push origin <tag>`
 
 ---
 
@@ -523,6 +558,6 @@
 | 3 | Indústria | 🟢 Concluída |
 | 4 | Serviços Privados | 🟢 Concluída |
 | 5 | Agregação e publicação | 🟡 Em andamento (5.1–5.6, 5.8, 5.9 e 5.10 concluídas; 5.7 nota técnica pendente; publicação/testes finais do dashboard pendentes) |
-| 6 | Manutenção trimestral | ⚪ Não iniciada |
+| 6 | Manutenção trimestral | 🟡 Em andamento (6.1 infraestrutura concluída; 6.2 rotina operacional pronta para uso) |
 
 > 🟢 Concluída · 🟡 Em andamento · ⚪ Não iniciada
