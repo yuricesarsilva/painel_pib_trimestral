@@ -132,18 +132,29 @@ linhas separadas por safra. O script agrega por ano antes de usar os valores.
 
 | Proxy | Fonte | SIDRA | Frequência | Status RR |
 |---|---|---|---|---|
-| Abate de animais (bovinos, suínos, aves) | IBGE Abate | Tab. 1092 | Trimestral | **Disponível** (290 obs.) |
-| Produção de ovos de galinha | IBGE Ovos | Tab. 915 | Trimestral | **Disponível** (57 obs.) |
+| Abate de bovinos | IBGE Abate | Tab. 1092 | Trimestral | **Disponível** |
+| Produção de ovos de galinha | IBGE Ovos | Tab. 7524 | Trimestral | **Disponível** |
 | Produção de leite | IBGE Leite | Tab. 74 | Trimestral | **Indisponível para RR** — excluída |
-| VBP por produto animal (pesos Laspeyres) | PPM | Tab. 74, v215 | Anual | **Disponível** |
+| Parâmetro estrutural anual dos subsetores agropecuários | Arquivo manual interno | Planilha anual 2020–2023 | Anual | **Disponível** |
 
-**Nota sobre pesos pecuários**: o VBP por produto animal vem da Tab. 74 v215 (valor da produção
-animal). A Tab. 3939 (PPM efetivo de rebanhos) não contém a variável de valor necessária para
-ponderação.
+**Nota sobre pesos pecuários**: a proporção estrutural entre `lavouras` e `pecuária` passa a ser calibrada por tabulação anual específica dos subsetores da agropecuária, usada apenas como parâmetro interno do projeto. Isso substitui o uso isolado da PPM como definidora do peso relativo entre os dois blocos.
 
-**Estrutura de pesos lavouras × pecuária** (janela móvel com os 4 últimos anos disponíveis; no processamento atual, **2021–2024**):
-- Lavouras: **93,2%**
-- Pecuária: **6,8%** (abate + ovos; leite excluído por falta de série para RR)
+**Nota operacional sobre cache**: no estado atual do script, as consultas do SIDRA na agropecuária usam cache local por padrão. O rebaixamento online das séries só ocorre quando `atualizar_sidra <- TRUE` é definido explicitamente.
+
+**Nota sobre cobertura trimestral do abate**: para Roraima, o projeto usa apenas a Tab. 1092,
+que no retorno operacional do SIDRA aparece na dimensão `Tipo de rebanho bovino`. O IBGE não
+divulga, no mesmo desenho trimestral adotado aqui, séries equivalentes de abate de suínos e
+frango para RR; por isso esses componentes não entram na proxy pecuária.
+
+**Estrutura de pesos lavouras × pecuária**:
+- calibrada pela média anual `2020–2023` dos subsetores da agropecuária
+- aplicada operacionalmente apenas aos dois blocos com proxy trimestral direta no script (`lavouras` e `pecuária`)
+
+**Composição interna da proxy pecuária trimestral**:
+- `abate bovino` + `ovos`
+- combinação ponderada com predominância bovina
+- consequência: o projeto mantém aderência à estrutura produtiva local sem publicar os parâmetros internos no plano
+- a série só é aceita quando há cobertura trimestral completa no período operacional requerido; não há mais fallback por interpolação anual para substituir lacunas observadas
 
 ---
 
@@ -444,11 +455,13 @@ publicação IBGE out/2025). VAB total = R$ 23,0 bilhões.
 - Arquivo: `data/processed/serie_lavouras_trimestral.csv`
 
 **Etapa 1.3 — Pecuária** ✅
-- Abate (Tab. 1092): disponível para RR, trimestral — incluído
-- Ovos (Tab. 915): disponível para RR, trimestral — incluído
+- Abate de bovinos (Tab. 1092): disponível para RR, trimestral — incluído
+- Ovos (Tab. 7524): disponível para RR, trimestral — incluído
+- Suínos e frango: sem série trimestral equivalente operacional do IBGE para RR — excluídos
 - Leite (Tab. 74, trimestral): **sem cobertura para RR** — excluído
-- Pesos VBP: Tab. 74 v215 (valor da produção animal)
-- Resultado atual: lavouras 93,2%, pecuária 6,8% no índice agropecuário total
+- Regra de validação: a proxy só passa com cobertura trimestral completa no intervalo operacional exigido pelo script; no estado atual, a janela validada é `2020T1–2025T4`
+- Pesos estruturais: calibração anual específica dos subsetores da agropecuária
+- Resultado atual: composição entre lavouras e pecuária calibrada por parâmetro anual interno; dentro da proxy pecuária, `abate bovino` tem predominância sobre `ovos`
 - Arquivo: `data/processed/serie_pecuaria_trimestral.csv`
 
 **Etapa 1.4 — Denton-Cholette** ✅
@@ -754,6 +767,7 @@ Na Fase 5 (agregação), gerar duas versões do índice:
 | `dplyr` / `tidyr` / `lubridate` | Manipulação |
 | `ggplot2` | Visualização |
 | `writexl` / `openxlsx` | Excel |
+| `pdftools` | Extração de texto dos PDFs de ICMS por atividade |
 | `quarto` | Nota técnica PDF |
 | `shiny` / `flexdashboard` | Dashboard |
 | `httr2` / `jsonlite` | APIs (Transparência, BCB, ANEEL, ANP) |
@@ -772,47 +786,55 @@ Na Fase 5 (agregação), gerar duas versões do índice:
    lavouras de Roraima, calculado com a janela móvel dos **4 últimos anos disponíveis da PAM**.
    No processamento atual (`2021–2024`), a soja representa cerca de **54,3%** do VBP total da cesta.
 4. **Leite excluído da pecuária**: a pesquisa de produção de leite (IBGE, Tab. 74) não tem
-   cobertura trimestral para Roraima. O índice pecuário cobre abate (Tab. 1092) e ovos (Tab. 915).
-5. **Pesos lavouras × pecuária**: 93,2% e 6,8% respectivamente na configuração atual, com base na
-   janela móvel dos **4 últimos anos disponíveis** nas bases anuais.
-   Leite excluído não distorce — seu peso seria incorporado via ponderação Laspeyres com zero.
-6. **Denton-Cholette — fórmula sem intercepto obrigatória**: `td(bench ~ 0 + indicador)`. A
+   cobertura trimestral para Roraima. O índice pecuário cobre abate de bovinos (Tab. 1092) e ovos (Tab. 7524).
+5. **Suínos e frango fora da proxy pecuária**: o IBGE não divulga, para RR, séries trimestrais
+   equivalentes de abate dessas espécies no mesmo desenho operacional usado no projeto.
+6. **Pesos lavouras × pecuária**: a composição entre esses dois blocos é calibrada por parâmetro
+   anual específico dos subsetores da agropecuária, usando a média do período 2020–2023.
+7. **Peso do bovino dentro da pecuária**: a proxy pecuária trimestral usa ponderação técnica com
+   predominância bovina sobre ovos.
+8. **Sem fallback na pecuária**: lacunas observadas em `abate` ou `ovos` não são mais preenchidas
+   por interpolação anual; a série trimestral só é aceita quando a cobertura está completa no
+   período operacional exigido.
+9. **Cache operacional nas rotinas SIDRA críticas**: as etapas da agropecuária e do PIB nominal
+   usam cache local por padrão; refresh online só ocorre sob parametrização explícita.
+10. **Denton-Cholette — fórmula sem intercepto obrigatória**: `td(bench ~ 0 + indicador)`. A
    fórmula com intercepto (`~ indicador`) cria matriz RHS que o algoritmo Denton rejeita. O
    parâmetro `conversion = "mean"` é obrigatório para índices (a média dos 4 trimestres deve
    igualar o benchmark anual, não a soma).
-7. **Elemento 31 (pessoal ativo) para AAPP**: alinhado com a metodologia do IBGE — aposentados
+11. **Elemento 31 (pessoal ativo) para AAPP**: alinhado com a metodologia do IBGE — aposentados
    e pensionistas são transferências, não remuneração de fator, e não integram o VAB de AAPP nas
    Contas Nacionais. O SICONFI (RREO Anexo 06) é a fonte oficial para estado e municípios.
-8. **SIAPE obrigatório na produção**: o endpoint `/remuneracao-servidores-ativos` do Portal da
+12. **SIAPE obrigatório na produção**: o endpoint `/remuneracao-servidores-ativos` do Portal da
    Transparência não sustenta o fluxo automatizado direto. O projeto usa os arquivos mensais do
    Portal processados localmente e o script de AAPP falha explicitamente se a base federal não existir.
-9. **RREO bimestral acumulado → trimestral**: diferença entre bimestres consecutivos → valor
+13. **RREO bimestral acumulado → trimestral**: diferença entre bimestres consecutivos → valor
    incremental; distribuição uniforme em 2 meses; agregação por trimestre.
-10. **Ausência de PIM-PF**: compensada por CAGED C + energia industrial ANEEL; peso < 2% no total.
-11. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
-12. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
-13. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
-14. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
-15. **Benchmarking Denton**: assegura consistência anual com IBGE.
-16. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
-17. **ANEEL SAMP via API CKAN (não CSV completo)**: arquivo CSV anual tem 201 MB (todo o Brasil).
+14. **Ausência de PIM-PF**: compensada por CAGED C + energia industrial ANEEL; peso < 2% no total.
+15. **Ausência de IPCA estadual**: IPCA nacional usado para deflacionar séries nominais.
+16. **Início em 2020**: descontinuidade do CAGED inviabiliza séries anteriores baseadas em emprego.
+17. **ICMS como proxy de volume**: requer deflação e monitoramento de mudanças legislativas.
+18. **Diesel para transportes**: proxy de frete rodoviário; não duplicado em agropecuária/construção.
+19. **Benchmarking Denton**: assegura consistência anual com IBGE.
+20. **Pesos anuais**: revisados conforme publicação das Contas Regionais (tipicamente 2 anos de defasagem).
+21. **ANEEL SAMP via API CKAN (não CSV completo)**: arquivo CSV anual tem 201 MB (todo o Brasil).
     A API CKAN do portal de dados abertos aceita filtros em `datastore_search` — retorna apenas
     os ~800 registros/ano de BOA VISTA (RR), evitando download pesado. Paginação a cada 500 registros.
-18. **CAGED via FTP MTE (microdata nacional)**: Novo CAGED (2020+) não está em SIDRA nem tem API
+22. **CAGED via FTP MTE (microdata nacional)**: Novo CAGED (2020+) não está em SIDRA nem tem API
     com filtro por UF. Script baixa CAGEDMOV {yearmonth}.7z, extrai com 7-Zip local
     (`C:/Program Files/7-Zip/7z.exe`), filtra `uf == 14` com `data.table::fread`, agrega por
     seção CNAE e apaga os arquivos grandes. Todas as seções CNAE são salvas (não só F e C)
     para reaproveitamento na Fase 4 sem re-download.
-19. **CAGED como estoque acumulado**: o saldo mensal (admissões − desligamentos) é um fluxo.
+23. **CAGED como estoque acumulado**: o saldo mensal (admissões − desligamentos) é um fluxo.
     Para uso como indicador Denton (que requer série de nível), acumula-se o saldo a partir de
     base 1000 em Jan 2020. O Denton calibra o nível absoluto; apenas o perfil temporal importa.
-20. **SNIC cimento indisponível via API**: snic.org.br não responde a requisições automáticas.
+24. **SNIC cimento indisponível via API**: snic.org.br não responde a requisições automáticas.
     O script aceita `data/raw/snic_cimento_rr.csv` como insumo de download manual. Se presente:
     Construção = CAGED F 60% + SNIC 40%. Se ausente: Construção = CAGED F 100%.
-21. **ICMS excluído do bloco industrial (Fase 3)**: SEFAZ-RR não publica ICMS por seção CNAE
+25. **ICMS excluído do bloco industrial (Fase 3)**: SEFAZ-RR não publica ICMS por seção CNAE
     de forma automatizável. Construção e Transformação usam apenas CAGED + energia. ICMS
     incorporado na Fase 4 (Comércio) onde o total de ICMS (sem disagregação) já é a proxy padrão.
-22. **Pesos internos do bloco industrial**: calculados a partir do VAB 2020 das Contas Regionais
+26. **Pesos internos do bloco industrial**: calculados a partir do VAB 2020 das Contas Regionais
     (SIUP 5,51 + Construção 4,98 + Transformação 1,15 = 11,64% do VAB total). Normalizados
     para soma 100% dentro do bloco. O bloco total recebe peso 11,64% no índice agregado (Fase 5).
 

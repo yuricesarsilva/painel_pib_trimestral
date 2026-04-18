@@ -68,9 +68,9 @@ Output gerado: `data/processed/icms_sefaz_rr_trimestral.csv`.
 
 Fonte: SIDRA/IBGE.
 
-Especificação exata no código: API `"/t/5457/n3/14/v/214,215/p/all/c782/all"`, com `214 = quantidade`, `215 = VBP`, UF `14 = RR`, e cache em `data/raw/sidra/pam_temp_rr.csv`.
+Especificação exata no código: API `"/t/5457/n3/14/v/214,215/p/all/c782/all"`, com `214 = quantidade`, `215 = VBP`, UF `14 = RR`, e cache em `data/raw/sidra/pam_temp_rr.csv`. No estado atual do script, esse cache é usado por padrão; nova consulta ao SIDRA só ocorre se `atualizar_sidra <- TRUE` for definido explicitamente.
 
-O que é feito com ela: mede a cobertura das culturas e calcula os pesos Laspeyres das lavouras com base na média do VBP dos 4 últimos anos disponíveis da PAM. Hoje, com a PAM disponível até 2024, essa janela corresponde a `2020–2024`. A mesma base também fornece a parte anual definitiva das lavouras.
+O que é feito com ela: mede a cobertura das culturas e calcula os pesos Laspeyres das lavouras com base na média do VBP dos 4 últimos anos disponíveis da PAM. Hoje, com a PAM disponível até 2024, essa janela corresponde a `2021–2024`. A mesma base também fornece a parte anual definitiva das lavouras.
 
 Output gerado: `data/processed/cobertura_lspa_pam.csv` e insumo para `data/processed/serie_lavouras_trimestral.csv`.
 
@@ -78,7 +78,7 @@ Output gerado: `data/processed/cobertura_lspa_pam.csv` e insumo para `data/proce
 
 Fonte: SIDRA/IBGE.
 
-Especificação exata no código: API `"/t/6588/n3/14/v/35/p/all/c48/all"`, usando apenas observações cujo mês começa por `dezembro`, com cache em `data/raw/sidra/lspa_rr.csv`.
+Especificação exata no código: API `"/t/6588/n3/14/v/35/p/all/c48/all"`, usando apenas observações cujo mês começa por `dezembro`, com cache em `data/raw/sidra/lspa_rr.csv`. No estado atual do script, esse cache é usado por padrão; nova consulta ao SIDRA só ocorre se `atualizar_sidra <- TRUE` for definido explicitamente.
 
 O que é feito com ela: substitui a PAM nos anos ainda não fechados, agregando as safras por cultura para gerar quantidade anual provisória.
 
@@ -94,13 +94,13 @@ O que é feito com ela: converte a produção anual de cada cultura em distribui
 
 Output gerado: `data/processed/coef_sazonais_colheita.csv` e `data/processed/serie_lavouras_trimestral.csv`.
 
-### 4. VBP pecuário anual
+### 4. Parâmetro estrutural anual da agropecuária
 
-Fonte: SIDRA/IBGE.
+Fonte: arquivo manual de referência interna.
 
-Especificação exata no código: API `"/t/74/n3/14/v/215/p/all/c80/all"`, com cache em `data/raw/sidra/ppm_vbp_rr.csv`.
+Especificação exata no código: leitura do arquivo manual `bases_baixadas_manualmente/dados_participacao_vab_agopecuaria_rr_2020_2023/vab_agropecuaria_pib_ibge.xlsx`, com média do período `2020–2023` para os subsetores anuais da agropecuária.
 
-O que é feito com ela: o script usa o VBP pecuário apenas para ponderar o bloco `pecuária` dentro do índice agropecuário total.
+O que é feito com ela: o script usa essa tabulação anual como parâmetro estrutural para calibrar a proporção entre `lavouras` e `pecuária` no índice agropecuário trimestral. O terceiro subsetor anual da agropecuária funciona como referência estrutural da calibração, mas não entra como proxy trimestral direta no script.
 
 Output gerado: insumo para `data/output/indice_agropecuaria.csv`.
 
@@ -108,9 +108,9 @@ Output gerado: insumo para `data/output/indice_agropecuaria.csv`.
 
 Fonte: SIDRA/IBGE.
 
-Especificação exata no código: API `"/t/1092/n3/14/v/284/p/all/c12716/all"`, com cache em `data/raw/sidra/abate_rr.csv`.
+Especificação exata no código: API `"/t/1092/n3/14/v/284/p/all/c12716/all"`, com filtro operacional em `Referência temporal = Total do trimestre`. A tabela 1092 é a pesquisa trimestral de abate de bovinos; no arquivo retornado a classificação específica é `Tipo de rebanho bovino`, usada no código com `Total`. Para Roraima, o projeto não usa abate trimestral de suínos ou frango porque o IBGE não divulga, no mesmo desenho operacional adotado aqui, séries trimestrais equivalentes para essas espécies. Cache em `data/raw/sidra/abate_rr.csv`.
 
-O que é feito com ela: compõe a proxy trimestral da pecuária com dados efetivamente disponíveis para Roraima.
+O que é feito com ela: compõe, junto com ovos, a proxy trimestral da pecuária com dados efetivamente disponíveis para Roraima. No estado atual do código, `abate bovino` recebe peso predominante na composição interna da proxy pecuária e a série só é aceita quando a cobertura trimestral observada está completa na janela operacional validada.
 
 Output gerado: `data/processed/serie_pecuaria_trimestral.csv`.
 
@@ -118,9 +118,9 @@ Output gerado: `data/processed/serie_pecuaria_trimestral.csv`.
 
 Fonte: SIDRA/IBGE.
 
-Especificação exata no código: API `"/t/915/n3/14/v/29/p/all"`, com cache em `data/raw/sidra/ovos_rr.csv`.
+Especificação exata no código: API `"/t/7524/n3/14/v/29/p/all"`, com filtro operacional em `Finalidade da produção = Total` e `Referência temporal = Total do trimestre`, com cache em `data/raw/sidra/ovos_rr.csv`.
 
-O que é feito com ela: complementa a proxy trimestral da pecuária.
+O que é feito com ela: complementa a proxy trimestral da pecuária. Desde a revisão metodológica desta etapa, o script não usa mais fallback por interpolação anual para substituir lacunas observadas em `abate` ou `ovos`.
 
 Output gerado: `data/processed/serie_pecuaria_trimestral.csv`.
 
@@ -480,9 +480,9 @@ Output gerado: `data/output/ilp_rr_trimestral.csv` e `data/output/pib_nominal_rr
 
 Fonte: SIDRA/IBGE.
 
-Especificação exata no código: `get_sidra(x = 5938, variable = 37, period = "2010-2023", geo = "State", geo.filter = list("State" = 14))`.
+Especificação exata no código: leitura prioritária do cache `data/raw/sidra/pib_rr_anual_sidra_5938.csv`; quando `atualizar_sidra <- TRUE`, o script reconsulta `get_sidra(x = 5938, variable = 37, period = "2010-2023", geo = "State", geo.filter = list("State" = 14))` e regrava o cache.
 
-O que é feito com ela: obtém o PIB anual oficial de Roraima para benchmark do ILP e fechamento do PIB nominal trimestral.
+O que é feito com ela: obtém o PIB anual oficial de Roraima para benchmark do ILP e fechamento do PIB nominal trimestral, com comportamento offline por padrão para estabilizar o `run_all`.
 
 Output gerado: `data/output/pib_nominal_rr.csv`.
 
@@ -618,7 +618,7 @@ Fonte dos inputs: não possui input de dados próprio; apenas chama os demais sc
 
 Especificação exata no código: sequência obrigatória de execução das etapas do pipeline.
 
-O que é feito com ela: orquestra a execução completa do projeto.
+O que é feito com ela: orquestra a execução completa do projeto. No estado atual do pipeline, a execução completa depende de `pdftools` para a leitura dos PDFs de ICMS por atividade em `R/00b_icms_sefaz_atividade.R`.
 
 Output gerado: não gera output próprio.
 

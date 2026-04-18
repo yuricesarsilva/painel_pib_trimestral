@@ -160,7 +160,9 @@ As saídas estão em `data/output/indice_geral_rr_sa.csv` (índices SA por bloco
 
 ### 6.1 Agropecuária
 
-**Peso no VAB de 2020: 6,89%.** O índice agropecuário é composto por dois subíndices — lavouras e pecuária — ponderados por VBP médio calculado via PAM/PPM. No estado atual do projeto, esses pesos usam uma **janela móvel com os 4 últimos anos disponíveis** das bases anuais. Após o reprocessamento corrente, a janela efetiva ficou em **2021–2024**.
+**Peso no VAB de 2020: 6,89%.** O índice agropecuário é composto por dois subíndices — lavouras e pecuária — calibrados por parâmetro estrutural anual específico dos subsetores da agropecuária, combinado às proxies trimestrais observáveis do projeto.
+
+No estado atual do pipeline, o script usa os caches locais do SIDRA por padrão e só rebaixa novamente as séries quando `atualizar_sidra <- TRUE` é definido explicitamente.
 
 #### Lavouras — hierarquia de fontes
 
@@ -206,11 +208,17 @@ As saídas estão em `data/output/indice_geral_rr_sa.csv` (índices SA por bloco
 
 | Proxy | Fonte/SIDRA | Frequência | Status para RR |
 |---|---|---|---|
-| Abate de bovinos, suínos e aves | IBGE Abate, Tab. 1092 | Trimestral | Disponível (290 obs.) |
-| Produção de ovos de galinha | IBGE Ovos, Tab. 915 | Trimestral | Disponível (57 obs.) |
+| Abate de bovinos | IBGE Abate, Tab. 1092 | Trimestral | Disponível |
+| Produção de ovos de galinha | IBGE Ovos, Tab. 7524 | Trimestral | Disponível |
 | Produção de leite | IBGE Leite, Tab. 74 | Trimestral | Indisponível para RR — excluída |
 
-**Pesos:** lavouras **93,2%**, pecuária **6,8%** na configuração corrente, calculados com a janela móvel dos **4 últimos anos disponíveis** nas bases anuais. No processamento atual, isso corresponde a **2021–2024**.
+O IBGE não divulga, para Roraima, séries trimestrais equivalentes de abate de suínos e frango no desenho operacional adotado no projeto. Por isso, a proxy de abate usada aqui é estritamente bovina (Tab. 1092).
+
+Os pesos entre lavouras e pecuária são calibrados a partir de uma tabulação anual específica dos subsetores da agropecuária usada como parâmetro interno do projeto. Dentro da proxy pecuária trimestral, o abate bovino recebe peso predominante sobre ovos.
+
+Desde a revisão metodológica desta etapa, a pecuária trimestral não usa mais fallback por interpolação anual quando faltam dados observados. O bloco só é calculado quando `abate` e `ovos` apresentam cobertura trimestral completa no período operacional exigido pelo script; no estado atual, a janela validada vai de `2020T1` a `2025T4`.
+
+**Pesos:** a composição entre lavouras e pecuária usa calibração estrutural anual; a composição interna da pecuária usa ponderação técnica com predominância bovina.
 
 ---
 
@@ -422,6 +430,8 @@ Para os 4 blocos analíticos (Agropecuária, AAPP, Indústria, Serviços), o VAB
 $$\text{ILP trimestral}_t = \text{ICMS deflacionado}_t \times k_j$$
 
 onde $k_j$ é o fator de escala anual que garante que $\sum_q \text{ILP}_{j,q}$ coincida com o ILP anual das Contas Regionais no ano $j$. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.
+
+Na implementação atual, a série anual oficial de PIB usada nesse benchmark é mantida em cache local e reutilizada por padrão no `05g_pib_nominal.R`; a atualização online do SIDRA ficou reservada a execuções explicitamente parametrizadas para refresh das bases.
 
 $$\text{PIB nominal}_t = \text{VAB nominal}_t + \text{ILP}_t$$
 

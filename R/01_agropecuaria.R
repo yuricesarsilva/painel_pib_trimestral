@@ -12,7 +12,7 @@
 #            SIDRA); Etapa 1.4 — índice agregado com Denton-
 #            Cholette contra o índice anual de volume da
 #            agropecuária nas Contas Regionais do IBGE.
-# Entrada : SIDRA IBGE — tabs 5457, 6588, 3939, 1092, 74, 915;
+# Entrada : SIDRA IBGE — tabs 5457, 6588, 3939, 1092, 74, 7524;
 #            data/processed/contas_regionais_RR_volume.csv
 # Saída   : data/processed/cobertura_lspa_pam.csv
 #            data/processed/coef_sazonais_colheita.csv
@@ -32,6 +32,7 @@ library(sidrar)
 library(dplyr)
 library(tidyr)
 library(lubridate)
+library(readxl)
 
 # --- Caminhos -----------------------------------------------
 
@@ -39,6 +40,7 @@ dir_processed  <- file.path("data", "processed")
 dir_output     <- file.path("data", "output")
 dir_raw_sidra  <- file.path("data", "raw", "sidra")
 dir_referencias <- file.path("data", "referencias")
+dir_bases_manuais <- "bases_baixadas_manualmente"
 
 dir.create(dir_processed, recursive = TRUE, showWarnings = FALSE)
 dir.create(dir_output,    recursive = TRUE, showWarnings = FALSE)
@@ -49,7 +51,7 @@ arq_lspa      <- file.path(dir_raw_sidra, "lspa_rr.csv")           # tab 6588
 arq_ppm       <- file.path(dir_raw_sidra, "ppm_vbp_rr.csv")         # tab 74 v215
 arq_abate     <- file.path(dir_raw_sidra, "abate_rr.csv")          # tab 1092
 arq_leite     <- file.path(dir_raw_sidra, "leite_rr.csv")          # tab 74
-arq_ovos      <- file.path(dir_raw_sidra, "ovos_rr.csv")           # tab 915
+arq_ovos      <- file.path(dir_raw_sidra, "ovos_rr.csv")           # tab 7524
 
 arq_cobertura <- file.path(dir_processed, "cobertura_lspa_pam.csv")
 arq_coef_saz  <- file.path(dir_processed, "coef_sazonais_colheita.csv")
@@ -77,6 +79,11 @@ arq_pecuaria  <- file.path(dir_processed, "serie_pecuaria_trimestral.csv")
 # o valor externo é preservado.
 if (!exists("arq_indice")) arq_indice <- file.path(dir_output, "indice_agropecuaria.csv")
 arq_vol_serie <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
+arq_vab_subagro <- file.path(
+  dir_bases_manuais,
+  "dados_participacao_vab_agopecuaria_rr_2020_2023",
+  "vab_agropecuaria_pib_ibge.xlsx"
+)
 
 # --- Culturas de interesse ----------------------------------
 # Nomes exatos como aparecem na tabela SIDRA 5457
@@ -127,11 +134,20 @@ padroes_lspa <- list(
 # Ordem canônica das culturas (igual ao calendário de colheita)
 culturas_ord <- names(padroes_lspa)
 
-# --- Função: download idempotente via SIDRA -----------------
+# --- Função: download com atualização forçada via SIDRA ----
 
-baixar_sidra <- function(api_url, caminho_cache, descricao) {
-  if (!file.exists(caminho_cache)) {
-    message("Baixando ", descricao, " ...")
+# Por padrão, usa o cache local para garantir reprodutibilidade e evitar
+# depender de conexão ativa em toda execução. Quando for necessário
+# rebaixar as séries do SIDRA, defina `atualizar_sidra <- TRUE`.
+if (!exists("atualizar_sidra")) atualizar_sidra <- FALSE
+
+baixar_sidra <- function(api_url, caminho_cache, descricao, forcar_atualizacao = atualizar_sidra) {
+  if (forcar_atualizacao || !file.exists(caminho_cache)) {
+    message(if (file.exists(caminho_cache)) {
+      paste0(descricao, ": atualizando cache (", basename(caminho_cache), ") ...")
+    } else {
+      paste0("Baixando ", descricao, " ...")
+    })
     df <- get_sidra(api = api_url)
     write.csv(df, caminho_cache, row.names = FALSE)
     message(descricao, ": ", nrow(df), " linhas salvas em cache.")
@@ -487,130 +503,232 @@ abate_raw <- tryCatch(
 )
 
 # Tab 74 é ANUAL — usada apenas para VBP pecuário (pesos), não como série trimestral
-# Para série pecuária trimestral, usar tab 1092 (abate) se disponível
+# Para série pecuária trimestral, exigir abate e ovos completos na janela recente.
 leite_raw <- NULL  # Sem série trimestral de leite disponível para RR via SIDRA
 
 ovos_raw <- tryCatch(
-  baixar_sidra("/t/915/n3/14/v/29/p/all",
-               arq_ovos, "Produção de ovos — RR (tab 915)"),
-  error = function(e) { message("  tab 915 falhou: ", e$message); NULL }
+  baixar_sidra("/t/7524/n3/14/v/29/p/all",
+               arq_ovos, "Produção de ovos — RR (tab 7524)"),
+  error = function(e) { message("  tab 7524 falhou: ", e$message); NULL }
 )
 
-tem_dados_validos <- function(df, descricao) {
-  if (is.null(df)) {
-    message(sprintf("  %-28s: falhou na consulta", descricao))
-    return(FALSE)
+ultimo_trimestre_fechado <- function(data_ref = Sys.Date()) {
+  ano_ref <- year(data_ref)
+  trim_ref <- quarter(data_ref)
+  trim_fechado <- trim_ref - 1L
+  if (trim_fechado == 0L) {
+    ano_ref <- ano_ref - 1L
+    trim_fechado <- 4L
   }
-  col_val <- detectar_col(df, c("^Valor$"))
-  if (is.na(col_val)) {
-    message(sprintf("  %-28s: coluna Valor não encontrada", descricao))
-    return(FALSE)
-  }
-  n_ok <- sum(!is.na(suppressWarnings(as.numeric(gsub(",", ".",
-             df[[col_val]])))) &
-             suppressWarnings(as.numeric(gsub(",", ".", df[[col_val]]))) > 0,
-             na.rm = TRUE)
-  disp <- n_ok > 0
-  message(sprintf("  %-28s: %s (%d obs. válidas)",
-                  descricao, if (disp) "DISPONÍVEL" else "SEM DADOS PARA RR", n_ok))
-  disp
+  list(
+    ano = ano_ref,
+    trimestre = trim_fechado,
+    codigo = ano_ref * 100L + trim_fechado,
+    rotulo = sprintf("%dT%d", ano_ref, trim_fechado)
+  )
 }
 
-cat("Disponibilidade das séries pecuárias para Roraima:\n")
-disp_abate <- tem_dados_validos(abate_raw, "Abate (tab 1092)")
-disp_leite <- tem_dados_validos(leite_raw, "Leite (tab 74)")
-disp_ovos  <- tem_dados_validos(ovos_raw,  "Ovos (tab 915)")
+sequencia_trimestres <- function(codigo_ini, codigo_fim) {
+  anos <- codigo_ini %/% 100L
+  trims <- codigo_ini %% 100L
+  ano_fim <- codigo_fim %/% 100L
+  trim_fim <- codigo_fim %% 100L
+  codigos <- integer()
+  ano <- anos
+  trim <- trims
+  repeat {
+    codigos <- c(codigos, ano * 100L + trim)
+    if (ano == ano_fim && trim == trim_fim) break
+    trim <- trim + 1L
+    if (trim == 5L) {
+      trim <- 1L
+      ano <- ano + 1L
+    }
+  }
+  codigos
+}
 
-# Normaliza série trimestral SIDRA → data.frame(ano, trim, valor)
-normalizar_trim_sidra <- function(df) {
+ultimo_trimestre_disponivel_comum <- function(...) {
+  series <- list(...)
+  maximos <- vapply(series, function(df) {
+    max(df$trimestre_codigo, na.rm = TRUE)
+  }, numeric(1))
+  as.integer(min(maximos, na.rm = TRUE))
+}
+
+normalizar_trim_sidra <- function(df, descricao,
+                                  apenas_total_trimestre = FALSE,
+                                  apenas_total_categoria = FALSE) {
+  if (is.null(df)) stop(descricao, ": consulta SIDRA falhou.")
+
   col_val <- detectar_col(df, c("^Valor$"))
   col_per <- detectar_col(df, c("Trimestre", "^Trimestre", "Período$"))
-  if (is.na(col_val) || is.na(col_per)) return(NULL)
+  col_ref <- detectar_col(df, c("Referência temporal", "Referencia temporal"))
+  col_cod <- names(df)[grepl("^Trimestre \\(Código\\)$", names(df))]
+  col_cat <- detectar_col(df, c("Finalidade da produção", "Finalidade"))
 
-  df %>%
+  if (is.na(col_val) || is.na(col_per) || length(col_cod) == 0) {
+    stop(descricao, ": colunas trimestrais esperadas não foram encontradas.")
+  }
+
+  out <- df %>%
     transmute(
+      trimestre_codigo = suppressWarnings(as.integer(.data[[col_cod[1]]])),
       periodo = as.character(.data[[col_per]]),
-      valor   = suppressWarnings(as.numeric(gsub(",", ".", .data[[col_val]])))
-    ) %>%
-    filter(!is.na(valor), valor > 0) %>%
+      referencia_temporal = if (!is.na(col_ref)) as.character(.data[[col_ref]]) else NA_character_,
+      categoria = if (!is.na(col_cat)) as.character(.data[[col_cat]]) else NA_character_,
+      valor_txt = as.character(.data[[col_val]])
+    )
+
+  if (apenas_total_trimestre) {
+    out <- out %>%
+      filter(!is.na(referencia_temporal),
+             grepl("^Total do trimestre$", referencia_temporal, ignore.case = TRUE))
+  }
+
+  if (apenas_total_categoria) {
+    out <- out %>%
+      filter(!is.na(categoria),
+             grepl("^Total$", categoria, ignore.case = TRUE))
+  }
+
+  out %>%
     mutate(
-      ano  = suppressWarnings(as.integer(
-               regmatches(periodo, regexpr("[12][0-9]{3}", periodo)))),
-      trim = case_when(
-        grepl("1[º°o]|Q1|1\\.tri|1st|jan|Jan", periodo, ignore.case = TRUE) ~ 1L,
-        grepl("2[º°o]|Q2|2\\.tri|2nd|abr|Apr", periodo, ignore.case = TRUE) ~ 2L,
-        grepl("3[º°o]|Q3|3\\.tri|3rd|jul|Jul", periodo, ignore.case = TRUE) ~ 3L,
-        grepl("4[º°o]|Q4|4\\.tri|4th|out|Oct", periodo, ignore.case = TRUE) ~ 4L,
-        TRUE ~ NA_integer_
-      )
+      valor = suppressWarnings(as.numeric(gsub(",", ".", valor_txt))),
+      ano  = trimestre_codigo %/% 100L,
+      trim = trimestre_codigo %% 100L
     ) %>%
-    filter(!is.na(ano), !is.na(trim)) %>%
+    filter(!is.na(trimestre_codigo), !is.na(ano), trim %in% 1:4) %>%
     arrange(ano, trim)
 }
 
-series_pec <- list()
-if (disp_abate) {
-  ab <- normalizar_trim_sidra(abate_raw)
-  if (!is.null(ab)) {
-    series_pec$abate <- ab %>%
-      group_by(ano, trim) %>%
-      summarise(abate = sum(valor, na.rm = TRUE), .groups = "drop")
-  }
-}
-if (disp_leite) {
-  lt <- normalizar_trim_sidra(leite_raw)
-  if (!is.null(lt)) series_pec$leite <- lt %>% rename(leite = valor) %>% select(ano, trim, leite)
-}
-if (disp_ovos) {
-  ov <- normalizar_trim_sidra(ovos_raw)
-  if (!is.null(ov)) series_pec$ovos <- ov %>% rename(ovos = valor) %>% select(ano, trim, ovos)
-}
+validar_completude_trimestral <- function(df, descricao,
+                                          trimestre_inicial = 202001L,
+                                          trimestre_final = ultimo_trimestre_fechado()$codigo) {
+  dados <- df %>%
+    filter(trimestre_codigo >= trimestre_inicial,
+           trimestre_codigo <= trimestre_final)
 
-if (length(series_pec) == 0) {
-  message("\nNenhuma série pecuária trimestral disponível para RR.")
-  message("Proxy pecuário: interpolação linear do VAB agropecuário anual (Contas Regionais).")
-
-  vol_serie <- read.csv(arq_vol_serie, stringsAsFactors = FALSE)
-  vol_agro_anual <- vol_serie %>%
-    filter(atividade == "Agropecuária") %>%
-    select(ano, vab_volume_rebased) %>% arrange(ano)
-
-  idx_pec_trim <- vol_agro_anual %>%
-    crossing(trimestre = 1:4) %>%
-    arrange(ano, trimestre) %>%
-    mutate(
-      indice_pecuaria = vab_volume_rebased,
-      periodo         = sprintf("%dT%d", ano, trimestre)
-    ) %>%
-    select(ano, trimestre, periodo, indice_pecuaria)
-
-  metodo_pec <- "interpolação VAB anual"
-
-} else {
-  normalizar_idx <- function(df, col) {
-    base <- mean(df[[col]][df$ano == 2020], na.rm = TRUE)
-    if (is.na(base) || base == 0) base <- mean(df[[col]], na.rm = TRUE)
-    df %>% mutate(idx = .data[[col]] / base * 100) %>% select(ano, trim, idx)
+  if (nrow(dados) == 0) {
+    stop(descricao, ": nenhuma observação encontrada entre ",
+         trimestre_inicial %/% 100L, "T", trimestre_inicial %% 100L, " e ",
+         trimestre_final %/% 100L, "T", trimestre_final %% 100L, ".")
   }
 
-  lista_idx <- lapply(names(series_pec), function(nm) {
-    normalizar_idx(series_pec[[nm]], nm)
-  })
+  dados_invalidos <- dados %>%
+    filter(is.na(valor) | valor <= 0)
+  if (nrow(dados_invalidos) > 0) {
+    probs <- sprintf("%dT%d", dados_invalidos$ano, dados_invalidos$trim)
+    stop(descricao, ": há valores ausentes/invalidos em ",
+         paste(unique(probs), collapse = ", "), ".")
+  }
 
-  idx_pec_comb <- Reduce(
-    function(a, b) full_join(a, b, by = c("ano", "trim"), suffix = c("_a", "_b")),
-    lista_idx
+  duplicados <- dados %>%
+    count(trimestre_codigo) %>%
+    filter(n > 1)
+  if (nrow(duplicados) > 0) {
+    probs <- sprintf("%dT%d", duplicados$trimestre_codigo %/% 100L,
+                     duplicados$trimestre_codigo %% 100L)
+    stop(descricao, ": há trimestres duplicados em ",
+         paste(probs, collapse = ", "), ".")
+  }
+
+  esperado <- sequencia_trimestres(trimestre_inicial, trimestre_final)
+  faltantes <- setdiff(esperado, dados$trimestre_codigo)
+  if (length(faltantes) > 0) {
+    probs <- sprintf("%dT%d", faltantes %/% 100L, faltantes %% 100L)
+    stop(descricao, ": faltam trimestres entre 2020T1 e ",
+         trimestre_final %/% 100L, "T", trimestre_final %% 100L, ": ",
+         paste(probs, collapse = ", "), ".")
+  }
+
+  invisible(TRUE)
+}
+
+trim_fechado <- ultimo_trimestre_fechado()
+cat("Disponibilidade das séries pecuárias para Roraima:\n")
+
+ab <- normalizar_trim_sidra(abate_raw, "Abate (tab 1092)", apenas_total_trimestre = TRUE)
+ov <- normalizar_trim_sidra(
+  ovos_raw,
+  "Ovos (tab 7524)",
+  apenas_total_trimestre = TRUE,
+  apenas_total_categoria = TRUE
+)
+
+trim_exigido_codigo <- ultimo_trimestre_disponivel_comum(ab, ov)
+trim_exigido_rotulo <- sprintf("%dT%d", trim_exigido_codigo %/% 100L, trim_exigido_codigo %% 100L)
+
+cat(sprintf("  Janela mínima exigida: 2020T1 a %s\n", trim_exigido_rotulo))
+if (trim_exigido_codigo < trim_fechado$codigo) {
+  cat(sprintf(
+    "  Observação: último trimestre fechado no calendário é %s, mas a validação usa %s, último trimestre comum já observado nas séries requeridas.\n",
+    trim_fechado$rotulo,
+    trim_exigido_rotulo
+  ))
+}
+
+validar_completude_trimestral(ab, "Abate (tab 1092)", trimestre_final = trim_exigido_codigo)
+validar_completude_trimestral(ov, "Ovos (tab 7524)", trimestre_final = trim_exigido_codigo)
+
+cat(sprintf("  %-28s: OK até %s\n", "Abate (tab 1092)", trim_exigido_rotulo))
+cat(sprintf("  %-28s: OK até %s\n", "Ovos (tab 7524)", trim_exigido_rotulo))
+
+ab_valido <- ab %>%
+  filter(
+    trimestre_codigo >= 202001L,
+    trimestre_codigo <= trim_exigido_codigo,
+    !is.na(valor),
+    valor > 0
   )
-  idx_cols <- grep("^idx", names(idx_pec_comb), value = TRUE)
-  idx_pec_comb$indice_pecuaria <- rowMeans(idx_pec_comb[, idx_cols, drop = FALSE],
-                                           na.rm = TRUE)
-  idx_pec_trim <- idx_pec_comb %>%
-    mutate(periodo = sprintf("%dT%d", ano, trim)) %>%
-    select(ano, trimestre = trim, periodo, indice_pecuaria) %>%
-    arrange(ano, trimestre)
 
-  metodo_pec <- paste("séries SIDRA:", paste(names(series_pec), collapse = "+"))
+ov_valido <- ov %>%
+  filter(
+    trimestre_codigo >= 202001L,
+    trimestre_codigo <= trim_exigido_codigo,
+    !is.na(valor),
+    valor > 0
+  )
+
+series_pec <- list(
+  abate = ab_valido %>% select(ano, trim, abate = valor),
+  ovos  = ov_valido %>% select(ano, trim, ovos = valor)
+)
+
+peso_abate_bovino <- 0.90
+peso_ovos <- 0.10
+
+normalizar_idx <- function(df, col) {
+  base <- mean(df[[col]][df$ano == 2020], na.rm = TRUE)
+  if (is.na(base) || base == 0) {
+    stop("Sem base válida de 2020 para normalizar a série ", col, ".")
+  }
+  df %>% mutate(idx = .data[[col]] / base * 100) %>% select(ano, trim, idx)
 }
+
+lista_idx <- lapply(names(series_pec), function(nm) {
+  normalizar_idx(series_pec[[nm]], nm)
+})
+
+idx_pec_comb <- Reduce(
+  function(a, b) full_join(a, b, by = c("ano", "trim"), suffix = c("_a", "_b")),
+  lista_idx
+) %>%
+  rename(
+    idx_abate = idx_a,
+    idx_ovos = idx_b
+  ) %>%
+  mutate(
+    indice_pecuaria = peso_abate_bovino * idx_abate +
+      peso_ovos * idx_ovos
+  )
+
+idx_pec_trim <- idx_pec_comb %>%
+  mutate(periodo = sprintf("%dT%d", ano, trim)) %>%
+  select(ano, trimestre = trim, periodo, indice_pecuaria) %>%
+  arrange(ano, trimestre)
+
+metodo_pec <- "séries SIDRA com predominância bovina"
 
 validar_serie(idx_pec_trim$indice_pecuaria, "indice_pecuaria_trimestral")
 write.csv(idx_pec_trim, arq_pecuaria, row.names = FALSE)
@@ -622,36 +740,42 @@ message(sprintf("Série pecuária salva (%s): %d obs.", metodo_pec, nrow(idx_pec
 
 message("\n=== ETAPA 1.4: Índice agropecuário e Denton-Cholette ===\n")
 
-# --- Pesos lavouras vs. pecuária (VBP PAM + PPM) ------------
+# --- Pesos lavouras vs. pecuária (calibração estrutural) ----
 
-vbp_total_lavouras <- sum(vbp_pesos$vbp_medio, na.rm = TRUE)
-
-col_val_ppm <- detectar_col(ppm_raw, c("^Valor$"))
-col_ano_ppm <- detectar_col(ppm_raw, c("^Ano$"))
-col_prod_ppm <- detectar_col(ppm_raw, c("Tipo de produto"))
-
-vbp_total_pecuaria <- if (!is.na(col_val_ppm) && !is.na(col_ano_ppm)) {
-  ppm_raw %>%
-    transmute(
-      ano     = suppressWarnings(as.integer(.data[[col_ano_ppm]])),
-      produto = if (!is.na(col_prod_ppm)) .data[[col_prod_ppm]] else "Total",
-      vbp     = suppressWarnings(as.numeric(gsub(",", ".", .data[[col_val_ppm]])))
-    ) %>%
-    # Usar apenas "Total" para evitar dupla contagem; ou excluir Total se quiser granular
-    filter(grepl("^Total$", produto, ignore.case = TRUE),
-           ano %in% anos_peso, !is.na(vbp), vbp > 0) %>%
-    pull(vbp) %>% mean(na.rm = TRUE)
-} else {
-  message("AVISO: VBP pecuário não processado — usando peso padrão pecuária = 30%.")
-  vbp_total_lavouras * 30 / 70
+if (!file.exists(arq_vab_subagro)) {
+  stop("Arquivo de calibração estrutural da agropecuária não encontrado: ", arq_vab_subagro)
 }
 
-if (is.na(vbp_total_pecuaria) || vbp_total_pecuaria == 0) {
-  message("AVISO: VBP pecuário zerado — usando peso padrão pecuária = 30%.")
-  vbp_total_pecuaria <- vbp_total_lavouras * 30 / 70
+vab_subagro_raw <- readxl::read_excel(arq_vab_subagro, col_names = FALSE)
+vab_subagro <- tibble::tibble(
+  subsetor = as.character(vab_subagro_raw[[1]][2:4]),
+  `2020` = as.numeric(vab_subagro_raw[[2]][2:4]),
+  `2021` = as.numeric(vab_subagro_raw[[3]][2:4]),
+  `2022` = as.numeric(vab_subagro_raw[[4]][2:4]),
+  `2023` = as.numeric(vab_subagro_raw[[5]][2:4])
+)
+
+media_agricultura <- vab_subagro %>%
+  filter(grepl("^Agricultura$", subsetor, ignore.case = TRUE)) %>%
+  select(`2020`, `2021`, `2022`, `2023`) %>%
+  unlist(use.names = FALSE) %>%
+  mean(na.rm = TRUE)
+
+media_pecuaria <- vab_subagro %>%
+  filter(grepl("^Pecuária$", subsetor, ignore.case = TRUE)) %>%
+  select(`2020`, `2021`, `2022`, `2023`) %>%
+  unlist(use.names = FALSE) %>%
+  mean(na.rm = TRUE)
+
+if (is.na(media_agricultura) || is.na(media_pecuaria) ||
+    media_agricultura <= 0 || media_pecuaria <= 0) {
+  stop("Falha ao ler os parâmetros estruturais de lavouras e pecuária no arquivo manual.")
 }
 
-peso_lavouras <- vbp_total_lavouras / (vbp_total_lavouras + vbp_total_pecuaria)
+peso_lavouras <- round(
+  100 * media_agricultura / (media_agricultura + media_pecuaria),
+  0
+) / 100
 peso_pecuaria <- 1 - peso_lavouras
 
 cat(sprintf("Pesos no índice agropecuário:\n  Lavouras: %.1f%%  Pecuária: %.1f%%\n\n",

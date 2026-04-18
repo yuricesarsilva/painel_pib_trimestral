@@ -101,7 +101,7 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 |---|---|---|---|
 | Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual + municipal) | Portal da Transparência / STN–SICONFI |
 | Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE–CAGED |
-| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA, com pesos VBP dos 4 últimos anos da PAM) + pecuária (PPM/abate) | IBGE/SIDRA |
+| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA) + pecuária trimestral observada (abate de bovinos + ovos), com calibração estrutural anual específica para os subsetores da agropecuária e exigência de cobertura trimestral completa no período operacional | IBGE/SIDRA + parâmetro interno |
 | Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | IBGE – CR |
 | Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE–CAGED |
 | Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL (SAMP) |
@@ -116,7 +116,7 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 
 ### PIB Nominal Trimestral — VAB e ILP
 
-O script `R/05g_pib_nominal.R` gera o **PIB nominal trimestral** de Roraima (VAB + ILP, em R$ milhões), principal produto de divulgação do projeto.
+O script `R/05g_pib_nominal.R` gera o **PIB nominal trimestral** de Roraima (VAB + ILP, em R$ milhões), principal produto de divulgação do projeto. No estado atual, o benchmark anual do PIB usado nessa etapa é lido de cache local por padrão, com atualização online apenas quando explicitamente solicitada.
 
 O VAB nominal trimestral (`R/05f_vab_nominal.R`) é calculado como:
 
@@ -209,6 +209,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 | `seasonal` | Ajuste sazonal X-13ARIMA-SEATS |
 | `dplyr` / `tidyr` / `readr` | Manipulação de dados |
 | `openxlsx` | Exportação em Excel |
+| `pdftools` | Extração de texto dos PDFs de ICMS por atividade da SEFAZ-RR |
 | `httr2` / `jsonlite` | Coleta via APIs (BCB, ANEEL, ANP, Portal da Transparência) |
 | `readxl` | Leitura dos arquivos XLS das Contas Regionais |
 
@@ -219,7 +220,8 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 | Fonte | Dado | Acesso |
 |---|---|---|
 | IBGE Contas Regionais | VAB nominal e índice de volume por atividade — Roraima (2002–2023) | FTP IBGE — download automático (`00_dados_referencia.R`) |
-| IBGE / SIDRA | Agropecuária: PAM (tab. 5457), LSPA (tab. 6588), PPM/abate/ovos (tabs. 74, 1092, 915); IPCA (tab. 1737); PIB anual RR (tab. 5938) | API SIDRA via `sidrar` |
+| IBGE / SIDRA | Agropecuária: PAM (tab. 5457), LSPA (tab. 6588), PPM/VBP animal (tab. 74), abate de bovinos (tab. 1092) e ovos de galinha (tab. 7524); IPCA (tab. 1737); PIB anual RR (tab. 5938) | API SIDRA via `sidrar`, com caches locais usados por padrão nas etapas operacionais |
+| SEFAZ-RR | PDFs de ICMS por atividade econômica | Download manual; extração local via `pdftools` |
 | Portal da Transparência | Folha federal (SIAPE) — arquivos mensais ZIP por UF | Download manual; `bases_baixadas_manualmente/dados_siape_portal_transparencia/` |
 | STN / SICONFI | Folha estadual e municipal — RREO Anexo 06 (pessoal ativo, elemento 31), 16 entes de RR | API pública `apidatalake.tesouro.gov.br` (sem autenticação) |
 | ANEEL (SAMP) | Consumo de energia elétrica por classe — Roraima Energia S.A. (sistema isolado) | API CKAN `dadosabertos.aneel.gov.br` — download automático |

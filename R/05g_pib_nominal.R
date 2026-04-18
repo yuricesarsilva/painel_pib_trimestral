@@ -39,6 +39,7 @@ library(openxlsx)
 
 dir_processed <- file.path("data", "processed")
 dir_output    <- file.path("data", "output")
+dir_raw_sidra <- file.path("data", "raw", "sidra")
 
 arq_icms      <- file.path(dir_processed, "icms_sefaz_rr_trimestral.csv")
 arq_cr_serie  <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
@@ -46,12 +47,17 @@ arq_vab_reais <- file.path(dir_output,    "vab_nominal_rr_reais.csv")
 arq_ilp_trim  <- file.path(dir_output,    "ilp_rr_trimestral.csv")
 arq_pib_trim  <- file.path(dir_output,    "pib_nominal_rr.csv")
 arq_excel     <- file.path(dir_output,    "IAET_RR_series.xlsx")
+arq_pib_anual_cache <- file.path(dir_raw_sidra, "pib_rr_anual_sidra_5938.csv")
 
 # --- Parâmetros ---------------------------------------------
 
 ano_inicio <- 2020L
 ano_atual  <- as.integer(format(Sys.Date(), "%Y"))
 anos_saida <- ano_inicio:(ano_atual - 1L)
+
+if (!exists("atualizar_sidra")) atualizar_sidra <- FALSE
+
+dir.create(dir_raw_sidra, recursive = TRUE, showWarnings = FALSE)
 
 
 # ============================================================
@@ -87,24 +93,42 @@ message(sprintf("VAB nominal trimestral: %d trimestres (%s a %s)",
 
 message("\n=== ETAPA 5.8.2: PIB anual e ILP anual ===\n")
 
-pib_sidra <- sidrar::get_sidra(
-  x = 5938,
-  variable = 37,
-  period = "2010-2023",
-  geo = "State",
-  geo.filter = list("State" = 14)
-)
+baixar_pib_anual_sidra <- function(forcar_atualizacao = atualizar_sidra) {
+  if (!forcar_atualizacao && file.exists(arq_pib_anual_cache)) {
+    message("PIB anual SIDRA 5938: usando cache local.")
+    return(read_csv(arq_pib_anual_cache, show_col_types = FALSE))
+  }
 
-col_ano <- names(pib_sidra)[grep("^Ano$|^ano$|^Trimestre", names(pib_sidra), ignore.case = TRUE)][1]
-col_val <- names(pib_sidra)[grep("^Valor$|^valor$", names(pib_sidra), ignore.case = TRUE)][1]
+  message(if (file.exists(arq_pib_anual_cache)) {
+    "PIB anual SIDRA 5938: atualizando cache local."
+  } else {
+    "PIB anual SIDRA 5938: baixando do SIDRA."
+  })
 
-pib_anual <- pib_sidra |>
-  transmute(
-    ano = as.integer(.data[[col_ano]]),
-    pib_mi = as.numeric(.data[[col_val]]) / 1000
-  ) |>
-  filter(ano >= ano_inicio, ano <= 2023) |>
-  arrange(ano)
+  pib_sidra <- sidrar::get_sidra(
+    x = 5938,
+    variable = 37,
+    period = "2010-2023",
+    geo = "State",
+    geo.filter = list("State" = 14)
+  )
+
+  col_ano <- names(pib_sidra)[grep("^Ano$|^ano$|^Trimestre", names(pib_sidra), ignore.case = TRUE)][1]
+  col_val <- names(pib_sidra)[grep("^Valor$|^valor$", names(pib_sidra), ignore.case = TRUE)][1]
+
+  pib_anual <- pib_sidra |>
+    transmute(
+      ano = as.integer(.data[[col_ano]]),
+      pib_mi = as.numeric(.data[[col_val]]) / 1000
+    ) |>
+    filter(ano >= ano_inicio, ano <= 2023) |>
+    arrange(ano)
+
+  write_csv(pib_anual, arq_pib_anual_cache)
+  pib_anual
+}
+
+pib_anual <- baixar_pib_anual_sidra()
 
 vab_anual <- cr |>
   filter(atividade == "Total das Atividades", ano >= ano_inicio, ano <= 2023) |>
