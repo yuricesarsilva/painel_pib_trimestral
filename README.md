@@ -1,10 +1,11 @@
 # PIB Trimestral de Roraima
 
-> **[Dashboard interativo](https://yuricesar.shinyapps.io/pib-trimestral-rr/)** · **[Nota Metodológica](https://yuricesarsilva.github.io/painel_pib_trimestral/metodologia.html)**
+Para conhecero o painel, clique em:
+> **[Dashboard interativo](https://yuricesar.shinyapps.io/pib-trimestral-rr/)**
 
-Desenvolvido pela **Secretaria de Estado do Planejamento e Desenvolvimento de Roraima (SEPLAN/RR)**, este projeto produz as **estimativas trimestrais do PIB de Roraima** — em termos reais e nominais — a partir de 2020.
+Desenvolvido pela **Secretaria de Planejamento e Orçamento de Roraima (SEPLAN/RR)**, este projeto produz as **estimativas trimestrais do PIB de Roraima** — em termos reais e nominais — a partir de 2020.
 
-O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e o **PIB real** (índice e taxa de crescimento, base média de 2020 = 100). O instrumento metodológico que sustenta essas estimativas é o **Indicador de Atividade Econômica Trimestral de Roraima (IAET-RR)**, um índice encadeado de volume construído com proxies setoriais e ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette.
+O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e o **PIB real** (índice e taxa de crescimento, base média de 2020 = 100 e em R$ milhões de 2020). O instrumento metodológico que sustenta essas estimativas é o **Indicador de Atividade Econômica Trimestral de Roraima (IAET-RR)**, um índice encadeado de volume construído com proxies setoriais e ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette.
 
 ---
 
@@ -45,7 +46,7 @@ O produto central é o **PIB nominal trimestral** (VAB + ILP, em R$ milhões) e 
 | 2024 | +6,9% *(sem benchmark oficial)* | +4,1% | +3,7% |
 | 2025 | +7,2% *(sem benchmark oficial)* | +1,7% | +2,5% |
 
-> As taxas de 2021–2023 são ancoradas ao **PIB real das Contas Regionais do IBGE** via Denton-Cholette. As taxas de 2024–2025 derivam da série preliminar do projeto (sem benchmark oficial disponível) e serão substituídas quando as Contas Regionais 2024 forem publicadas (previsão IBGE: outubro de 2026).
+> As taxas de 2021–2023 são ancoradas ao **PIB real das Contas Regionais do IBGE** via Denton-Cholette. As taxas de 2024–2025 derivam das séries geradas no projeto (sem benchmark oficial disponível) e serão substituídas quando as Contas Regionais 2024 (e as seguintes) forem publicadas (previsão IBGE para as Contas Regionais 2024: outubro de 2026).
 
 ---
 
@@ -100,7 +101,7 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 |---|---|---|---|
 | Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual + municipal) | Portal da Transparência / STN–SICONFI |
 | Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE–CAGED |
-| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA, com pesos VBP da janela PAM 2021–2024) + pecuária (PPM/abate) | IBGE/SIDRA |
+| Agropecuária | 8,87% | Produção física lavouras (PAM/LSPA, com pesos VBP dos 4 últimos anos da PAM) + pecuária (PPM/abate) | IBGE/SIDRA |
 | Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | IBGE – CR |
 | Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE–CAGED |
 | Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL (SAMP) |
