@@ -554,6 +554,7 @@ A Fase 6 do pipeline formaliza a rotina de atualização trimestral e separa exp
 ```
 1. source("R/06_coleta_fontes.R")
    → Atualiza SIDRA, ANP e ANEEL automaticamente.
+   → No SIDRA, inclui PAM, LSPA, abate bovino, ovos, PMC, PMS, IPCA e PIB anual.
    → Imprime relatório de cobertura: mostra o que ainda falta por fonte.
 
 2. [Manual] Baixar SIAPE, FIPLAN, ANAC, BCB Estban/SCR e ICMS SEFAZ-RR.
@@ -586,7 +587,7 @@ O histórico de avanços fica versionado no git, garantindo rastreabilidade de q
 
 | Tipo | Fontes | Comando |
 |---|---|---|
-| Automatizável | SIDRA (PAM, LSPA, abate, ovos, IPCA, PIB), ANP diesel, ANEEL | `06_coleta_fontes.R` |
+| Automatizável | SIDRA (PAM, LSPA, abate, ovos, PMC, PMS, IPCA, PIB), ANP diesel, ANEEL | `06_coleta_fontes.R` |
 | Manual | SIAPE, FIPLAN estadual, ANAC Boa Vista, BCB Estban, BCB SCR, ICMS SEFAZ-RR | Download nas pastas `bases_baixadas_manualmente/` |
 
 ---

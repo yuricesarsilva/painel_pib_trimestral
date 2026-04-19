@@ -508,7 +508,7 @@
   - [x] Lido por `05e_exportacao.R` para filtrar a exportação pública
   - [x] Lido por `run_all.R` para exibir o trimestre publicado no cabeçalho e no resumo
 - [x] Criar `R/06_coleta_fontes.R` — atualiza todas as fontes automatizáveis em um único comando
-  - [x] SIDRA: PAM (5457), LSPA (6588), abate (1092), ovos (7524), IPCA (1737), PIB (5938)
+  - [x] SIDRA: PAM (5457), LSPA (6588), abate (1092), ovos (7524), PMC (8880), PMS (5906), IPCA (1737), PIB (5938)
   - [x] ANP: vendas de diesel RR (dados abertos, download inline)
   - [x] ANEEL: apaga cache do ano corrente para forçar re-download no próximo `run_all.R`
   - [x] Relatório de cobertura por fonte (automatizáveis e manuais) ao final

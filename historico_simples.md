@@ -2074,6 +2074,8 @@ dashboard `dashboard/app.R` realmente fazem hoje. Foram revisados e corrigidos q
   `R/05i_pib_real.R` e do arquivo `data/output/pib_real_anual_rr.csv`;
 - a rotina de atualização trimestral (Fase 6) foi reescrita para citar o `run_all.R` e listar a
   sequência completa dos 13 scripts;
+- a descrição da Fase 6 foi atualizada para explicitar que `06_coleta_fontes.R` também cobre
+  `PMC` e `PMS` no SIDRA, além das demais bases já listadas;
 - a tabela de status geral atualizou a nota da Fase 5 para incluir a etapa 5.10 como concluída.
 
 **Leitura metodológica:**

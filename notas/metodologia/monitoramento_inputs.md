@@ -891,7 +891,7 @@ Output gerado: não gera output próprio.
 Fonte dos inputs: `config/release.R` (determina o trimestre alvo); caches locais de cada fonte para checar cobertura atual.
 
 Especificação exata no código: calcula `trimestre_alvo` como o próximo após `trimestre_publicado`. Executa sequencialmente:
-- SIDRA: PAM (5457), LSPA (6588), abate bovino (1092), ovos (7524), IPCA (1737) e PIB anual (5938) com `atualizar_sidra <- TRUE` via `sidrar`.
+- SIDRA: PAM (5457), LSPA (6588), abate bovino (1092), ovos (7524), PMC (8880), PMS (5906), IPCA (1737) e PIB anual (5938) com `atualizar_sidra <- TRUE` via `sidrar`.
 - ANP: download inline do CSV de dados abertos (vendas de diesel por UF), filtrando `UF = RR`, com cache em `data/raw/anp/anp_diesel_rr_mensal.csv`.
 - ANEEL: apaga `data/raw/aneel/aneel_energia_rr_{ano_atual}.csv`, `data/raw/aneel/aneel_energia_rr_{ano_alvo}.csv` e `data/raw/aneel/aneel_energia_rr.csv` para forçar re-download no próximo `run_all.R`.
 - Relatório de cobertura: detecta o fim de cada cache (via funções `max_sidra_trim`, `max_aneel_cob`, `max_caged_cob`, `max_ano_mes`, `max_pam_cob`, `max_lspa_cob`) e imprime uma tabela comparando a cobertura atual com o trimestre alvo, sinalizando o que ainda falta.

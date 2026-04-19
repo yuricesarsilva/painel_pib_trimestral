@@ -63,7 +63,7 @@ A atualização de um novo trimestre segue quatro passos:
 source("R/06_coleta_fontes.R")
 ```
 
-Baixa/atualiza SIDRA (PAM, LSPA, abate, ovos, IPCA, PIB), ANP diesel e apaga o cache ANEEL do ano corrente para forçar re-download. Ao final, imprime um relatório de cobertura por fonte.
+Baixa/atualiza SIDRA (PAM, LSPA, abate, ovos, PMC, PMS, IPCA, PIB), ANP diesel e apaga o cache ANEEL do ano corrente para forçar re-download. Ao final, imprime um relatório de cobertura por fonte.
 
 **Passo 2 — Atualizar fontes manuais**
 
