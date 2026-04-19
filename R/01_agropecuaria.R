@@ -78,6 +78,7 @@ arq_cal_seadi  <- file.path(dir_referencias, "calendario_colheita_seadi_rr.csv")
 arq_cal_area   <- file.path(dir_referencias, "calendario_colheita_censo2006_area_rr.csv")
 arq_cal_estab  <- file.path(dir_referencias, "calendario_colheita_censo2006_estabelecimentos_rr.csv")
 arq_lavouras  <- file.path(dir_processed, "serie_lavouras_trimestral.csv")
+arq_culturas  <- file.path(dir_processed, "serie_culturas_trimestral.csv")
 arq_pecuaria  <- file.path(dir_processed, "serie_pecuaria_trimestral.csv")
 # Se `arq_indice` já existir no ambiente (ex: caminho alternativo para teste A/B),
 # o valor externo é preservado.
@@ -507,6 +508,23 @@ idx_lavouras_trim <- idx_mensal %>%
 
 validar_serie(idx_lavouras_trim$indice_lavouras, "indice_lavouras_trimestral")
 write.csv(idx_lavouras_trim, arq_lavouras, row.names = FALSE)
+
+# Índices trimestrais por cultura (cada uma normalizada a 2020 = 100)
+idx_culturas_trim <- prod_mensal %>%
+  group_by(nome_curto) %>%
+  mutate(
+    base_2020    = mean(qtd_m[ano == 2020], na.rm = TRUE),
+    indice_bruto = if_else(base_2020 > 0, qtd_m / base_2020 * 100, NA_real_)
+  ) %>%
+  ungroup() %>%
+  mutate(trimestre = ceiling(mes / 3L)) %>%
+  group_by(nome_curto, ano, trimestre) %>%
+  summarise(indice_cultura = mean(indice_bruto, na.rm = TRUE), .groups = "drop") %>%
+  mutate(periodo = sprintf("%dT%d", ano, trimestre)) %>%
+  arrange(nome_curto, ano, trimestre)
+
+write.csv(idx_culturas_trim, arq_culturas, row.names = FALSE)
+message(sprintf("Índices por cultura salvos: %s", arq_culturas))
 message(sprintf("\nSérie de lavouras: %d trimestres (%s a %s)",
                 nrow(idx_lavouras_trim),
                 head(idx_lavouras_trim$periodo, 1),
