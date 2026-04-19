@@ -39,7 +39,7 @@ O Brasil não dispõe de estimativa oficial do PIB estadual em frequência trime
 Este projeto preenche essa lacuna construindo o **Indicador de Atividade Econômica Trimestral de Roraima (IAET-RR)**, um índice encadeado de volume que serve como instrumento metodológico para gerar o **PIB real e nominal trimestral de Roraima** a partir de 2020T1.
 
 > ⚠️ **Restrições estruturais de Roraima**  
-> O estado não é coberto pelas pesquisas de conjuntura do IBGE que seriam naturalmente aplicáveis: sem PIM-PF, sem PMC e sem PMS para Roraima. Também não há IPCA estadual em nenhum período, o que obriga o uso do IPCA nacional como deflator de séries nominais.
+> O estado segue sem cobertura da PIM-PF regional e não dispõe de IPCA estadual em nenhum período. Em contrapartida, a PMC e a PMS existem para Roraima em nível de UF e passaram a reforçar o bloco de serviços privados; o IPCA nacional continua sendo o deflator adotado para as séries nominais.
 
 A solução adotada é construir um **índice encadeado de volume sem unidade monetária** — metodologicamente convergente com o **IBCR (Índice de Atividade Econômica Regional) do Banco Central do Brasil** — utilizando proxies de alta frequência disponíveis para Roraima e ancorando os totais anuais nas Contas Regionais via Denton-Cholette.
 
@@ -76,7 +76,7 @@ A variável `trimestre_publicado` em `config/release.R` controla qual trimestre 
 | `03_industria.R` | 3 | `indice_industria.csv` |
 | `04_servicos.R` | 4 | `indice_servicos.csv` |
 | `05_agregacao.R` | 5.1 | `indice_geral_rr.csv` |
-| `05b_sensibilidade_pesos.R` | 5.2 | Grid de pesos ótimos (504 combinações) |
+| `05b_sensibilidade_pesos.R` | 5.2 | Grid de pesos ótimos das proxies compostas (3.836 combinações) |
 | `05c_ajuste_sazonal.R` | 5.3 | `indice_geral_rr_sa.csv`, `fatores_sazonais.csv` |
 | `05d_validacao.R` | 5.4 | `validacao_relatorio.csv` |
 | `05e_exportacao.R` | 5.5 | `IAET_RR_series.xlsx` (filtrado por `trimestre_publicado`) |
@@ -333,9 +333,10 @@ Os pesos foram otimizados pelo critério de variância do Denton (ver Seção 7)
 
 | Componente | Fonte | Tipo | Peso adotado |
 |---|---|---|---|
-| Energia comercial (kWh) | ANEEL SAMP — classe "Comercial" | Volume físico | **60%** |
-| ICMS comércio (deflacionado) | SEFAZ-RR — por atividade econômica | Valor nominal deflacionado | **20%** |
-| Emprego CAGED G | FTP MTE — seção G | Insumo (estoque) | **20%** |
+| PMC-RR | IBGE/SIDRA — índice de volume do comércio varejista | Volume | **70%** |
+| Energia comercial (kWh) | ANEEL SAMP — classe "Comercial" | Volume físico | **10%** |
+| ICMS comércio (deflacionado) | SEFAZ-RR — por atividade econômica | Valor nominal deflacionado | **10%** |
+| Emprego CAGED G | FTP MTE — seção G | Insumo (estoque) | **10%** |
 
 **Nota sobre ICMS:** séries baseadas em ICMS requerem monitoramento contínuo de alterações de alíquota, benefícios fiscais e mudanças de regime tributário (Decretos SEFAZ-RR). Cada quebra estrutural identificada deve receber variável dummy no script.
 
@@ -374,15 +375,15 @@ Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe 
 
 | Subsetor | Proxy | Fonte |
 |---|---|---|
-| Outros serviços (7,63%) | CAGED I + M+N + P+Q, pesos por estoque 2020 | FTP MTE |
-| Informação e comunicação (1,01%) | Emprego CAGED J (TI, telecom, mídia) | FTP MTE |
+| Outros serviços (7,63%) | PMS-RR geral + CAGED I + CAGED M+N + CAGED P+Q | IBGE–PMS / FTP MTE |
+| Informação e comunicação (1,01%) | PMS-RR geral + CAGED J | IBGE–PMS / FTP MTE |
 | Indústrias extrativas (0,05%) | Interpolação linear CR (peso negligenciável) | IBGE CR |
 
 ---
 
 ## 7. Otimização de Pesos — Critério de Variância do Denton
 
-Quatro setores do IAET-RR usam proxies compostas: Indústria de Transformação, Comércio, Transportes e Financeiro. Até abril de 2026, os pesos dessas composições eram definidos *ad hoc*, com base em julgamento qualitativo. O script `R/05b_sensibilidade_pesos.R` substituiu esse julgamento por um **critério quantitativo objetivo, interno à metodologia e consistente com o Denton-Cholette**.
+Seis setores do IAET-RR usam proxies compostas: Indústria de Transformação, Comércio, Outros Serviços, Informação e Comunicação, Transportes e Financeiro. O script `R/05b_sensibilidade_pesos.R` substituiu o julgamento puramente qualitativo por um **critério quantitativo objetivo, interno à metodologia e consistente com o Denton-Cholette**.
 
 ### Por que não usar regressão?
 
@@ -398,14 +399,16 @@ onde $x_t(w) = \sum_i w_i \cdot \tilde{c}_{it}$ é a proxy composta com pesos $w
 
 ### Procedimento de busca em grade
 
-Passo de 5 pontos percentuais: 21 combinações para 2 componentes, 231 para 3 componentes. **Total: 504 combinações avaliadas** nos 4 setores. Para cada combinação: constrói proxy → aplica Denton → calcula objetivo.
+Passo de 5 pontos percentuais: 21 combinações para 2 componentes, 231 para 3 componentes e 1.771 para 4 componentes. **Total: 3.836 combinações avaliadas** nos 6 setores. Para cada combinação: constrói proxy → aplica Denton → calcula objetivo.
 
 ### Resultados
 
 | Setor | Pesos anteriores (ad hoc) | Pesos ótimos | Pesos adotados | Melhoria | Decisão |
 |---|---|---|---|---|---|
 | Ind. Transformação | Energia 70% / CAGED C 30% | Energia 55% / CAGED C 45% | **55% / 45%** | **59,9%** | ✅ Aplicado |
-| Comércio | Energia 40% / ICMS 40% / CAGED G 20% | Energia 100% / ICMS 0% / CAGED G 0% | **60% / 20% / 20%** | 93,6% (ótimo) | ⚠️ Conservador (ICMS histórico curto) |
+| Comércio | Energia 35% / PMC 25% / ICMS 20% / CAGED G 20% | Energia 0% / PMC 95% / ICMS 5% / CAGED G 0% | **10% / 70% / 10% / 10%** | **59,7%** | ✅ Aplicado (piso de 10%) |
+| Outros Serviços | CAGED I 25% / M+N 30% / P+Q 20% / PMS 25% | CAGED I 35% / M+N 0% / P+Q 0% / PMS 65% | **20% / 10% / 10% / 60%** | **70,3%** | ✅ Aplicado (piso de 10%) |
+| InfoCom | CAGED J 50% / PMS 50% | CAGED J 0% / PMS 100% | **10% / 90%** | **27,4%** | ✅ Aplicado (piso de 10%) |
 | Transportes | Pax 40% / Carga 30% / Diesel 30% | Pax 55% / Carga 0% / Diesel 45% | **55% / 0% / 45%** | **41,7%** | ✅ Aplicado |
 | Financeiro | Concessões 70% / Depósitos 30% | Concessões 40% / Depósitos 60% | **40% / 60%** | **90,5%** | ✅ Aplicado |
 
@@ -528,16 +531,16 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 | Atividade | % VAB 2023 | Proxy principal | Qualidade |
 |---|---|---|---|
 | Adm. Pública | 46,21% | Folha observada de pessoal (SIAPE + estadual + municipal) | **Forte** |
-| Comércio | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio (20%) + CAGED G (20%) | Aceitável |
+| Comércio | 12,25% | PMC-RR (70%) + energia comercial (10%) + ICMS comércio (10%) + CAGED G (10%) | Aceitável |
 | Agropecuária | 8,87% | PAM/LSPA + coef. de colheita + abate + ovos | **Forte** |
 | Atividades imobiliárias | 7,68% | Interpolação linear CR IBGE | Fraca mas necessária |
-| Outros serviços | 7,63% | CAGED I + M+N + P+Q | Aceitável |
+| Outros serviços | 7,63% | PMS-RR geral (60%) + CAGED I (20%) + CAGED M+N (10%) + CAGED P+Q (10%) | Aceitável |
 | SIUP | 5,40% | Energia elétrica total distribuída (kWh), ANEEL SAMP | **Forte** |
 | Construção | 4,89% | Estoque acumulado CAGED F | Aceitável |
 | Financeiro | 2,78% | Concessões BCB (40%) + Depósitos Estban (60%) | Aceitável |
 | Transportes | 1,92% | Passageiros ANAC SBBV (55%) + Diesel ANP (45%) | Aceitável |
 | Ind. de Transformação | 1,31% | Energia industrial ANEEL (55%) + CAGED C (45%) | Aceitável |
-| Informação e comunicação | 1,01% | CAGED J (TI, telecom) | Fraca mas necessária |
+| Informação e comunicação | 1,01% | PMS-RR geral (90%) + CAGED J (10%) | Aceitável |
 | Ind. extrativas | 0,05% | Interpolação linear CR | Fraca mas necessária |
 
 ---

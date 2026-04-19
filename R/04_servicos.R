@@ -5,10 +5,12 @@
 # Data    : 2026-04-11
 # Descrição: Índice trimestral do bloco de Serviços Privados de RR:
 #
-#   Comércio (12,25%): energia comercial ANEEL (60%) + ICMS comércio
-#     SEFAZ-RR deflacionado pelo IPCA (20%) + CAGED G (20%).
-#     Pesos conservadores: ótimo Denton aponta 100% energia, mas ICMS
-#     tem histórico curto (2020+); mantidos 3 componentes.
+#   Comércio (12,25%): energia comercial ANEEL + PMC-RR + ICMS comércio
+#     SEFAZ-RR deflacionado pelo IPCA + CAGED G.
+#     O script exporta as proxies brutas para a rotina de otimização
+#     (`05b_sensibilidade_pesos.R`). A produção usa pesos conservadores
+#     fixados no próprio script, preservando pelo menos 10% em cada proxy
+#     ativa dos blocos Comércio, Outros Serviços e Info/Com.
 #   Transportes (1,92%): passageiros ANAC (55%) + diesel ANP (45%).
 #     Pesos otimizados por minimização da variância do Denton (2026-04-15);
 #     carga ANAC removida (peso ótimo = 0).
@@ -18,8 +20,9 @@
 #   Imobiliário (7,68%): tendência linear interpolada entre
 #     benchmarks anuais das Contas Regionais IBGE.
 #   Outros serviços (7,63%): CAGED I (aloj./alim.) + M+N (prof./
-#     admin.) + P+Q (educação/saúde privada), pesos dinâmicos.
-#   Informação e comunicação (1,01%): CAGED J (TI/telecom).
+#     admin.) + P+Q (educação/saúde privada) + PMS-RR geral.
+#   Informação e comunicação (1,01%): CAGED J (TI/telecom) +
+#     PMS-RR geral.
 #   Indústrias extrativas (0,05%): interpolação linear CR (peso
 #     negligenciável, sem proxy específico).
 #
@@ -32,11 +35,14 @@
 #            ANAC VRA mensal — dadosabertos ANAC (baixado aqui)
 #            ANP — Vendas de combustíveis por UF (baixado aqui)
 #            BCB SGS/OData — IPCA, Estban, Concessões (baixado aqui)
+#            SIDRA/IBGE — PMC 8880 e PMS 5906 (baixado aqui ou via cache)
 #            data/processed/contas_regionais_RR_serie.csv
 # Saída   : data/raw/anac/anac_bvb_mensal.csv
 #            data/raw/anp/anp_diesel_rr_mensal.csv
 #            data/raw/bcb/bcb_estban_rr_mensal.csv
 #            data/raw/bcb/bcb_concessoes_rr_mensal.csv
+#            data/raw/sidra/pmc_rr.csv
+#            data/raw/sidra/pms_rr.csv
 #            data/output/indice_servicos.csv
 # Depende : httr2, jsonlite, dplyr, tidyr, lubridate, readr,
 #            readxl, data.table, tempdisagg, sidrar
@@ -48,11 +54,10 @@
 #   - BCB Estban: OData, UF=14, verbete 160 (depósitos totais).
 #   - BCB Concessões: OData NotaCredito. Se indisponível, fallback
 #     para Estban com aviso.
-#   - Comércio: 3 componentes (energia 60% + ICMS SEFAZ-RR 20% + CAGED G 20%).
-#     Pesos conservadores: ótimo Denton aponta 100% energia, mas mantém ICMS
-#     para dar robustez quando o histórico de ICMS por atividade for maior.
-#     Fallback automático para 2 componentes se icms_sefaz_rr_trimestral.csv
-#     não estiver disponível (energia 75% + CAGED G 25%).
+#   - Comércio: 4 componentes (energia, PMC, ICMS SEFAZ-RR e CAGED G),
+#     com pesos conservadores de produção definidos no script.
+#     Se algum componente faltar, os pesos são redistribuídos apenas
+#     entre os indicadores disponíveis naquele trimestre.
 # ============================================================
 
 source("R/utils.R")
@@ -66,6 +71,7 @@ library(readr)
 library(readxl)
 library(data.table)
 library(tempdisagg)
+library(sidrar)
 
 # --- Caminhos -----------------------------------------------
 
@@ -77,9 +83,10 @@ dir_caged     <- file.path(dir_raw, "caged")
 dir_anac      <- file.path(dir_raw, "anac")
 dir_anp       <- file.path(dir_raw, "anp")
 dir_bcb       <- file.path(dir_raw, "bcb")
+dir_sidra     <- file.path(dir_raw, "sidra")
 
 for (d in c(dir_raw, dir_processed, dir_output,
-            dir_anac, dir_anp, dir_bcb)) {
+            dir_anac, dir_anp, dir_bcb, dir_sidra)) {
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
 }
 
@@ -90,6 +97,8 @@ arq_anp_out        <- file.path(dir_anp,   "anp_diesel_rr_mensal.csv")
 arq_estban_out     <- file.path(dir_bcb,   "bcb_estban_rr_mensal.csv")
 arq_concessoes_out <- file.path(dir_bcb,   "bcb_concessoes_rr_mensal.csv")
 arq_ipca           <- file.path(dir_raw,   "ipca_mensal.csv")
+arq_pmc_rr         <- file.path(dir_sidra, "pmc_rr.csv")
+arq_pms_rr         <- file.path(dir_sidra, "pms_rr.csv")
 arq_cr_serie       <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
 arq_icms_trim      <- file.path(dir_processed, "icms_sefaz_rr_trimestral.csv")
 arq_vol_serie      <- file.path(dir_processed, "contas_regionais_RR_volume.csv")
@@ -105,16 +114,15 @@ dir_scr_bulk    <- file.path("bases_baixadas_manualmente", "dados_bcb_src_2020_2
 
 ano_inicio <- 2020L
 ano_atual  <- as.integer(format(Sys.Date(), "%Y"))
+if (!exists("atualizar_sidra")) atualizar_sidra <- FALSE
 
-# Pesos dos componentes — otimizados por 05b_sensibilidade_pesos.R
-# (critério: minimização da variância da correção Denton, 2026-04-15)
-
-# Comércio: ótimo Denton = 100%/0%/0%, mas ICMS tem histórico curto (2020+);
-#   decisão conservadora: aumentar energia, reduzir ICMS, manter CAGED
-#   Ad hoc anterior: 40%/40%/20% | Adotado: 60%/20%/20%
-peso_energia_comercio <- 0.60
-peso_icms_comercio    <- 0.20
-peso_caged_g          <- 0.20
+# Pesos de produção adotados após leitura da grade de otimização:
+# no Comércio e nos blocos apoiados pela PMS, a regra atual é manter
+# pelo menos 10% em cada proxy para não perder informação.
+peso_energia_comercio <- 0.10
+peso_pmc_comercio     <- 0.70
+peso_icms_comercio    <- 0.10
+peso_caged_g          <- 0.10
 
 # Transportes: carga aérea eliminada (0%) — volátil e não informativa em RR
 #   Ad hoc anterior: 40%/30%/30% | Ótimo: 55%/0%/45% | Melhoria: 41,7%
@@ -127,9 +135,60 @@ peso_diesel_anp  <- 0.45
 peso_concessoes  <- 0.40
 peso_depositos   <- 0.60
 
+# Outros serviços: pesos conservadores com piso de 10% por proxy.
+peso_caged_i_outros  <- 0.20
+peso_caged_mn_outros <- 0.10
+peso_caged_pq_outros <- 0.10
+peso_pms_outros      <- 0.60
+
+# Informação e comunicação: PMS lidera, mantendo CAGED J com piso informacional.
+peso_caged_j     <- 0.10
+peso_pms_infocom <- 0.90
+
 # Benchmark: anos com Contas Regionais disponíveis
 anos_cr <- 2020:2023
 
+
+# ============================================================
+# FUNÇÕES AUXILIARES PARA SIDRA E PESOS OTIMIZADOS
+# ============================================================
+
+baixar_sidra_cache <- function(api, arq_cache, rotulo, forcar_atualizacao = atualizar_sidra) {
+  if (!forcar_atualizacao && file.exists(arq_cache)) {
+    message(rotulo, ": usando cache local.")
+    return(read_csv(arq_cache, show_col_types = FALSE))
+  }
+
+  message(rotulo, if (file.exists(arq_cache)) ": atualizando cache via SIDRA." else ": baixando via SIDRA.")
+
+  old_env <- Sys.getenv(c("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"), unset = NA)
+  on.exit({
+    for (nm in names(old_env)) {
+      val <- old_env[[nm]]
+      if (is.na(val)) Sys.unsetenv(nm) else do.call(Sys.setenv, setNames(list(val), nm))
+    }
+  }, add = TRUE)
+  Sys.unsetenv(c("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"))
+
+  bruto <- sidrar::get_sidra(api = api)
+  write_csv(bruto, arq_cache)
+  bruto
+}
+
+parse_mes_sidra <- function(df, col_mes = "Mês (Código)") {
+  mes_cod <- as.character(df[[col_mes]])
+  mutate(
+    df,
+    ano = as.integer(substr(mes_cod, 1, 4)),
+    mes = as.integer(substr(mes_cod, 5, 6))
+  )
+}
+
+valor_sidra_num <- function(x) {
+  out <- suppressWarnings(as.numeric(gsub(",", ".", as.character(x), fixed = TRUE)))
+  out[!is.finite(out)] <- NA_real_
+  out
+}
 
 # ============================================================
 # ETAPA 4.1 — Carregar ANEEL Comercial (cache da Fase 3)
@@ -679,6 +738,112 @@ if (!is.null(ipca_raw) && nrow(ipca_raw) > 0) {
 
 
 # ============================================================
+# ETAPA 4.5b — PMC e PMS (IBGE/SIDRA)
+# PMC 8880: índice de volume de vendas no comércio varejista (UF)
+# PMS 5906: índice geral de volume de serviços (UF)
+# A PMC entra no Comércio. A PMS geral entra como indicador extra
+# compartilhado em Outros Serviços e Informação e comunicação.
+# ============================================================
+
+message("\n=== ETAPA 4.5b: PMC e PMS — SIDRA/IBGE ===\n")
+
+pmc_rr_raw <- tryCatch(
+  baixar_sidra_cache(
+    api = "/t/8880/n3/14/v/7169/p/all/c11046/56734",
+    arq_cache = arq_pmc_rr,
+    rotulo = "PMC-RR"
+  ),
+  error = function(e) {
+    message(sprintf("PMC-RR: falha na coleta — %s", e$message))
+    NULL
+  }
+)
+
+pmc_trim <- NULL
+if (!is.null(pmc_rr_raw) && nrow(pmc_rr_raw) > 0) {
+  pmc_trim <- pmc_rr_raw |>
+    parse_mes_sidra() |>
+    transmute(
+      ano,
+      mes,
+      valor = valor_sidra_num(Valor)
+    ) |>
+    filter(!is.na(valor), ano >= ano_inicio) |>
+    mutate(trimestre = ceiling(mes / 3L)) |>
+    group_by(ano, trimestre) |>
+    summarise(indice_pmc = mean(valor, na.rm = TRUE), n_meses = n(), .groups = "drop") |>
+    filter(n_meses == 3) |>
+    arrange(ano, trimestre)
+
+  base_pmc_2020 <- pmc_trim |>
+    filter(ano == 2020) |>
+    pull(indice_pmc) |>
+    mean(na.rm = TRUE)
+
+  if (!is.na(base_pmc_2020) && base_pmc_2020 > 0) {
+    pmc_trim <- pmc_trim |>
+      mutate(indice_pmc = indice_pmc / base_pmc_2020 * 100)
+    message(sprintf("PMC-RR: %d trimestres completos (base 2020=100)",
+                    nrow(pmc_trim)))
+  } else {
+    message("PMC-RR: base 2020 inválida — componente desativado.")
+    pmc_trim <- NULL
+  }
+}
+
+pms_rr_raw <- tryCatch(
+  baixar_sidra_cache(
+    api = "/t/5906/n3/14/v/7167/p/all/c11046/56726",
+    arq_cache = arq_pms_rr,
+    rotulo = "PMS-RR"
+  ),
+  error = function(e) {
+    message(sprintf("PMS-RR: falha na coleta — %s", e$message))
+    NULL
+  }
+)
+
+pms_infocom_trim <- NULL
+pms_outros_trim  <- NULL
+if (!is.null(pms_rr_raw) && nrow(pms_rr_raw) > 0) {
+  pms_trim <- pms_rr_raw |>
+    parse_mes_sidra() |>
+    transmute(
+      ano,
+      mes,
+      valor = valor_sidra_num(Valor)
+    ) |>
+    filter(!is.na(valor), ano >= ano_inicio) |>
+    mutate(trimestre = ceiling(mes / 3L)) |>
+    group_by(ano, trimestre) |>
+    summarise(indice_pms = mean(valor, na.rm = TRUE), n_meses = n(), .groups = "drop") |>
+    filter(n_meses == 3) |>
+    arrange(ano, trimestre)
+
+  base_pms_2020 <- pms_trim |>
+    filter(ano == 2020) |>
+    pull(indice_pms) |>
+    mean(na.rm = TRUE)
+
+  if (!is.na(base_pms_2020) && base_pms_2020 > 0) {
+    pms_trim <- pms_trim |>
+      mutate(indice_pms = indice_pms / base_pms_2020 * 100)
+
+    pms_infocom_trim <- pms_trim |>
+      transmute(ano, trimestre, indice_pms_infocom = indice_pms)
+
+    pms_outros_trim <- pms_trim |>
+      transmute(ano, trimestre, indice_pms_outros = indice_pms)
+
+    message(sprintf("PMS-RR geral: %d trimestres completos (base 2020=100)",
+                    nrow(pms_trim)))
+  } else {
+    message("PMS-RR geral: base 2020 inválida — componente desativado.")
+  }
+}
+
+
+# ============================================================
 # ETAPA 4.6 — BCB Estban: depósitos totais em RR
 # Fonte: arquivos AAAAMM_ESTBAN.ZIP baixados manualmente do BCB
 #   (https://www4.bcb.gov.br/fis/cosif/estban.asp)
@@ -898,12 +1063,12 @@ if (bcb_concessoes_ok) {
 # ETAPA 4.8 — COMÉRCIO (12,25% do VAB)
 # Índice composto: energia comercial ANEEL (40%) +
 #   ICMS comércio SEFAZ-RR deflacionado pelo IPCA (40%) +
-#   CAGED G (20%)
-# Tipo medida: volume (energia) + valor real (ICMS) + insumo (emprego)
+#   CAGED G + PMC-RR
+# Tipo medida: volume (energia/PMC) + valor real (ICMS) + insumo (emprego)
 # Qualidade: forte (ICMS disponível)
 # ============================================================
 
-message("\n=== ETAPA 4.8: Comércio — energia + ICMS SEFAZ-RR + CAGED G ===\n")
+message("\n=== ETAPA 4.8: Comércio — energia + PMC + ICMS + CAGED G ===\n")
 
 # Energia comercial trimestral
 energia_com_trim <- energia_com_mensal |>
@@ -917,6 +1082,8 @@ base_ecom_2020 <- energia_com_trim |> filter(ano == 2020) |>
   pull(energia_kwh) |> mean(na.rm = TRUE)
 energia_com_trim <- energia_com_trim |>
   mutate(indice_energia_com = energia_kwh / base_ecom_2020 * 100)
+
+pmc_disp <- !is.null(pmc_trim) && nrow(pmc_trim) > 0
 
 # ICMS comércio trimestral (SEFAZ-RR) — deflacionado pelo IPCA
 icms_comercio_disp <- FALSE
@@ -963,34 +1130,50 @@ if (file.exists(arq_icms_trim)) {
   message(sprintf("ICMS comércio: arquivo não encontrado (%s) — usando 2 componentes.", arq_icms_trim))
 }
 
-# Pesos efetivos com fallback automático
-if (icms_comercio_disp) {
-  peso_energia_comercio_ef <- peso_energia_comercio   # 0.40
-  peso_icms_comercio_ef    <- peso_icms_comercio      # 0.40
-  peso_caged_g_ef          <- peso_caged_g             # 0.20
-} else {
-  # Sem ICMS: redistribuir proporcionalmente entre energia e CAGED
-  soma_sem_icms            <- peso_energia_comercio + peso_caged_g
-  peso_energia_comercio_ef <- peso_energia_comercio / soma_sem_icms
-  peso_icms_comercio_ef    <- 0.0
-  peso_caged_g_ef          <- peso_caged_g / soma_sem_icms
-  message(sprintf("Fallback Comércio sem ICMS: energia %.0f%% + CAGED G %.0f%%",
-                  peso_energia_comercio_ef * 100, peso_caged_g_ef * 100))
+# Pesos efetivos com fallback automático entre componentes disponíveis
+pesos_com_ref <- c(
+  energia = peso_energia_comercio,
+  pmc     = peso_pmc_comercio,
+  icms    = peso_icms_comercio,
+  caged_g = peso_caged_g
+)
+
+comp_disp_com <- c(
+  energia = TRUE,
+  pmc     = pmc_disp,
+  icms    = icms_comercio_disp,
+  caged_g = !is.null(caged_g) && nrow(caged_g) > 0
+)
+
+pesos_com_ef <- pesos_com_ref
+pesos_com_ef[!comp_disp_com] <- 0
+if (sum(pesos_com_ef) > 0) {
+  pesos_com_ef <- pesos_com_ef / sum(pesos_com_ef)
 }
 
+if (!pmc_disp) {
+  message("PMC-RR: componente indisponível no Comércio — pesos redistribuídos.")
+}
+if (!icms_comercio_disp) {
+  message("ICMS comércio: componente indisponível no Comércio — pesos redistribuídos.")
+}
 if (is.null(caged_g) || nrow(caged_g) == 0) {
-  warning("CAGED G: sem dados — peso redistribuído entre energia e ICMS.")
-  total_ef             <- peso_energia_comercio_ef + peso_icms_comercio_ef
-  peso_energia_comercio_ef <- if (total_ef > 0) peso_energia_comercio_ef / total_ef else 1.0
-  peso_icms_comercio_ef    <- if (total_ef > 0) peso_icms_comercio_ef    / total_ef else 0.0
-  peso_caged_g_ef          <- 0.0
+  warning("CAGED G: sem dados — peso redistribuído entre os demais componentes do Comércio.")
 }
 
-# Montar base com os três componentes
+# Montar base com os quatro componentes
 comercio_base <- energia_com_trim |>
   select(ano, trimestre, indice_energia_com)
 
-if (peso_caged_g_ef > 0 && !is.null(caged_g)) {
+if (pmc_disp) {
+  comercio_base <- comercio_base |>
+    left_join(select(pmc_trim, ano, trimestre, indice_pmc),
+              by = c("ano", "trimestre"))
+} else {
+  comercio_base <- comercio_base |> mutate(indice_pmc = NA_real_)
+}
+
+if (pesos_com_ef["caged_g"] > 0 && !is.null(caged_g) && nrow(caged_g) > 0) {
   comercio_base <- comercio_base |>
     left_join(select(caged_g, ano, trimestre, indice_g = indice),
               by = c("ano", "trimestre"))
@@ -1010,23 +1193,25 @@ if (icms_comercio_disp) {
 comercio_trim <- comercio_base |>
   mutate(
     indice_comercio_raw = mapply(
-      function(e_i, ic_i, g_i) {
-        vals  <- c(e_i,  ic_i,  g_i)
-        pesos <- c(peso_energia_comercio_ef,
-                   peso_icms_comercio_ef,
-                   peso_caged_g_ef)
+      function(e_i, pmc_i, ic_i, g_i) {
+        vals  <- c(e_i, pmc_i, ic_i, g_i)
+        pesos <- c(pesos_com_ef["energia"],
+                   pesos_com_ef["pmc"],
+                   pesos_com_ef["icms"],
+                   pesos_com_ef["caged_g"])
         ok <- !is.na(vals) & pesos > 0
         if (any(ok)) sum(vals[ok] * pesos[ok]) / sum(pesos[ok]) else NA_real_
       },
-      indice_energia_com, indice_icms_com, indice_g
+      indice_energia_com, indice_pmc, indice_icms_com, indice_g
     )
   )
 
-message(sprintf("Comércio: %d trimestres (energia %.0f%% + ICMS %.0f%% + CAGED G %.0f%%)",
+message(sprintf("Comércio: %d trimestres (energia %.0f%% + PMC %.0f%% + ICMS %.0f%% + CAGED G %.0f%%)",
                 sum(!is.na(comercio_trim$indice_comercio_raw)),
-                peso_energia_comercio_ef * 100,
-                peso_icms_comercio_ef * 100,
-                peso_caged_g_ef * 100))
+                pesos_com_ef["energia"] * 100,
+                pesos_com_ef["pmc"] * 100,
+                pesos_com_ef["icms"] * 100,
+                pesos_com_ef["caged_g"] * 100))
 
 # Contas Regionais — VAB nominal (pesos) e volume (benchmark Denton)
 cr_all  <- read_csv(arq_cr_serie,  show_col_types = FALSE)
@@ -1457,11 +1642,13 @@ message(sprintf("Imobiliário — %d trimestres (interpolação linear CR, extra
 # ============================================================
 # ETAPA 4.12 — OUTROS SERVIÇOS (7,63% do VAB)
 # CAGED I (aloj./alim.) + M+N (prof./admin.) + P+Q (educ./saúde)
-# Pesos: proporcionais ao estoque de emprego médio de 2020
-# Tipo: insumo (emprego) | Qualidade: aceitável
+# + PMS-RR geral
+# Os pesos entre I, M+N e P+Q seguem proporcionais ao estoque de
+# emprego médio de 2020; o PMS entra como indicador extra de mercado.
+# Tipo: insumo (emprego) + volume (PMS) | Qualidade: aceitável
 # ============================================================
 
-message("\n=== ETAPA 4.12: Outros Serviços — CAGED I + M+N + P+Q ===\n")
+message("\n=== ETAPA 4.12: Outros Serviços — CAGED + PMS ===\n")
 
 # Identificar quais subgrupos estão disponíveis
 disponivel_i  <- !is.null(caged_i)  && nrow(caged_i)  > 0
@@ -1480,18 +1667,29 @@ if (!disponivel_i && !disponivel_mn && !disponivel_pq) {
     df_caged |> filter(ano == 2020) |> pull(estoque) |> mean(na.rm = TRUE)
   }
 
-  estoque_i_2020  <- get_estoque_2020(caged_i,  disponivel_i)
-  estoque_mn_2020 <- get_estoque_2020(caged_mn, disponivel_mn)
-  estoque_pq_2020 <- get_estoque_2020(caged_pq, disponivel_pq)
-  total_estoque   <- estoque_i_2020 + estoque_mn_2020 + estoque_pq_2020
+  pms_outros_disp <- !is.null(pms_outros_trim) && nrow(pms_outros_trim) > 0
 
-  if (total_estoque == 0) total_estoque <- 1
-  peso_i  <- estoque_i_2020  / total_estoque
-  peso_mn <- estoque_mn_2020 / total_estoque
-  peso_pq <- estoque_pq_2020 / total_estoque
+  pesos_os_ref <- c(
+    caged_i  = peso_caged_i_outros,
+    caged_mn = peso_caged_mn_outros,
+    caged_pq = peso_caged_pq_outros,
+    pms      = peso_pms_outros
+  )
+  disp_os <- c(
+    caged_i  = disponivel_i,
+    caged_mn = disponivel_mn,
+    caged_pq = disponivel_pq,
+    pms      = pms_outros_disp
+  )
+  pesos_os <- pesos_os_ref
+  pesos_os[!disp_os] <- 0
+  if (sum(pesos_os) > 0) pesos_os <- pesos_os / sum(pesos_os)
 
-  message(sprintf("Outros Serviços — pesos dinâmicos (estoque 2020): I=%.1f%% M+N=%.1f%% P+Q=%.1f%%",
-                  peso_i * 100, peso_mn * 100, peso_pq * 100))
+  message(sprintf("Outros Serviços — pesos efetivos: I=%.1f%% M+N=%.1f%% P+Q=%.1f%% PMS=%.1f%%",
+                  pesos_os["caged_i"] * 100,
+                  pesos_os["caged_mn"] * 100,
+                  pesos_os["caged_pq"] * 100,
+                  pesos_os["pms"] * 100))
 
   # Base de trimestres: união de todos os subgrupos disponíveis
   base_os <- bind_rows(
@@ -1519,12 +1717,18 @@ if (!disponivel_i && !disponivel_mn && !disponivel_pq) {
   else
     outros_trim <- outros_trim |> mutate(indice_pq = NA_real_)
 
+  if (pms_outros_disp)
+    outros_trim <- outros_trim |>
+      left_join(select(pms_outros_trim, ano, trimestre, indice_pms_outros), by = c("ano", "trimestre"))
+  else
+    outros_trim <- outros_trim |> mutate(indice_pms_outros = NA_real_)
+
   outros_trim <- outros_trim |>
     rowwise() |>
     mutate(
       indice_outros_raw = {
-        vals  <- c(indice_i, indice_mn, indice_pq)
-        pesos <- c(peso_i, peso_mn, peso_pq)
+        vals  <- c(indice_i, indice_mn, indice_pq, indice_pms_outros)
+        pesos <- c(pesos_os["caged_i"], pesos_os["caged_mn"], pesos_os["caged_pq"], pesos_os["pms"])
         ok    <- !is.na(vals)
         if (any(ok)) sum(vals[ok] * pesos[ok] / sum(pesos[ok])) else NA_real_
       }
@@ -1563,27 +1767,68 @@ if (!disponivel_i && !disponivel_mn && !disponivel_pq) {
 
 # ============================================================
 # ETAPA 4.13 — INFORMAÇÃO E COMUNICAÇÃO (1,01% do VAB)
-# Proxy: estoque acumulado de emprego CNAE J (TI/telecom)
-# Tipo: insumo (emprego) | Qualidade: fraca mas necessária
+# Proxy: estoque acumulado de emprego CNAE J (TI/telecom) + PMS-RR geral
+# Tipo: insumo (emprego) + volume (PMS) | Qualidade: melhorada
 # ============================================================
 
-message("\n=== ETAPA 4.13: Informação e Comunicação — CAGED J ===\n")
+message("\n=== ETAPA 4.13: Informação e Comunicação — CAGED J + PMS ===\n")
 
-if (is.null(caged_j) || nrow(caged_j) == 0) {
-  warning("CAGED J: sem dados. Info e Comunicação sem índice.")
+infocom_disp <- !is.null(caged_j) && nrow(caged_j) > 0
+pms_infocom_disp <- !is.null(pms_infocom_trim) && nrow(pms_infocom_trim) > 0
+
+if (!infocom_disp && !pms_infocom_disp) {
+  warning("Info/Com: CAGED J e PMS indisponíveis. Setor sem índice.")
   infocom_trim_completo <- data.frame(
     ano = integer(), trimestre = integer(), indice_infocom = numeric()
   )
 } else {
+  pesos_inf_ref <- c(caged_j = peso_caged_j, pms = peso_pms_infocom)
+  pesos_inf <- pesos_inf_ref
+  pesos_inf[!c(infocom_disp, pms_infocom_disp)] <- 0
+  if (sum(pesos_inf) > 0) pesos_inf <- pesos_inf / sum(pesos_inf)
+
   bench_info <- vol_all |>
     filter(grepl("Informa", atividade, ignore.case = TRUE),
            ano %in% anos_cr) |>
     arrange(ano) |>
     pull(vab_volume_rebased)
 
-  ind_j_para_denton <- caged_j |>
+  base_inf <- bind_rows(
+    if (infocom_disp) caged_j |> select(ano, trimestre) else NULL,
+    if (pms_infocom_disp) pms_infocom_trim |> select(ano, trimestre) else NULL
+  ) |>
+    distinct() |>
+    arrange(ano, trimestre)
+
+  if (infocom_disp) {
+    base_inf <- base_inf |>
+      left_join(select(caged_j, ano, trimestre, indice_caged_j = indice), by = c("ano", "trimestre"))
+  } else {
+    base_inf <- base_inf |> mutate(indice_caged_j = NA_real_)
+  }
+
+  if (pms_infocom_disp) {
+    base_inf <- base_inf |>
+      left_join(select(pms_infocom_trim, ano, trimestre, indice_pms_infocom), by = c("ano", "trimestre"))
+  } else {
+    base_inf <- base_inf |> mutate(indice_pms_infocom = NA_real_)
+  }
+
+  infocom_trim <- base_inf |>
+    rowwise() |>
+    mutate(
+      indice_infocom_raw = {
+        vals <- c(indice_caged_j, indice_pms_infocom)
+        p    <- c(pesos_inf["caged_j"], pesos_inf["pms"])
+        ok   <- !is.na(vals)
+        if (any(ok)) sum(vals[ok] * p[ok] / sum(p[ok])) else NA_real_
+      }
+    ) |>
+    ungroup()
+
+  ind_j_para_denton <- infocom_trim |>
     filter(ano >= min(anos_cr)) |>
-    pull(indice)
+    pull(indice_infocom_raw)
 
   indice_j_denton <- tryCatch(
     denton(ind_j_para_denton, bench_info, ano_inicio = min(anos_cr), metodo = "denton-cholette"),
@@ -1596,12 +1841,14 @@ if (is.null(caged_j) || nrow(caged_j) == 0) {
   base_j_denton <- mean(head(indice_j_denton, 4L))
   indice_j      <- indice_j_denton / base_j_denton * 100
 
-  infocom_trim_completo <- caged_j |>
+  infocom_trim_completo <- infocom_trim |>
     filter(ano >= min(anos_cr)) |>
     mutate(indice_infocom = indice_j)
 
-  message(sprintf("Informação e Comunicação — %d trimestres (base 2020=100)",
-                  nrow(infocom_trim_completo)))
+  message(sprintf("Informação e Comunicação — %d trimestres (CAGED J %.0f%% + PMS %.0f%%)",
+                  nrow(infocom_trim_completo),
+                  pesos_inf["caged_j"] * 100,
+                  pesos_inf["pms"] * 100))
 }
 
 
@@ -1673,6 +1920,7 @@ message("\n=== ETAPA 4.15: Índice composto de Serviços ===\n")
   proxies_serv <- comercio_trim |>
     select(ano, trimestre,
            com_energia = indice_energia_com,
+           com_pmc     = indice_pmc,
            com_icms    = indice_icms_com,
            com_caged_g = indice_g)
 
@@ -1695,6 +1943,37 @@ message("\n=== ETAPA 4.15: Índice composto de Serviços ===\n")
         financeiro_trim |>
           select(ano, trimestre, all_of(cols_fin)) |>
           rename_with(~ paste0("fin_", sub("indice_", "", .x)), all_of(cols_fin)),
+        by = c("ano", "trimestre")
+      )
+  }
+
+  if (exists("outros_trim") && is.data.frame(outros_trim) && nrow(outros_trim) > 0) {
+    cols_outros <- intersect(c("indice_i", "indice_mn", "indice_pq", "indice_pms_outros"),
+                             names(outros_trim))
+    proxies_serv <- proxies_serv |>
+      left_join(
+        outros_trim |>
+          select(ano, trimestre, all_of(cols_outros)) |>
+          rename(
+            os_caged_i = indice_i,
+            os_caged_mn = indice_mn,
+            os_caged_pq = indice_pq,
+            os_pms = indice_pms_outros
+          ),
+        by = c("ano", "trimestre")
+      )
+  }
+
+  if (exists("infocom_trim") && is.data.frame(infocom_trim) && nrow(infocom_trim) > 0) {
+    cols_inf <- intersect(c("indice_caged_j", "indice_pms_infocom"), names(infocom_trim))
+    proxies_serv <- proxies_serv |>
+      left_join(
+        infocom_trim |>
+          select(ano, trimestre, all_of(cols_inf)) |>
+          rename(
+            inf_caged_j = indice_caged_j,
+            inf_pms = indice_pms_infocom
+          ),
         by = c("ano", "trimestre")
       )
   }
@@ -1844,10 +2123,13 @@ message(sprintf("  Cobertura: %dT%d – %dT%d",
 message("
 === NOTAS PARA REVISÃO ===
 
-1. COMÉRCIO: pesos adotados = energia 60% + ICMS SEFAZ-RR 20% + CAGED G 20%.
-   ICMS por atividade já integrado via icms_sefaz_rr_trimestral.csv.
-   Fallback (sem ICMS): energia 75% + CAGED G 25%.
-   Revisar pesos quando histórico de ICMS por atividade superar 3 anos (2022+).
+1. COMÉRCIO, OUTROS SERVIÇOS E INFO/COM:
+   pesos operacionais são definidos no script com regra conservadora:
+   manter pelo menos 10% em cada proxy ativa desses subsetores.
+   O arquivo data/output/sensibilidade/pesos_otimos.csv permanece como
+   diagnóstico de ótimo irrestrito, não como override automático da produção.
+   Quando algum componente estiver indisponível, os pesos são redistribuídos
+   automaticamente entre os indicadores válidos do próprio subsetor.
 
 2. ANAC: verificar cobertura dos dados. Se VRA indisponível para
    algum mês, conferir manualmente no portal ANAC e re-executar.

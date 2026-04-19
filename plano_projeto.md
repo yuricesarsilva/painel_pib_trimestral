@@ -5,7 +5,7 @@
 A SEPLAN/RR precisa de um indicador da produção trimestral de Roraima como proxy do PIB estadual,
 ancorado metodologicamente nas Contas Regionais do IBGE. Os principais obstáculos são a ausência de
 PIM-PF, ausência de IPCA estadual em qualquer período, e cobertura limitada das pesquisas do IBGE
-para estados pequenos (sem PMC, sem PMS). A solução é construir um **índice encadeado de volume**
+para estados pequenos (sem PIM-PF regional e com cobertura parcial de conjuntura). A solução é construir um **índice encadeado de volume**
 (sem unidade monetária) — convergente com a metodologia do IBCR do Banco Central — usando proxies
 disponíveis para Roraima e ancorando os totais anuais às Contas Regionais do IBGE via Denton-Cholette.
 
@@ -314,13 +314,14 @@ de forma automatizável. A disponibilidade futura pode melhorar esta proxy.
 
 | Proxy | Fonte | Frequência | Tipo de medida | Qualidade |
 |---|---|---|---|---|
+| PMC-RR | IBGE/SIDRA | Mensal | Volume | Forte |
 | ICMS sobre comércio (por atividade econômica) | SEFAZ-RR | Mensal | Valor nominal | Aceitável |
 | Vínculos no comércio (CNAE G) | CAGED | Mensal | Insumo (emprego) | Aceitável |
 | Consumo de energia comercial (RR) | ANEEL (classe comercial — coletado no SIUP) | Mensal | Volume | Forte |
 
-**Composição do índice**: índice composto com pesos explícitos a calibrar (sugestão inicial:
-energia comercial 40%, ICMS deflacionado 40%, CAGED 20%). A energia comercial é o componente
-mais robusto por medir volume físico independente de preço ou alíquota.
+**Composição do índice**: índice composto calibrado por otimização do Denton. No desenho atual de produção,
+adota-se uma regra conservadora de piso de 10% por proxy: PMC-RR 70%, energia comercial 10%,
+ICMS deflacionado 10% e CAGED G 10%.
 
 **Regra para quebras tributárias**: toda vez que houver alteração de alíquota, benefício fiscal
 ou mudança de regime tributário que afete a arrecadação de ICMS do comércio, documentar a data
@@ -350,6 +351,7 @@ nota técnica.
 
 | Proxy | Fonte | Frequência |
 |---|---|---|
+| PMS-RR geral | IBGE/SIDRA | Mensal |
 | Vínculos em TI, telecom e mídia (CNAE J) | CAGED | Mensal |
 
 ---
@@ -394,6 +396,7 @@ saúde e educação privadas, artes, cultura e esporte, serviços domésticos.
 | Vínculos em saúde e educação privadas (CNAE P+Q) | CAGED | Mensal |
 | Vínculos em alojamento e alimentação (CNAE I) | CAGED | Mensal |
 | Vínculos em atividades profissionais e admin. (CNAE M+N) | CAGED | Mensal |
+| PMS-RR geral | IBGE/SIDRA | Mensal |
 
 ---
 
@@ -421,7 +424,7 @@ publicação IBGE out/2025). VAB total = R\$ 23,0 bilhões.
 | Atividades financeiras e seguros | 2,78% | 639 | Média (BCB concessões + depósitos) | 4ª fase |
 | Transporte, armazenagem e correio | 1,92% | 441 | Média (ANAC passag./carga + diesel ponderado) | 4ª fase |
 | Indústrias de transformação | 1,31% | 301 | Média (energia industrial 70% + CAGED C 30%) | 3ª fase ✅ |
-| Informação e comunicação | 1,01% | 233 | Fraca mas necessária (CAGED TI/telecom) | 4ª fase |
+| Informação e comunicação | 1,01% | 233 | Média (PMS-RR geral como principal, CAGED J complementar) | 4ª fase |
 | Indústrias extrativas | 0,05% | 12 | — (negligenciável) | Absorvida |
 
 ---
@@ -552,11 +555,11 @@ Para 2024–2025 (sem benchmark), o script usa o indicador bruto.
 **Saída**: `data/output/indice_servicos.csv` (24 obs., 2020T1–2025T4)
 
 **Decisão de implementação (Opção A — sem ICMS):**
-ICMS por atividade econômica (SEFAZ-RR) não disponível nesta versão. Comércio calculado
-com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 40%, ICMS 40%, CAGED 20%.
+PMC-RR e ICMS por atividade econômica da SEFAZ-RR estão integrados nesta versão. O Comércio agora
+é calibrado por otimização do Denton, mas a produção mantém piso de 10% em cada proxy ativa.
 
 **Componentes:**
-- Comércio: energia comercial ANEEL (67%) + CAGED G (33%) — Denton vs. CR Comércio
+- Comércio: PMC-RR 70% + energia 10% + ICMS comércio 10% + CAGED G 10% — Denton vs. CR Comércio
 - Transportes: ANAC microdados mensais SBBV pax 40% + carga 30% + ANP diesel 30% — Denton vs. CR
   - ANAC: microdados baixados manualmente (74 ZIPs, jan/2020–fev/2026), pasta
     `bases_baixadas_manualmente/microdados_anac_mensal_2020.1_2026.2_basico/`
@@ -567,8 +570,8 @@ com energia comercial (67%) + CAGED G (33%). Ao obter o ICMS: pesos → energia 
   - IPCA: variável SIDRA 2266 = nível do índice (base dez/1993=100); deflator calculado como
     `indice_preco = indice_nivel / indice_nivel[jan/2020]`
 - Imobiliário: interpolação linear entre benchmarks CR anuais + extrapolação tendência 2024–2025
-- Outros serviços: CAGED I + M+N + P+Q, pesos dinâmicos por estoque de emprego 2020 — Denton
-- Informação e comunicação: CAGED J — Denton vs. CR Info/Com
+- Outros serviços: PMS-RR geral 60% + CAGED I 20% + M+N 10% + P+Q 10% — Denton
+- Informação e comunicação: PMS-RR geral 90% + CAGED J 10%
 - Extrativas (0,05%): interpolação linear CR (sem proxy específico)
 - Composto final: Laspeyres com pesos dos subsetores calculados a partir do VAB nominal de 2020
   (ano-base do índice geral), preservando coerência com a base do sistema

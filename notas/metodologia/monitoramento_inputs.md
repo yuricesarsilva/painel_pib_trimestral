@@ -328,7 +328,35 @@ O que é feito com ela: gera estoques trimestrais de emprego para comércio (`G`
 
 Output gerado: `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
 
-### 3. Passageiros e carga aérea
+### 3. PMC-RR
+
+Fonte: SIDRA/IBGE.
+
+Periodicidade da base: mensal.
+
+Periodicidade operacional atual: trimestral, após agregação por média simples.
+
+Especificação exata no código: API `"/t/8880/n3/14/v/7169/p/all/c11046/56734"`, com cache em `data/raw/sidra/pmc_rr.csv`.
+
+O que é feito com ela: compõe o bloco `Comércio` como indicador de volume do varejo em RR e entra também na rotina de otimização de pesos das proxies de serviços; na produção atual é o componente principal do comércio, mas não exclusivo.
+
+Output gerado: `data/raw/sidra/pmc_rr.csv`, `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
+
+### 4. PMS-RR geral
+
+Fonte: SIDRA/IBGE.
+
+Periodicidade da base: mensal.
+
+Periodicidade operacional atual: trimestral, após agregação por média simples.
+
+Especificação exata no código: API `"/t/5906/n3/14/v/7167/p/all/c11046/56726"`, com cache em `data/raw/sidra/pms_rr.csv`.
+
+O que é feito com ela: compõe os blocos `Outros serviços` e `Informação e comunicação` como indicador extra de volume de serviços em RR e entra na rotina de otimização de pesos das proxies de serviços; na produção atual lidera ambos os subsetores, mas preservando peso positivo para as proxies de emprego.
+
+Output gerado: `data/raw/sidra/pms_rr.csv`, `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
+
+### 5. Passageiros e carga aérea
 
 Fonte: ANAC.
 
@@ -342,7 +370,7 @@ O que é feito com ela: monta a série mensal de `pax_total` e `carga_kg`, depoi
 
 Output gerado: `data/raw/anac/anac_bvb_mensal.csv`, `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
 
-### 4. Vendas de diesel
+### 6. Vendas de diesel
 
 Fonte: ANP.
 
@@ -356,7 +384,7 @@ O que é feito com ela: agrega a trimestre e usa como componente do bloco `Trans
 
 Output gerado: `data/raw/anp/anp_diesel_rr_mensal.csv`, `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
 
-### 5. Depósitos bancários
+### 7. Depósitos bancários
 
 Fonte: BCB / Estban.
 
@@ -370,7 +398,7 @@ O que é feito com ela: gera a proxy mensal de `depositos`, depois deflaciona e 
 
 Output gerado: `data/raw/bcb/bcb_estban_rr_mensal.csv`, `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
 
-### 6. Crédito / carteira ativa
+### 8. Crédito / carteira ativa
 
 Fonte: BCB / SCR.
 
@@ -384,7 +412,7 @@ O que é feito com ela: gera a proxy mensal de crédito para RR, aplica deflaç�
 
 Output gerado: `data/raw/bcb/bcb_concessoes_rr_mensal.csv`, `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
 
-### 7. IPCA mensal
+### 9. IPCA mensal
 
 Fonte: SIDRA/IBGE.
 
@@ -398,7 +426,7 @@ O que é feito com ela: deflaciona `ICMS comércio`, `concessoes` e `depositos`.
 
 Output gerado: `data/raw/ipca_mensal.csv` e `data/output/indice_servicos.csv`.
 
-### 8. ICMS comércio trimestral
+### 10. ICMS comércio trimestral
 
 Fonte: fonte interna do pipeline com origem em SEFAZ-RR.
 
@@ -412,7 +440,7 @@ O que é feito com ela: compõe o bloco `Comércio`, após deflação pelo IPCA 
 
 Output gerado: `data/output/indice_servicos.csv` e `data/output/sensibilidade/proxies_servicos.csv`.
 
-### 9. Série real anual oficial de serviços
+### 11. Série real anual oficial de serviços
 
 Fonte: fonte interna do pipeline com origem em IBGE.
 
@@ -770,7 +798,7 @@ Periodicidade da base: não se aplica como série temporal; é uma grade paramé
 
 Periodicidade operacional atual: não se aplica como série temporal.
 
-O que é feito com ela: identifica pesos ótimos para as proxies compostas minimizando a variância implícita do Denton.
+O que é feito com ela: identifica pesos ótimos para as proxies compostas minimizando a variância implícita do Denton. Esses resultados são diagnósticos; na produção, Comércio, Outros Serviços e Info/Com usam uma regra conservadora de piso de 10% por proxy ativa.
 
 Output gerado: `data/output/sensibilidade/pesos_otimos.csv` e `data/output/sensibilidade/grid_completo.csv`.
 

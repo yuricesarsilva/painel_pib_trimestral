@@ -20,15 +20,19 @@
 #
 # Setores analisados — pesos anteriores à otimização (ad hoc, pré-2026-04-15):
 #   - Ind. Transformação : energia industrial 70% + CAGED C 30%
-#   - Comércio           : energia com. 40% + ICMS 40% + CAGED G 20%
+#   - Comércio           : energia com. + PMC + ICMS + CAGED G
 #   - Transportes        : pax ANAC 40% + carga ANAC 30% + diesel 30%
 #   - Financeiro         : concessões BCB 70% + depósitos Estban 30%
+#   - Outros Serviços    : CAGED I + CAGED M+N + CAGED P+Q + PMS
+#   - InfoCom            : CAGED J + PMS
 #
 # Pesos adotados após otimização (aplicados em produção desde 2026-04-15):
 #   - Ind. Transformação : energia industrial 55% + CAGED C 45%
-#   - Comércio           : energia com. 60% + ICMS 20% + CAGED G 20% (conservador)
+#   - Comércio           : usa os pesos vigentes no script de produção
 #   - Transportes        : pax ANAC 55% + carga ANAC 0% + diesel 45%
 #   - Financeiro         : concessões BCB 40% + depósitos Estban 60%
+#   - Outros Serviços    : usa os pesos vigentes no script de produção
+#   - InfoCom            : usa os pesos vigentes no script de produção
 #
 # Entrada : data/output/sensibilidade/proxies_transformacao.csv
 #            data/output/sensibilidade/proxies_servicos.csv
@@ -99,7 +103,7 @@ objetivo_denton <- function(proxy, bench, ano_ini) {
 }
 
 #' Gera grade de pesos para n componentes (soma = 1, passos passo_grid)
-#' Retorna data.frame com colunas w1, w2, [w3]
+#' Retorna data.frame com colunas w1, w2, ..., wn
 grade_pesos <- function(n_comp, passo = passo_grid) {
   vals <- round(seq(0, 1, by = passo), 10)
   if (n_comp == 2) {
@@ -111,7 +115,12 @@ grade_pesos <- function(n_comp, passo = passo_grid) {
     grd$w3 <- round(1 - grd$w1 - grd$w2, 10)
     return(grd[grd$w3 >= 0 & grd$w1 >= 0 & grd$w2 >= 0, ])
   }
-  stop("grade_pesos suporta apenas 2 ou 3 componentes.", call. = FALSE)
+  if (n_comp == 4) {
+    grd <- expand.grid(w1 = vals, w2 = vals, w3 = vals)
+    grd$w4 <- round(1 - grd$w1 - grd$w2 - grd$w3, 10)
+    return(grd[grd$w4 >= 0 & grd$w1 >= 0 & grd$w2 >= 0 & grd$w3 >= 0, ])
+  }
+  stop("grade_pesos suporta apenas 2, 3 ou 4 componentes.", call. = FALSE)
 }
 
 #' Executa busca em grade para um setor e retorna resultado completo
@@ -264,13 +273,13 @@ if (length(bench_transf) == length(anos_cr) &&
 
 bench_com <- bench_setor("Com.rcio")
 
-comp_com_disp <- intersect(c("com_energia", "com_icms", "com_caged_g"),
+comp_com_disp <- intersect(c("com_energia", "com_pmc", "com_icms", "com_caged_g"),
                             names(proxies_serv))
 
 if (length(bench_com) == length(anos_cr) && length(comp_com_disp) >= 2) {
 
   # Pesos atuais de produção (na ordem dos componentes disponíveis)
-  pesos_com_ref <- c(com_energia = 0.40, com_icms = 0.40, com_caged_g = 0.20)
+  pesos_com_ref <- c(com_energia = 0.35, com_pmc = 0.25, com_icms = 0.20, com_caged_g = 0.20)
   pesos_com_atual <- pesos_com_ref[comp_com_disp]
   pesos_com_atual <- pesos_com_atual / sum(pesos_com_atual)  # renormalizar se componente ausente
 
@@ -289,7 +298,65 @@ if (length(bench_com) == length(anos_cr) && length(comp_com_disp) >= 2) {
 }
 
 # ------------------------------------------------------------------
-# 3.3 Transportes
+# 3.4 Outros Serviços
+# ------------------------------------------------------------------
+
+bench_outros <- bench_setor("Outros servi")
+
+comp_outros_disp <- intersect(c("os_caged_i", "os_caged_mn", "os_caged_pq", "os_pms"),
+                              names(proxies_serv))
+
+if (length(bench_outros) == length(anos_cr) && length(comp_outros_disp) >= 2) {
+
+  pesos_outros_ref <- c(os_caged_i = 0.25, os_caged_mn = 0.30, os_caged_pq = 0.20, os_pms = 0.25)
+  pesos_outros_atual <- pesos_outros_ref[comp_outros_disp]
+  pesos_outros_atual <- pesos_outros_atual / sum(pesos_outros_atual)
+
+  r_outros <- busca_grade(
+    df_proxy     = proxies_serv,
+    nomes_comp   = comp_outros_disp,
+    bench_anual  = bench_outros,
+    pesos_atuais = pesos_outros_atual,
+    nome_setor   = "Outros Servicos"
+  )
+  resultados_lista[["outros"]] <- r_outros$resumo
+  grids_lista[["outros"]]      <- r_outros$grid
+
+} else {
+  message("Outros ServiÃ§os: proxies insuficientes ou benchmark ausente â€” pulando.")
+}
+
+# ------------------------------------------------------------------
+# 3.5 Informação e Comunicação
+# ------------------------------------------------------------------
+
+bench_infocom <- bench_setor("Informa")
+
+comp_infocom_disp <- intersect(c("inf_caged_j", "inf_pms"),
+                               names(proxies_serv))
+
+if (length(bench_infocom) == length(anos_cr) && length(comp_infocom_disp) >= 2) {
+
+  pesos_infocom_ref <- c(inf_caged_j = 0.50, inf_pms = 0.50)
+  pesos_infocom_atual <- pesos_infocom_ref[comp_infocom_disp]
+  pesos_infocom_atual <- pesos_infocom_atual / sum(pesos_infocom_atual)
+
+  r_infocom <- busca_grade(
+    df_proxy     = proxies_serv,
+    nomes_comp   = comp_infocom_disp,
+    bench_anual  = bench_infocom,
+    pesos_atuais = pesos_infocom_atual,
+    nome_setor   = "InfoCom"
+  )
+  resultados_lista[["infocom"]] <- r_infocom$resumo
+  grids_lista[["infocom"]]      <- r_infocom$grid
+
+} else {
+  message("InfoCom: proxies insuficientes ou benchmark ausente â€” pulando.")
+}
+
+# ------------------------------------------------------------------
+# 3.6 Transportes
 # ------------------------------------------------------------------
 
 bench_transp <- bench_setor("Transporte")
@@ -318,7 +385,7 @@ if (length(bench_transp) == length(anos_cr) && length(comp_transp_disp) >= 2) {
 }
 
 # ------------------------------------------------------------------
-# 3.4 Financeiro
+# 3.7 Financeiro
 # ------------------------------------------------------------------
 
 bench_fin <- bench_setor("financeiras")

@@ -251,9 +251,10 @@
 
 ### 4.0 Decisão metodológica — Comércio com ICMS (integrado em 2026-04-15)
 - [x] ICMS por atividade (SEFAZ-RR) obtido em PDFs (trimestral 2020–2024 + mensal 2024–2026)
-- [x] **Decisão**: integrar ICMS como 3º componente do Comércio com pesos energia 40% / ICMS 40% / CAGED G 20%
-- [x] Pesos finais Comércio: energia comercial 40%, ICMS SEFAZ-RR deflacionado 40%, CAGED G 20%
-- [x] Fallback automático no script para 2 componentes (energia 67% + CAGED 33%) se CSV ausente
+- [x] PMC-RR integrada via SIDRA como novo componente de volume do Comércio
+- [x] **Decisão**: calibrar Comércio com quatro proxies (`energia`, `PMC`, `ICMS`, `CAGED G`) via `05b_sensibilidade_pesos.R`
+- [x] Pesos finais Comércio em produção: PMC 70%, energia 10%, ICMS 10%, CAGED G 10%
+- [x] Fallback automático no script: redistribuir pesos apenas entre componentes disponíveis
 
 ### 4.1 Comércio
 - [x] Reutilizar energia comercial ANEEL da coleta 3.1 (sem coleta adicional)
@@ -306,11 +307,12 @@
 - [x] Reutilizar CAGED I (alojamento/alimentação) — cache da Fase 3
 - [x] Reutilizar CAGED M+N (prof./admin.) — cache da Fase 3
 - [x] Reutilizar CAGED P+Q (educ./saúde privada) — cache da Fase 3
-- [x] Pesos intra-bloco: proporcionais ao estoque médio de emprego de 2020 (dinâmicos)
+- [x] PMS-RR geral integrada via SIDRA como indicador extra de volume
+- [x] Pesos intra-bloco calibrados por `05b_sensibilidade_pesos.R`
 - [x] Denton-Cholette contra VAB Outros Serviços das Contas Regionais (2020–2023)
 
 ### 4.6 Informação e comunicação / Extrativas
-- [x] Info e Com: CAGED J (cache Fase 3) — Denton contra CR
+- [x] Info e Com: PMS-RR geral integrada; CAGED J mantido na grade de teste
 - [x] Extrativas (0,05%): interpolação linear CR (mesma lógica do Imobiliário)
 
 ### 4.7 Índice composto de serviços privados
@@ -356,11 +358,12 @@
 
 **Outros candidatos — pesos das proxies compostas:**
 - [x] Otimizar pesos das proxies compostas por minimização da variância da correção Denton
-      → **IMPLEMENTADO 2026-04-15**: script `R/05b_sensibilidade_pesos.R`; busca em grade (504 combinações,
+      → **ATUALIZADO 2026-04-18**: script `R/05b_sensibilidade_pesos.R`; busca em grade (3.836 combinações,
         passo 5%); critério: `sum(diff(output/proxy)²)`. Resultados em `data/output/sensibilidade/`.
   - [x] Ind. Transformação: energia 70%→**55%** / CAGED C 30%→**45%** (melhoria 59,9%)
-  - [x] Comércio: energia 40%→**60%** / ICMS 40%→**20%** / CAGED G 20% mantido
-        *(decisão conservadora: ótimo Denton = 100% energia, mas ICMS tem histórico curto)*
+  - [x] Comércio: energia 35% / PMC 25% / ICMS 20% / CAGED G 20% → ótimo irrestrito `0% / 95% / 5% / 0%`; produção `10% / 70% / 10% / 10%`
+  - [x] Outros serviços: CAGED I 25% / M+N 30% / P+Q 20% / PMS 25% → ótimo irrestrito `35% / 0% / 0% / 65%`; produção `20% / 10% / 10% / 60%`
+  - [x] Informação e comunicação: CAGED J 50% / PMS 50% → ótimo irrestrito `0% / 100%`; produção `10% / 90%`
   - [x] Transportes: pax 40%→**55%** / carga 30%→**0%** / diesel 30%→**45%** (melhoria 41,7%)
   - [x] Financeiro: concessões 70%→**40%** / depósitos 30%→**60%** (melhoria 90,5%)
   - [x] Documentar metodologia e decisões em `notas/metodologia/otimizacao_pesos_proxies.md`

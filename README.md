@@ -194,16 +194,16 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 | Atividade | % VAB 2023¹ | Proxy principal | Fonte |
 |---|---|---|---|
 | Adm., defesa, educação e saúde públicas e seguridade social | 46,21% | Folha de pagamento observada (federal SIAPE + estadual FIPLAN + municipal) | Portal da Transparência / SEPLAN-RR FIPLAN / STN–SICONFI |
-| Comércio e reparação de veículos | 12,25% | Energia comercial ANEEL (60%) + ICMS comércio SEFAZ-RR deflacionado (20%) + emprego CAGED G (20%) | ANEEL / SEFAZ-RR / MTE–CAGED |
+| Comércio e reparação de veículos | 12,25% | PMC-RR (70%) + energia comercial (10%) + ICMS comércio deflacionado (10%) + CAGED G (10%) | IBGE–PMC / ANEEL / SEFAZ-RR / MTE–CAGED |
 | Agropecuária | 8,87% | Produção física lavouras (PAM definitivo / LSPA leitura mais recente disponível) + pecuária trimestral observada (abate de bovinos + ovos), com calibração estrutural anual e cobertura trimestral completa exigida | IBGE/SIDRA + parâmetro interno |
 | Atividades imobiliárias | 7,68% | Interpolação linear entre benchmarks CR IBGE | IBGE – CR |
-| Outros serviços | 7,63% | Emprego formal — seções I, M+N, P+Q (CAGED) | MTE–CAGED |
+| Outros serviços | 7,63% | PMS-RR geral (60%) + CAGED I (20%) + CAGED M+N (10%) + CAGED P+Q (10%) | IBGE–PMS / MTE–CAGED |
 | Eletricidade, gás, água, esgoto e resíduos (SIUP) | 5,40% | Consumo de energia elétrica por classe | ANEEL (SAMP) |
 | Construção | 4,89% | Estoque acumulado de emprego CAGED F | MTE–CAGED |
 | Atividades financeiras e de seguros | 2,78% | Depósitos Estban BCB (60%) + carteira de crédito ativa BCB/SCR (40%) | BCB (Estban / SCR) |
 | Transporte, armazenagem e correio | 1,92% | Passageiros ANAC (55%) + diesel ANP (45%) | ANAC / ANP |
 | Indústrias de transformação | 1,31% | Energia industrial ANEEL (55%) + emprego CAGED C (45%) | ANEEL (SAMP) / MTE–CAGED |
-| Informação e comunicação | 1,01% | Emprego em TI/telecom (CAGED J) | MTE–CAGED |
+| Informação e comunicação | 1,01% | PMS-RR geral (90%) + CAGED J (10%) | IBGE–PMS / MTE–CAGED |
 | Indústrias extrativas | 0,05% | Interpolação linear CR IBGE (peso negligenciável) | IBGE – CR |
 
 ¹ Participações de referência informativa (CR IBGE 2023). Os **pesos efetivos do índice** usam participações de 2020 (ano base Laspeyres), calculados dinamicamente de `contas_regionais_RR_serie.csv`.
