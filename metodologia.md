@@ -448,13 +448,62 @@ Para os 4 blocos analíticos (Agropecuária, AAPP, Indústria, Serviços), o VAB
 
 ### Impostos Líquidos sobre Produtos (ILP) — `05g_pib_nominal.R`
 
-$$\text{ILP trimestral}_t = \text{ICMS deflacionado}_t \times k_j$$
+#### Benchmark anual — identidade contábil
 
-onde $k_j$ é o fator de escala anual que garante que $\sum_q \text{ILP}_{j,q}$ coincida com o ILP anual das Contas Regionais no ano $j$. Para anos sem benchmark, o fator é extrapolado pela tendência histórica.
+O ILP anual é obtido diretamente por diferença, sem estimação:
 
-Na implementação atual, a série anual oficial de PIB usada nesse benchmark é mantida em cache local e reutilizada por padrão no `05g_pib_nominal.R`; a atualização online do SIDRA ficou reservada a execuções explicitamente parametrizadas para refresh das bases.
+$$\text{ILP}_j = \text{PIB}_j^{\text{SIDRA}} - \text{VAB}_j^{\text{CR IBGE}}$$
+
+onde $\text{PIB}_j^{\text{SIDRA}}$ é lido da Tabela 5938 do SIDRA (variável 37, em R\$ mil, convertida para milhões) e $\text{VAB}_j^{\text{CR IBGE}}$ é a atividade "Total das Atividades" de `contas_regionais_RR_serie.csv`. Nos anos com benchmark (2020–2023), o fechamento é exato por construção.
+
+Valores de referência:
+
+| Ano | PIB (R\$ mi) | VAB (R\$ mi) | ILP (R\$ mi) | ICMS (R\$ mi) | ICMS/ILP |
+|---|---|---|---|---|---|
+| 2020 | 16.024 | 14.524 | 1.500 | 1.240 | 82,7% |
+| 2021 | 18.203 | 16.310 | 1.893 | 1.569 | 82,9% |
+| 2022 | 21.095 | 19.117 | 1.978 | 1.597 | 80,7% |
+| 2023 | 25.125 | 23.003 | 2.122 | 1.707 | 80,5% |
+
+#### Extrapolação para anos sem benchmark (2024–2025)
+
+Para os anos sem CR publicada, o ILP anual é extrapolado pela taxa de variação do ICMS anual:
+
+$$\text{ILP}_j = \text{ILP}_{j-1} \times \frac{\text{ICMS}_j}{\text{ICMS}_{j-1}}$$
+
+Isso pressupõe que o crescimento relativo do ICMS é uma boa aproximação do crescimento do ILP total — válido enquanto a participação do ICMS no ILP permanecer estável (~80–83%).
+
+#### Desagregação trimestral — Denton-Cholette
+
+O ICMS estadual total (em valores nominais, sem deflação) é usado como proxy do perfil intra-anual do ILP:
+
+```r
+td(ILP_anual ~ 0 + ICMS_trimestral, method = "denton-cholette", conversion = "sum")
+```
+
+O `conversion = "sum"` garante que a soma dos quatro trimestres de cada ano reproduza exatamente o ILP anual benchmark. Os ~17–20% do ILP não cobertos pelo ICMS são distribuídos pelo Denton de forma proporcional ao ICMS — o resíduo é absorvido sem distorção do perfil sazonal.
+
+O ICMS trimestral vem de `icms_sefaz_rr_trimestral.csv` (coluna `icms_total_mi`), gerado por `00b_icms_sefaz_atividade.R` a partir dos arquivos mensais da SEFAZ-RR.
+
+#### Por que apenas ICMS — exclusão do ISS e dos tributos federais
+
+> ⚠️ **Objetivo do ILP nas Contas Regionais**: aproximar apenas os *impostos sobre produtos* — tributos que incidem sobre produção, circulação, vendas ou disponibilização de bens e serviços. Tributos sobre renda, folha, patrimônio ou lucro não entram nessa categoria.
+
+**ISS municipal excluído.** O ISS municipal foi investigado via Siconfi/MSC para os 15 municípios de Roraima. Boa Vista concentrou 54% do ISS anual de 2023 em janeiro (R\$ 77 mi vs. média de R\$ 4–6 mi nos demais meses), com segundo pico atípico em junho. Trata-se de artefato de lançamento em lote no Siconfi, não de sazonalidade econômica real. Usar essa série como proxy no Denton inflaria artificialmente o 1º trimestre. O ISS pode ser reincorporado em versão futura caso seja obtido por fonte com distribuição mensal uniforme (SEFAZ municipal, NFS-e ou suavização explícita).
+
+**Tributos federais excluídos** (IPI, II, PIS/Cofins, CIDE). Três razões:
+
+1. **Cobertura truncada.** Os arquivos da Receita Federal por estado cobrem apenas até maio/2022. Para o período seguinte não há dado por UF publicado.
+2. **Problema de imputação territorial.** PIS/Cofins é registrado no domicílio fiscal do contribuinte. Como Roraima importa a maior parte dos bens tributados de outros estados (AM, SP), a arrecadação federal atribuída a RR subestima sistematicamente a carga real sobre a economia local — criando viés estrutural.
+3. **Magnitude negligenciável.** IPI e II somam menos de R\$ 1 mi/ano para RR. CIDE-Combustíveis = zero (sem refinaria ou distribuidora-base no estado).
+
+**Fonte do ICMS: SEFAZ-RR (não Siconfi).** O Siconfi/MSC apresentou lacuna de 15 meses (jan/2022–mar/2023) por transição de classificadores contábeis — exatamente o período com benchmark CR disponível. A fonte adotada são os arquivos mensais do Portal de Arrecadação da SEFAZ-RR, com 75 observações mensais sem lacunas (jan/2020–mar/2026). Nenhum outlier detectado (z-score > 2,5). Limitação: atualização manual; sem API pública.
+
+#### Identidade final
 
 $$\text{PIB nominal}_t = \text{VAB nominal}_t + \text{ILP}_t$$
+
+A série anual de PIB usada no benchmark é mantida em cache local (`data/raw/sidra/pib_rr_anual_sidra_5938.csv`) e reutilizada por padrão; a atualização online do SIDRA fica reservada a execuções com `atualizar_sidra <- TRUE`.
 
 ---
 
