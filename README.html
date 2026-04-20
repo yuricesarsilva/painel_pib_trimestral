@@ -1,0 +1,669 @@
+<!DOCTYPE html><html><head>
+      <title>README</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:///c:\Users\Usuario\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.23\crossnote\dependencies\katex\katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="pib-trimestral-de-roraima">PIB Trimestral de Roraima </h1>
+<p>Para conhecer o painel, clique em:</p>
+<blockquote>
+<p><strong><a href="https://yuricesar.shinyapps.io/pib-trimestral-rr/">Dashboard interativo</a></strong></p>
+</blockquote>
+<p>Desenvolvido pela <strong>Secretaria de Planejamento e Orçamento de Roraima (SEPLAN/RR)</strong>, este projeto produz as <strong>estimativas trimestrais do PIB de Roraima</strong> — em termos reais e nominais — a partir de 2020.</p>
+<p>O produto central é o <strong>PIB nominal trimestral</strong> (VAB + ILP, em R$ milhões) e o <strong>PIB real</strong> (índice e taxa de crescimento, base média de 2020 = 100 e em R$ milhões de 2020). O instrumento metodológico que sustenta essas estimativas é o <strong>Indicador de Atividade Econômica Trimestral de Roraima (IAET-RR)</strong>, um índice encadeado de volume construído com proxies setoriais e ancorado anualmente nas Contas Regionais do IBGE via Denton-Cholette.</p>
+<hr>
+<h2 id="como-usar-o-projeto">Como usar o projeto </h2>
+<h3 id="pré-requisitos">Pré-requisitos </h3>
+<ul>
+<li>R ≥ 4.4.0 com os pacotes do <code>renv.lock</code> instalados (<code>renv::restore()</code>)</li>
+<li>Diretório de trabalho na <strong>raiz do projeto</strong> (abrir o <code>.Rproj</code> no RStudio)</li>
+<li>Bases manuais atualizadas nas pastas corretas (ver seção de atualização trimestral)</li>
+</ul>
+<hr>
+<h3 id="executar-o-pipeline-completo">Executar o pipeline completo </h3>
+<pre data-role="codeBlock" data-info="r" class="language-r r"><code>source<span class="token punctuation">(</span><span class="token string">"R/run_all.R"</span><span class="token punctuation">)</span>
+</code></pre><p>O orquestrador executa os 14 scripts na ordem correta, registra o tempo de cada etapa e para imediatamente em caso de erro. Ao iniciar, exibe o trimestre oficialmente publicado:</p>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>&gt;&gt;&gt; TRIMESTRE PUBLICADO: 2025T4 &lt;&lt;&lt;
+    A exportação oficial será filtrada até este trimestre.
+    Para avançar: source("R/06_avanca_publicacao.R")
+</code></pre><p>Os arquivos de saída são gravados em <code>data/output/</code>. A exportação pública (Excel e CSVs) é filtrada até o trimestre publicado em <code>config/release.R</code>.</p>
+<hr>
+<h3 id="dashboard-interativo">Dashboard interativo </h3>
+<p><strong>Versão publicada:</strong> <a href="https://yuricesar.shinyapps.io/pib-trimestral-rr/">https://yuricesar.shinyapps.io/pib-trimestral-rr/</a></p>
+<p><strong>Rodar localmente</strong> (lê os outputs gerados pelo pipeline):</p>
+<pre data-role="codeBlock" data-info="r" class="language-r r"><code>shiny<span class="token operator">::</span>runApp<span class="token punctuation">(</span><span class="token string">"dashboard/app.R"</span><span class="token punctuation">)</span>
+<span class="token comment"># ou, estando dentro da pasta dashboard/:</span>
+shiny<span class="token operator">::</span>runApp<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre><p>O app lê os arquivos em <code>data/output/</code>. Rode <code>run_all.R</code> antes para garantir que os dados estão atualizados.</p>
+<hr>
+<h3 id="rotina-de-atualização-trimestral-fase-6">Rotina de atualização trimestral (Fase 6) </h3>
+<p>A atualização de um novo trimestre segue quatro passos:</p>
+<p><strong>Passo 1 — Atualizar fontes automatizáveis</strong></p>
+<pre data-role="codeBlock" data-info="r" class="language-r r"><code>source<span class="token punctuation">(</span><span class="token string">"R/06_coleta_fontes.R"</span><span class="token punctuation">)</span>
+</code></pre><p>Baixa/atualiza SIDRA (PAM, LSPA, abate, ovos, PMC, PMS, IPCA, PIB), ANP diesel e apaga o cache ANEEL do ano corrente para forçar re-download. Ao final, imprime um relatório de cobertura por fonte.</p>
+<p><strong>Passo 2 — Atualizar fontes manuais</strong></p>
+<p>Com base no relatório do passo anterior, baixar as fontes que ainda faltam e colocá-las nas pastas corretas:</p>
+<table>
+<thead>
+<tr>
+<th>Fonte</th>
+<th>Pasta de destino</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIAPE (Portal da Transparência — ZIP mensal por UF)</td>
+<td><code>bases_baixadas_manualmente/dados_siape_portal_transparencia/</code></td>
+</tr>
+<tr>
+<td>FIPLAN estadual (FIP 855)</td>
+<td><code>bases_baixadas_manualmente/dados_folha_rr_fip855/</code></td>
+</tr>
+<tr>
+<td>ANAC Boa Vista (microdados VRA mensais)</td>
+<td><code>bases_baixadas_manualmente/microdados_anac_mensal_.../</code></td>
+</tr>
+<tr>
+<td>BCB Estban (ZIPs mensais)</td>
+<td><code>bases_baixadas_manualmente/dados_estban_bcb/</code></td>
+</tr>
+<tr>
+<td>BCB SCR (ZIPs de concessões)</td>
+<td><code>bases_baixadas_manualmente/dados_bcb_src_2020_2025/</code></td>
+</tr>
+<tr>
+<td>ICMS SEFAZ-RR (PDFs trimestrais por atividade)</td>
+<td><code>bases_baixadas_manualmente/dados_icms_por_atividade/</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Passo 3 — Rodar o pipeline e validar internamente</strong></p>
+<pre data-role="codeBlock" data-info="r" class="language-r r"><code>source<span class="token punctuation">(</span><span class="token string">"R/run_all.R"</span><span class="token punctuation">)</span>
+</code></pre><p>Neste momento, <code>config/release.R</code> ainda aponta para o trimestre anterior. O pipeline processa todos os dados disponíveis, mas a exportação pública (Excel/CSVs) é filtrada até o trimestre publicado. Use esta execução para inspeção interna, geração de informativos e rascunho da nota técnica.</p>
+<p><strong>Passo 4 — Avançar o trimestre publicado (após comunicação à imprensa)</strong></p>
+<pre data-role="codeBlock" data-info="r" class="language-r r"><code>source<span class="token punctuation">(</span><span class="token string">"R/06_avanca_publicacao.R"</span><span class="token punctuation">)</span>
+</code></pre><p>Script interativo com checklist de 6 itens (dados conferidos, pipeline sem erros, validações ok, dashboard verificado, informativos aprovados, imprensa comunicada). Após confirmação:</p>
+<ul>
+<li>Atualiza <code>config/release.R</code> com o novo trimestre</li>
+<li>Cria commit git com mensagem padronizada</li>
+<li>Cria tag git (ex: <code>v2026-Q1</code>)</li>
+</ul>
+<p>Em seguida, rode <code>run_all.R</code> novamente para gerar a exportação oficial do novo trimestre.</p>
+<hr>
+<h2 id="documentação-técnica">Documentação técnica </h2>
+<blockquote>
+<p><a href="https://yuricesarsilva.github.io/painel_pib_trimestral/metodologia.html"><strong>Nota Metodológica completa</strong></a> — arquitetura do sistema, fórmulas, proxies setoriais, otimização de pesos e resultados de validação.</p>
+</blockquote>
+<hr>
+<h2 id="estado-atual-do-projeto">Estado atual do projeto </h2>
+<p><strong>Pipeline de produção: operacional e atualizado.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Componente</th>
+<th>Status</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agropecuária (<code>01_agropecuaria.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Administração Pública (<code>02_adm_publica.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Indústria (<code>03_industria.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Serviços Privados (<code>04_servicos.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Índice Geral agregado (<code>05_agregacao.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Ajuste sazonal (<code>05c_ajuste_sazonal.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Validação final (<code>05d_validacao.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>Exportação (<code>05e_exportacao.R</code>)</td>
+<td>✅ Operacional</td>
+<td>até <code>trimestre_publicado</code></td>
+</tr>
+<tr>
+<td>VAB Nominal trimestral (<code>05f_vab_nominal.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>PIB Nominal trimestral (<code>05g_pib_nominal.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4</td>
+</tr>
+<tr>
+<td>VAB Nominal setorial (<code>05h_vab_nominal_setorial.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2023T4</td>
+</tr>
+<tr>
+<td>PIB Real trimestral e anual (<code>05i_pib_real.R</code>)</td>
+<td>✅ Operacional</td>
+<td>2020T1–2025T4 / 2020–2025</td>
+</tr>
+<tr>
+<td>Coleta de fontes (<code>06_coleta_fontes.R</code>)</td>
+<td>✅ Operacional</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Avanço de publicação (<code>06_avanca_publicacao.R</code>)</td>
+<td>✅ Operacional</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dashboard interativo (<code>dashboard/app.R</code>)</td>
+<td>✅ <a href="https://yuricesar.shinyapps.io/pib-trimestral-rr/">Publicado</a></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Nota técnica</td>
+<td>⬜ Não iniciada</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Últimas taxas de crescimento do PIB real de Roraima (base 2020 = 100):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Ano</th>
+<th>PIB Real — RR (%)</th>
+<th>IBCR Norte</th>
+<th>IBC-Br</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2021</td>
+<td>+8,4%</td>
+<td>+7,2%</td>
+<td>+4,2%</td>
+</tr>
+<tr>
+<td>2022</td>
+<td>+11,3%</td>
+<td>−1,2%</td>
+<td>+2,8%</td>
+</tr>
+<tr>
+<td>2023</td>
+<td>+4,2%</td>
+<td>+1,7%</td>
+<td>+2,7%</td>
+</tr>
+<tr>
+<td>2024</td>
+<td>+6,9% <em>(sem benchmark oficial)</em></td>
+<td>+4,1%</td>
+<td>+3,7%</td>
+</tr>
+<tr>
+<td>2025</td>
+<td>+7,2% <em>(sem benchmark oficial)</em></td>
+<td>+1,7%</td>
+<td>+2,5%</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>As taxas de 2021–2023 são ancoradas ao <strong>PIB real das Contas Regionais do IBGE</strong> via Denton-Cholette. As taxas de 2024–2025 derivam das séries geradas no projeto (sem benchmark oficial disponível) e serão substituídas quando as Contas Regionais 2024 (e as seguintes) forem publicadas (previsão IBGE para as Contas Regionais 2024: outubro de 2026).</p>
+</blockquote>
+<hr>
+<h2 id="próximos-passos">Próximos passos </h2>
+<table>
+<thead>
+<tr>
+<th>Prioridade</th>
+<th>Tarefa</th>
+<th>Dependência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🔴 Alta</td>
+<td>Incorporar CR IBGE 2024 quando publicada (out/2026): substituir extrapolações 2024 por dados reais</td>
+<td>Publicação IBGE</td>
+</tr>
+<tr>
+<td>🔴 Alta</td>
+<td>Migrar dashboard para ambiente institucional (<a href="http://shinyapps.io">shinyapps.io</a> free: 25 h/mês)</td>
+<td>Infraestrutura SEPLAN/RR</td>
+</tr>
+<tr>
+<td>🟡 Média</td>
+<td>Redigir nota técnica metodológica (<code>notas/nota_tecnica.qmd</code>)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>🟡 Média</td>
+<td>Re-estimar pesos ótimos das proxies compostas após publicação das CR 2024 (out/2026) — re-rodar <code>R/05b_sensibilidade_pesos.R</code> com benchmark 2020–2024</td>
+<td>Publicação IBGE</td>
+</tr>
+<tr>
+<td>🟢 Baixa</td>
+<td>Revisão periódica do calendário de colheita SEADI-RR (sensibilidade alta à soja)</td>
+<td>SEADI-RR</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="sobre-o-projeto">Sobre o projeto </h2>
+<p>O Brasil não dispõe de estimativas oficiais do PIB estadual em frequência trimestral. As <strong>Contas Regionais do IBGE</strong>, referência metodológica deste projeto, são publicadas apenas anualmente e com defasagem de cerca de dois anos.</p>
+<p>Este projeto preenche essa lacuna produzindo o <strong>PIB trimestral de Roraima</strong> em duas dimensões:</p>
+<ul>
+<li><strong>PIB real</strong> — obtido pela deflação do PIB nominal com o deflator implícito das Contas Regionais e ancorado ao benchmark oficial do PIB real do IBGE (2020–2023); cobertura trimestral 2020T1–2025T4 e anual 2020–2025. O instrumento que gera o perfil intra-anual é o IAET-RR (índice encadeado de volume do VAB, base 2020 = 100);</li>
+<li><strong>PIB nominal</strong> — VAB trimestral a preços correntes + impostos líquidos sobre produtos (ILP), em R$ milhões, com cobertura 2020T1–2025T4.</li>
+</ul>
+<p>A metodologia do IAET-RR é convergente com a do <strong>Índice de Atividade Econômica Regional (IBCR)</strong> do Banco Central do Brasil, adaptada às especificidades de Roraima — estado com estrutura econômica singular, alta participação do setor público (46% do VAB) e disponibilidade limitada de pesquisas estatísticas desagregadas.</p>
+<hr>
+<h2 id="metodologia">Metodologia </h2>
+<h3 id="fórmula-do-iaet-rr">Fórmula do IAET-RR </h3>
+<p><strong>Índice de Laspeyres encadeado por volume</strong> — padrão das Contas Nacionais do IBGE:</p>
+<ul>
+<li>Período base: média de 2020 = 100</li>
+<li>Pesos setoriais: participação no VAB nominal de <strong>2020</strong> (ano base), calculados dinamicamente das Contas Regionais IBGE</li>
+<li>Desagregação trimestral: <strong>Denton-Cholette</strong> (<code>tempdisagg</code>) — a média dos quatro trimestres de cada ano reproduz o benchmark anual das Contas Regionais</li>
+<li>Ajuste sazonal: <strong>X-13ARIMA-SEATS</strong> (<code>seasonal</code>)</li>
+</ul>
+<p>Nos subblocos, o projeto distingue dois tipos de ponderação:</p>
+<ul>
+<li><strong>pesos contábeis</strong> de agregação entre setores/subsetores, alinhados ao ano-base de 2020 sempre que disponíveis nas Contas Regionais;</li>
+<li><strong>pesos técnicos</strong> entre proxies de um mesmo subsetor — otimizados pelo <strong>critério de variância do Denton</strong>: os pesos ótimos são aqueles que minimizam <code>Σ(p[t]/x[t] − p[t−1]/x[t−1])²</code> sobre o período de benchmark 2020–2023, ou seja, a combinação de proxies que, antes mesmo da ancoragem, já apresenta o perfil sazonal mais próximo do comportamento real do setor. A busca é feita por grade com passo de 5 p.p. (<code>R/05b_sensibilidade_pesos.R</code>); os resultados e decisões estão documentados em <code>notas/metodologia/otimizacao_pesos_proxies.md</code>.</li>
+</ul>
+<h3 id="benchmark-do-denton-cholette">Benchmark do Denton-Cholette </h3>
+<p>O benchmark anual utiliza o <strong>índice encadeado de volume</strong> das Contas Regionais do IBGE (arquivo <code>Especiais_2002_2023_xls.zip</code>, aba <code>tab05.xls</code>, série base 2002 = 100, rebaseada para 2020 = 100) — e não o VAB a preços correntes (nominal).</p>
+<blockquote>
+<p><strong>Por que volume e não nominal?</strong> As proxies trimestrais são indicadores de volume (emprego, energia, passageiros). Usar o VAB nominal como benchmark introduz inflação setorial no índice, gerando crescimentos artificialmente elevados. Com o benchmark de volume, as taxas anuais refletem crescimento real e são diretamente comparáveis ao IBCR do Banco Central.</p>
+</blockquote>
+<h3 id="estrutura-setorial-e-proxies">Estrutura setorial e proxies </h3>
+<table>
+<thead>
+<tr>
+<th>Atividade</th>
+<th>% VAB 2023¹</th>
+<th>Proxy principal</th>
+<th>Fonte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adm., defesa, educação e saúde públicas e seguridade social</td>
+<td>46,21%</td>
+<td>Folha de pagamento observada (federal SIAPE + estadual FIPLAN + municipal)</td>
+<td>Portal da Transparência / SEPLAN-RR FIPLAN / STN–SICONFI</td>
+</tr>
+<tr>
+<td>Comércio e reparação de veículos</td>
+<td>12,25%</td>
+<td>PMC-RR (70%) + energia comercial (10%) + ICMS comércio deflacionado (10%) + CAGED G (10%)</td>
+<td>IBGE–PMC / ANEEL / SEFAZ-RR / MTE–CAGED</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>8,87%</td>
+<td>Produção física lavouras (PAM definitivo / LSPA leitura mais recente disponível) + pecuária trimestral observada (abate de bovinos + ovos), com calibração estrutural anual e cobertura trimestral completa exigida</td>
+<td>IBGE/SIDRA + parâmetro interno</td>
+</tr>
+<tr>
+<td>Atividades imobiliárias</td>
+<td>7,68%</td>
+<td>Consumidores residenciais ANEEL como indicador temporal + Denton-Cholette contra benchmark CR IBGE</td>
+<td>ANEEL (SAMP) / IBGE – CR</td>
+</tr>
+<tr>
+<td>Outros serviços</td>
+<td>7,63%</td>
+<td>PMS-RR geral (60%) + CAGED I (20%) + CAGED M+N (10%) + CAGED P+Q (10%)</td>
+<td>IBGE–PMS / MTE–CAGED</td>
+</tr>
+<tr>
+<td>Eletricidade, gás, água, esgoto e resíduos (SIUP)</td>
+<td>5,40%</td>
+<td>Consumo de energia elétrica por classe</td>
+<td>ANEEL (SAMP)</td>
+</tr>
+<tr>
+<td>Construção</td>
+<td>4,89%</td>
+<td>Estoque acumulado de emprego CAGED F</td>
+<td>MTE–CAGED</td>
+</tr>
+<tr>
+<td>Atividades financeiras e de seguros</td>
+<td>2,78%</td>
+<td>Depósitos Estban BCB (60%) + carteira de crédito ativa BCB/SCR (40%)</td>
+<td>BCB (Estban / SCR)</td>
+</tr>
+<tr>
+<td>Transporte, armazenagem e correio</td>
+<td>1,92%</td>
+<td>Passageiros ANAC (55%) + diesel ANP (45%)</td>
+<td>ANAC / ANP</td>
+</tr>
+<tr>
+<td>Indústrias de transformação</td>
+<td>1,31%</td>
+<td>Energia industrial ANEEL (55%) + emprego CAGED C (45%)</td>
+<td>ANEEL (SAMP) / MTE–CAGED</td>
+</tr>
+<tr>
+<td>Informação e comunicação</td>
+<td>1,01%</td>
+<td>PMS-RR geral (90%) + CAGED J (10%)</td>
+<td>IBGE–PMS / MTE–CAGED</td>
+</tr>
+<tr>
+<td>Indústrias extrativas</td>
+<td>0,05%</td>
+<td>CAGED B (estoque de emprego formal, seção B) + Denton-Cholette contra benchmark CR IBGE</td>
+<td>MTE–CAGED / IBGE – CR</td>
+</tr>
+</tbody>
+</table>
+<p>¹ Participações de referência informativa (CR IBGE 2023). Os <strong>pesos efetivos do índice</strong> usam participações de 2020 (ano base Laspeyres), calculados dinamicamente de <code>contas_regionais_RR_serie.csv</code>.</p>
+<h3 id="pib-nominal-trimestral--vab-e-ilp">PIB Nominal Trimestral — VAB e ILP </h3>
+<p>O script <code>R/05g_pib_nominal.R</code> gera o <strong>PIB nominal trimestral</strong> de Roraima (VAB + ILP, em R$ milhões), principal produto de divulgação do projeto. No estado atual, o benchmark anual do PIB usado nessa etapa é lido de cache local por padrão, com atualização online apenas quando explicitamente solicitada.</p>
+<p>O VAB nominal trimestral (<code>R/05f_vab_nominal.R</code>) é calculado como:</p>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>Índice nominal = Índice real × Deflator implícito / 100
+</code></pre><p>O deflator implícito anual do total é extraído diretamente das Contas Regionais do IBGE<br>
+(<code>índice nominal total / índice real total</code>) e desagregado para frequência trimestral via<br>
+Denton-Cholette com o IPCA como proxy. Nos anos com benchmark publicado (<code>2020–2023</code>), o<br>
+<code>VAB nominal</code> anual fecha exatamente com o total das Contas Regionais.</p>
+<p>O script <code>R/05h_vab_nominal_setorial.R</code> detalha o VAB nominal trimestral por bloco setorial<br>
+(<code>Agropecuária</code>, <code>AAPP</code>, <code>Indústria</code> e <code>Serviços</code>) para o período <code>2020–2023</code>. O script<br>
+<code>R/05i_pib_real.R</code> gera o <strong>PIB real</strong> tanto em série trimestral (<code>pib_real_rr.csv</code>) quanto<br>
+em resumo anual (<code>pib_real_anual_rr.csv</code>), em R$ milhões de 2020 e taxa de crescimento, com<br>
+ancoragem ao benchmark oficial do PIB real das Contas Regionais em <code>2020–2023</code>.</p>
+<hr>
+<h2 id="estrutura-do-repositório">Estrutura do repositório </h2>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>├── config/
+│   └── release.R                 # gate de publicação: define trimestre_publicado
+├── R/
+│   ├── utils.R                   # funções auxiliares: denton(), validar_serie()
+│   ├── run_all.R                 # orquestrador do pipeline completo
+│   ├── 00_dados_referencia.R     # CR IBGE: pesos nominais e benchmarks de volume
+│   ├── 00b_icms_sefaz_atividade.R # shares trimestrais de ICMS por atividade (SEFAZ-RR)
+│   ├── 01_agropecuaria.R         # lavouras (PAM/LSPA — leitura mais recente) e pecuária
+│   ├── 02_adm_publica.R          # folha pública federal + estadual + municipal
+│   ├── 03_industria.R            # construção, SIUP, transformação
+│   ├── 04_servicos.R             # comércio, transportes, financeiro, outros
+│   ├── 05_agregacao.R            # índice geral (Laspeyres + Denton)
+│   ├── 05b_sensibilidade_pesos.R # otimização dos pesos das proxies compostas (critério Denton)
+│   ├── 05b_sensibilidade_*.R     # demais testes de sensibilidade (calendário agrícola)
+│   ├── 05c_ajuste_sazonal.R      # X-13ARIMA-SEATS
+│   ├── 05d_validacao.R           # validação: CR IBGE, IBCR Norte, IBC-Br
+│   ├── 05e_exportacao.R          # exportação Excel e CSVs (filtrada por trimestre_publicado)
+│   ├── 05f_vab_nominal.R         # deflator implícito e índice nominal trimestral
+│   ├── 05g_pib_nominal.R         # ILP trimestral via ICMS e PIB nominal trimestral
+│   ├── 05h_vab_nominal_setorial.R # VAB nominal trimestral dos 4 blocos (2020–2023)
+│   ├── 05i_pib_real.R            # PIB real trimestral e anual em R\$ 2020 (ancorado ao CR IBGE)
+│   ├── 06_coleta_fontes.R        # Fase 6: atualiza fontes automatizáveis + relatório de cobertura
+│   ├── 06_avanca_publicacao.R    # Fase 6: checklist interativo + avanço do trimestre publicado
+│   └── exploratorio/             # scripts históricos de inspeção de dados
+├── data/
+│   └── referencias/              # calendários de colheita e referências versionadas
+│   (raw/, processed/, output/ — mantidos localmente, não versionados)
+├── logs/
+│   └── fontes_utilizadas.csv     # rastreabilidade das fontes por release
+├── dashboard/
+│   └── app.R                     # app Shiny (bslib v5 + plotly + DT)
+├── bases_baixadas_manualmente/   # bases manuais lidas diretamente pelos scripts R
+├── plano_projeto.md              # plano metodológico detalhado
+├── checklist.md                  # checklist geral do projeto
+├── historico_simples.md          # histórico do projeto em linguagem acessível
+├── regras.md                     # protocolo obrigatório de sessão e manutenção
+└── notas/
+    ├── apresentacoes/            # PDFs, TEX e versões de apresentação
+    ├── experimentos/             # laboratórios e testes metodológicos isolados
+    ├── metodologia/              # monitoramento, relatórios e notas metodológicas auxiliares
+    └── reformas/                 # planos e checklists das frentes metodológicas
+</code></pre><hr>
+<h2 id="saídas-de-dados">Saídas de dados </h2>
+<p>Salvas em <code>data/output/</code> (não versionadas — disponíveis mediante solicitação):</p>
+<table>
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IAET_RR_series.xlsx</code></td>
+<td>Excel com 8 abas: Índice Geral, Componentes, Dessazonalizado, Fatores Sazonais, Metadados, VAB Nominal, PIB Nominal, PIB Real</td>
+</tr>
+<tr>
+<td><code>indice_geral_rr.csv</code></td>
+<td>Índice geral trimestral NSA (2020T1–2025T4)</td>
+</tr>
+<tr>
+<td><code>indice_geral_rr_sa.csv</code></td>
+<td>Índice geral dessazonalizado (SA) + componentes</td>
+</tr>
+<tr>
+<td><code>fatores_sazonais.csv</code></td>
+<td>Fatores sazonais aditivos por componente</td>
+</tr>
+<tr>
+<td><code>indice_nominal_rr.csv</code></td>
+<td>Índice nominal (real × deflator implícito)</td>
+</tr>
+<tr>
+<td><code>pib_nominal_rr.csv</code></td>
+<td>PIB nominal trimestral em R$ milhões (VAB + ILP)</td>
+</tr>
+<tr>
+<td><code>vab_nominal_setorial_rr.csv</code></td>
+<td>VAB nominal trimestral dos 4 blocos do projeto (2020–2023)</td>
+</tr>
+<tr>
+<td><code>vab_nominal_setorial_anual_rr.csv</code></td>
+<td>Fechamento anual do VAB nominal setorial vs. benchmark das CR</td>
+</tr>
+<tr>
+<td><code>pib_real_rr.csv</code></td>
+<td>PIB real trimestral em R$ milhões de 2020 e índice (2020T1–2025T4)</td>
+</tr>
+<tr>
+<td><code>pib_real_anual_rr.csv</code></td>
+<td>PIB real anual em R$ milhões de 2020 e taxa de crescimento (2020–2025)</td>
+</tr>
+<tr>
+<td><code>validacao_relatorio.csv</code></td>
+<td>Relatório de validação (4 eixos)</td>
+</tr>
+<tr>
+<td><code>notas/metodologia/relatorio_comparacao_projeto_vs_cr.md</code></td>
+<td>Relatório rápido comparando projeto e Contas Regionais</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="pacotes-r-utilizados">Pacotes R utilizados </h2>
+<table>
+<thead>
+<tr>
+<th>Pacote</th>
+<th>Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sidrar</code></td>
+<td>Acesso ao SIDRA/IBGE (LSPA, PAM, PPM, Abate, Leite, Ovos)</td>
+</tr>
+<tr>
+<td><code>tempdisagg</code></td>
+<td>Desagregação temporal Denton-Cholette</td>
+</tr>
+<tr>
+<td><code>seasonal</code></td>
+<td>Ajuste sazonal X-13ARIMA-SEATS</td>
+</tr>
+<tr>
+<td><code>dplyr</code> / <code>tidyr</code> / <code>readr</code></td>
+<td>Manipulação de dados</td>
+</tr>
+<tr>
+<td><code>openxlsx</code></td>
+<td>Exportação em Excel</td>
+</tr>
+<tr>
+<td><code>pdftools</code></td>
+<td>Extração de texto dos PDFs de ICMS por atividade da SEFAZ-RR</td>
+</tr>
+<tr>
+<td><code>httr2</code> / <code>jsonlite</code></td>
+<td>Coleta via APIs (BCB, ANEEL, ANP, Portal da Transparência)</td>
+</tr>
+<tr>
+<td><code>readxl</code></td>
+<td>Leitura dos arquivos XLS das Contas Regionais</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="fontes-de-dados">Fontes de dados </h2>
+<table>
+<thead>
+<tr>
+<th>Fonte</th>
+<th>Dado</th>
+<th>Acesso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IBGE Contas Regionais</td>
+<td>VAB nominal e índice de volume por atividade — Roraima (2002–2023)</td>
+<td>FTP IBGE — download automático (<code>00_dados_referencia.R</code>)</td>
+</tr>
+<tr>
+<td>IBGE / SIDRA</td>
+<td>Agropecuária: PAM (tab. 5457), LSPA (tab. 6588), abate de bovinos (tab. 1092) e ovos de galinha (tab. 7524); IPCA (tab. 1737); PIB anual RR (tab. 5938)</td>
+<td>API SIDRA via <code>sidrar</code>, com caches locais usados por padrão nas etapas operacionais</td>
+</tr>
+<tr>
+<td>SEFAZ-RR</td>
+<td>PDFs de ICMS por atividade econômica</td>
+<td>Download manual; extração local via <code>pdftools</code></td>
+</tr>
+<tr>
+<td>Portal da Transparência</td>
+<td>Folha federal (SIAPE) — arquivos mensais ZIP por UF</td>
+<td>Download manual; <code>bases_baixadas_manualmente/dados_siape_portal_transparencia/</code></td>
+</tr>
+<tr>
+<td>SEPLAN-RR / FIPLAN</td>
+<td>Folha estadual mensal — FIP 855, com soma das rubricas <code>3190.1100</code>, <code>3190.1200</code> e <code>3190.1300</code></td>
+<td>Download manual; <code>bases_baixadas_manualmente/dados_folha_rr_fip855/</code></td>
+</tr>
+<tr>
+<td>STN / SICONFI</td>
+<td>Folha municipal — RREO Anexo 06, 15 entes de RR</td>
+<td>API pública <code>apidatalake.tesouro.gov.br</code> (sem autenticação)</td>
+</tr>
+<tr>
+<td>ANEEL (SAMP)</td>
+<td>Consumo de energia elétrica por classe — Roraima Energia S.A. (sistema isolado)</td>
+<td>API CKAN <code>dadosabertos.aneel.gov.br</code> — download automático</td>
+</tr>
+<tr>
+<td>MTE / CAGED</td>
+<td>Microdados de emprego formal por seção CNAE (UF=14)</td>
+<td>FTP MTE <code>ftp.mtps.gov.br</code> — download automático (~2,5 GB)</td>
+</tr>
+<tr>
+<td>ANAC</td>
+<td>Passageiros — aeroporto de Boa Vista (SBBV)</td>
+<td>Download manual de ZIPs mensais; <code>bases_baixadas_manualmente/microdados_anac_mensal_.../</code></td>
+</tr>
+<tr>
+<td>ANP</td>
+<td>Vendas de diesel por UF</td>
+<td>Download automático — CSV dados abertos <code>gov.br/anp</code></td>
+</tr>
+<tr>
+<td>BCB Estban</td>
+<td>Depósitos bancários em RR — poupança (verbete 420) + depósitos a prazo (verbete 432)</td>
+<td>Download manual de ZIPs; <code>bases_baixadas_manualmente/dados_estban_bcb/</code></td>
+</tr>
+<tr>
+<td>BCB SCR</td>
+<td>Carteira de crédito ativa em RR (dados abertos agregados)</td>
+<td>Download manual de ZIPs; <code>bases_baixadas_manualmente/dados_bcb_src_2020_2025/</code></td>
+</tr>
+<tr>
+<td>SEFAZ-RR</td>
+<td>ICMS estadual mensal (proxy do ILP) e ICMS por atividade trimestral (componente do bloco Comércio)</td>
+<td>Download manual; <code>data/processed/icms_sefaz_rr_mensal.csv</code> e <code>icms_sefaz_rr_trimestral.csv</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="instituição-e-autoria">Instituição e autoria </h2>
+<p><strong>Secretaria de Planejamento e Orçamento de Roraima — SEPLAN/RR</strong><br>
+Coordenação-Geral de Estudos Econômicos e Sociais — CGEES</p>
+<p><strong>Yuri Cesar de Lima e Silva</strong><br>
+Chefe da Divisão de Estudos e Análises Sociais — DIEAS<br>
+Coordenador da Equipe do PIB do Estado de Roraima — SEPLAN/RR</p>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>

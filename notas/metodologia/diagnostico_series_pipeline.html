@@ -1,0 +1,692 @@
+<!DOCTYPE html><html><head>
+      <title>diagnostico_series_pipeline</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:///c:\Users\Usuario\.vscode\extensions\shd101wyy.markdown-preview-enhanced-0.8.23\crossnote\dependencies\katex\katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="diagnóstico-das-séries-utilizadas-no-pipeline">Diagnóstico das séries utilizadas no pipeline </h1>
+<p>Gerado em 2026-04-19 20:55:26 pelo script <code>R/98_diagnostico_series_pipeline.R</code>.</p>
+<h2 id="escopo">Escopo </h2>
+<p>Este documento consolida, para as séries atualmente usadas no pipeline do PIB trimestral de Roraima:</p>
+<ul>
+<li>quantidade de NAs literais na variável operacional;</li>
+<li>faltantes de cobertura na grade esperada da janela 2020–2025;</li>
+<li>existência de tratamento preparado para faltantes;</li>
+<li>forma de uso na composição da proxy ou do índice final;</li>
+<li>gráficos comparativos das proxies por atividade.</li>
+</ul>
+<p>Foram incluídas também as séries de deflação e o bloco de impostos/ILP.</p>
+<h2 id="leitura-rápida">Leitura rápida </h2>
+<ul>
+<li>A maior parte das séries operacionais do núcleo 2020–2025 já está sem NAs literais, mas ainda existem problemas relevantes de cobertura em alguns insumos manuais e administrativos.</li>
+<li>A folha municipal passou a ter regra explícita de exclusão: municípios com mais de 1 bimestre final ausente são excluídos automaticamente, com base no trimestre publicado em <code>config/release.R</code>. Na fase 2025T4, Amajari e Caracaraí foram excluídos; Iracema foi mantida com carry-forward do último bimestre observado (2025B5).</li>
+<li>No SIAPE, o tratamento de faltantes existe e está explícito: o código interpola meses ausentes linearmente.</li>
+<li>No CAGED, o padrão do projeto é completar meses ausentes com <code>saldo = 0</code> antes de construir o estoque acumulado.</li>
+<li>Extrativas passou a usar CAGED B (estoque de emprego formal) como indicador trimestral na Denton-Cholette. A CFEM (ANM) foi avaliada e descartada — documentação completa em <code>notas/metodologia/cfem_extrativas_indice_composto.md</code>.</li>
+<li>Em serviços, quando uma proxy falta, o código redistribui os pesos apenas entre as proxies disponíveis do mesmo subsetor.</li>
+<li>Em impostos, o ILP trimestral usa Denton-Cholette com ICMS total como indicador temporal.</li>
+</ul>
+<h2 id="principais-problemas-por-cobertura-e-na">Principais problemas por cobertura e NA </h2>
+<table>
+<thead>
+<tr>
+<th>bloco</th>
+<th>atividade</th>
+<th>serie</th>
+<th>na_valor</th>
+<th>faltantes_grade</th>
+<th>tratamento_na</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AAPP</td>
+<td>Folha municipal</td>
+<td>SICONFI RREO Anexo 06</td>
+<td>0</td>
+<td>32</td>
+<td>Conversão acumulado-&gt;incremental; municípios com gap final &gt; 1 bimestre são excluídos automaticamente (regra derivada de config/release.R); único bimestre final faltante é preenchido com carry-forward; Amajari e Caracaraí excluídos na fase 2025T4</td>
+</tr>
+<tr>
+<td>AAPP</td>
+<td>Folha federal</td>
+<td>SIAPE</td>
+<td>0</td>
+<td>3</td>
+<td>Interpolação linear de meses ausentes no código</td>
+</tr>
+<tr>
+<td>AAPP</td>
+<td>Folha estadual</td>
+<td>FIPLAN FIP855</td>
+<td>0</td>
+<td>0</td>
+<td>Sem correção específica; ausência entra como 0 na soma final</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Lavouras</td>
+<td>Índice de lavouras</td>
+<td>0</td>
+<td>0</td>
+<td>PAM e LSPA são combinadas; sem imputação direta por NA</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Abate bovino</td>
+<td>0</td>
+<td>0</td>
+<td>Sem fallback; completude é exigida na janela operacional</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Ovos</td>
+<td>0</td>
+<td>0</td>
+<td>Sem fallback; completude é exigida na janela operacional</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Índice de pecuária</td>
+<td>0</td>
+<td>0</td>
+<td>Sem fallback; só é gerado com cobertura completa</td>
+</tr>
+<tr>
+<td>Deflação</td>
+<td>Deflator trimestral</td>
+<td>Deflator implícito trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>Denton com fallback para IPCA reescalado se necessário</td>
+</tr>
+<tr>
+<td>Deflação</td>
+<td>IPCA</td>
+<td>IPCA mensal</td>
+<td>0</td>
+<td>0</td>
+<td>Sem imputação; usado como nível de preços</td>
+</tr>
+<tr>
+<td>Impostos</td>
+<td>ILP / impostos</td>
+<td>ICMS total trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>No PIB nominal, faltantes do indicador entram como 0 no Denton do ILP</td>
+</tr>
+<tr>
+<td>Impostos</td>
+<td>ILP / impostos</td>
+<td>ILP trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>Denton-Cholette com benchmark anual e ICMS como indicador</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Construção</td>
+<td>CAGED F</td>
+<td>0</td>
+<td>0</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quadro-geral-das-séries">Quadro geral das séries </h2>
+<p>A tabela abaixo resume o diagnóstico das principais séries efetivamente usadas no pipeline.</p>
+<table>
+<thead>
+<tr>
+<th>bloco</th>
+<th>atividade</th>
+<th>serie</th>
+<th>periodicidade</th>
+<th>na_valor</th>
+<th>faltantes_grade</th>
+<th>primeiro_periodo</th>
+<th>ultimo_periodo</th>
+<th>tratamento_na</th>
+<th>uso_no_indice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AAPP</td>
+<td>Folha estadual</td>
+<td>FIPLAN FIP855</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Sem correção específica; ausência entra como 0 na soma final</td>
+<td>Somada à folha federal e municipal; depois deflacionada</td>
+</tr>
+<tr>
+<td>AAPP</td>
+<td>Folha federal</td>
+<td>SIAPE</td>
+<td>Mensal</td>
+<td>0</td>
+<td>3</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Interpolação linear de meses ausentes no código</td>
+<td>Somada à folha estadual e municipal; depois deflacionada</td>
+</tr>
+<tr>
+<td>AAPP</td>
+<td>Folha municipal</td>
+<td>SICONFI RREO Anexo 06</td>
+<td>Bimestral acumulada</td>
+<td>0</td>
+<td>32</td>
+<td>2020B1</td>
+<td>2026B1</td>
+<td>Conversão acumulado-&gt;incremental; municípios com gap final &gt; 1 bimestre são excluídos automaticamente (regra derivada de config/release.R); único bimestre final faltante é preenchido com carry-forward; Amajari e Caracaraí excluídos na fase 2025T4</td>
+<td>Convertida para trimestral e somada à folha estadual e federal</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Lavouras</td>
+<td>Índice de lavouras</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2026T4</td>
+<td>PAM e LSPA são combinadas; sem imputação direta por NA</td>
+<td>Média ponderada de 10 culturas com pesos de VBP e calendário</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Abate bovino</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2006T3</td>
+<td>2025T4</td>
+<td>Sem fallback; completude é exigida na janela operacional</td>
+<td>Média ponderada com ovos na proxy de pecuária</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Ovos</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2006T1</td>
+<td>2025T4</td>
+<td>Sem fallback; completude é exigida na janela operacional</td>
+<td>Média ponderada com abate bovino na proxy de pecuária</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Índice de pecuária</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2025T4</td>
+<td>Sem fallback; só é gerado com cobertura completa</td>
+<td>Componente da média ponderada do índice agro</td>
+</tr>
+<tr>
+<td>Deflação</td>
+<td>Deflator trimestral</td>
+<td>Deflator implícito trimestral</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2025T4</td>
+<td>Denton com fallback para IPCA reescalado se necessário</td>
+<td>Deflator do VAB nominal e insumo do PIB real</td>
+</tr>
+<tr>
+<td>Deflação</td>
+<td>IPCA</td>
+<td>IPCA mensal</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>1979M12</td>
+<td>2026M03</td>
+<td>Sem imputação; usado como nível de preços</td>
+<td>Deflator da AAPP e proxy temporal dos deflatores trimestrais</td>
+</tr>
+<tr>
+<td>Impostos</td>
+<td>ILP / impostos</td>
+<td>ICMS total trimestral</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2026T1</td>
+<td>No PIB nominal, faltantes do indicador entram como 0 no Denton do ILP</td>
+<td>Indicador temporal do ILP trimestral</td>
+</tr>
+<tr>
+<td>Impostos</td>
+<td>ILP / impostos</td>
+<td>ILP trimestral</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2025T4</td>
+<td>Denton-Cholette com benchmark anual e ICMS como indicador</td>
+<td>Somado ao VAB nominal para formar o PIB nominal</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Construção</td>
+<td>CAGED F</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Proxy única da construção na configuração atual</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Extrativas</td>
+<td>CAGED B (estoque)</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código; estoque = 1000 + cumsum(saldo), rebaseado 2020=100</td>
+<td>Indicador trimestral da Denton-Cholette de extrativas (proxy de emprego formal)</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Extrativas</td>
+<td>Índice extrativas</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2025T4</td>
+<td>CAGED B como indicador trimestral; Denton-Cholette ancora ao benchmark anual das Contas Regionais</td>
+<td>Componente do índice industrial com peso de VAB 2020</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Transformação</td>
+<td>ANEEL industrial</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; se faltar, transformação usa proxy remanescente</td>
+<td>Componente da média ponderada da transformação</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Transformação</td>
+<td>CAGED C</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Componente da média ponderada da transformação</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Comércio</td>
+<td>ANEEL comercial</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; se faltar, peso é redistribuído</td>
+<td>Componente da média ponderada do comércio</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Comércio</td>
+<td>CAGED G</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Componente da média ponderada do comércio</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Comércio</td>
+<td>ICMS comércio</td>
+<td>Trimestral</td>
+<td>0</td>
+<td>0</td>
+<td>2020T1</td>
+<td>2026T1</td>
+<td>Se faltar, peso é redistribuído; no ILP faltantes viram 0</td>
+<td>Componente da média ponderada do comércio; também alimenta o ILP</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Comércio</td>
+<td>PMC</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; se faltar, peso é redistribuído</td>
+<td>Componente da média ponderada do comércio</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Financeiro</td>
+<td>BCB Concessões</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Deflação pelo IPCA; se faltar, pesos são redistribuídos</td>
+<td>Componente da média ponderada do financeiro</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Financeiro</td>
+<td>BCB Estban</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Deflação pelo IPCA; se faltar, pesos são redistribuídos</td>
+<td>Componente da média ponderada do financeiro</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Imobiliário</td>
+<td>ANEEL consumidores residenciais</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; usado como indicador temporal no Denton do subsetor</td>
+<td>Indicador temporal do índice de atividades imobiliárias</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>InfoCom</td>
+<td>CAGED J</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Componente da média ponderada de informação e comunicação</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Outros serviços</td>
+<td>CAGED I</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Componente da média ponderada de outros serviços</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Outros serviços</td>
+<td>CAGED M+N</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Componente da média ponderada de outros serviços</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Outros serviços</td>
+<td>CAGED P+Q</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2025M12</td>
+<td>Meses ausentes são completados com saldo=0 no código</td>
+<td>Componente da média ponderada de outros serviços</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Outros serviços / InfoCom</td>
+<td>PMS</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; se faltar, pesos são redistribuídos</td>
+<td>Componente da média ponderada de outros serviços e infocom</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Transportes</td>
+<td>ANAC passageiros</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; se faltar, pesos são redistribuídos</td>
+<td>Componente da média ponderada dos transportes</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Transportes</td>
+<td>ANP diesel</td>
+<td>Mensal</td>
+<td>0</td>
+<td>0</td>
+<td>2020M01</td>
+<td>2026M02</td>
+<td>Sem imputação; se faltar, pesos são redistribuídos</td>
+<td>Componente da média ponderada dos transportes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="como-as-proxies-entram-nos-índices">Como as proxies entram nos índices </h2>
+<p>A tabela abaixo resume a regra de combinação usada hoje no código.</p>
+<table>
+<thead>
+<tr>
+<th>bloco</th>
+<th>atividade</th>
+<th>combinacao</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agropecuária</td>
+<td>Lavouras</td>
+<td>Média ponderada das 10 culturas com pesos de VBP da PAM; distribuição trimestral via calendário de colheita e LSPA/PAM</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Pecuária</td>
+<td>Média ponderada entre abate bovino e ovos</td>
+</tr>
+<tr>
+<td>Agropecuária</td>
+<td>Índice agropecuário</td>
+<td>Média ponderada entre lavouras e pecuária; depois Denton-Cholette contra benchmark anual de volume</td>
+</tr>
+<tr>
+<td>AAPP</td>
+<td>Índice de administração pública</td>
+<td>Soma nominal de folha estadual + municipal + federal; deflação pelo IPCA; depois Denton-Cholette contra benchmark anual</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>SIUP</td>
+<td>Proxy única baseada na energia elétrica total distribuída pela ANEEL; depois Denton-Cholette contra benchmark anual</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Transformação</td>
+<td>Média ponderada entre energia industrial ANEEL e CAGED C</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Construção</td>
+<td>Proxy única baseada em CAGED F na configuração atual</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Extrativas</td>
+<td>CAGED B (estoque de emprego formal) como indicador trimestral; Denton-Cholette ancora ao benchmark anual das Contas Regionais; CFEM (ANM) avaliada e descartada — ver notas/metodologia/cfem_extrativas_indice_composto.md</td>
+</tr>
+<tr>
+<td>Indústria</td>
+<td>Índice industrial</td>
+<td>Média ponderada entre SIUP, Construção, Transformação e Extrativas com pesos de VAB 2020</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Comércio</td>
+<td>Média ponderada entre energia comercial, PMC, ICMS comércio e CAGED G</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Transportes</td>
+<td>Média ponderada entre passageiros ANAC e diesel ANP; carga ANAC permanece só no diagnóstico</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Financeiro</td>
+<td>Média ponderada entre concessões BCB e depósitos Estban, ambos deflacionados</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Imobiliário</td>
+<td>Denton-Cholette entre benchmarks anuais das Contas Regionais, usando consumidores residenciais da ANEEL como indicador temporal</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Outros serviços</td>
+<td>Média ponderada entre CAGED I, CAGED M+N, CAGED P+Q e PMS</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Informação e comunicação</td>
+<td>Média ponderada entre CAGED J e PMS</td>
+</tr>
+<tr>
+<td>Serviços</td>
+<td>Índice de serviços</td>
+<td>Média ponderada entre 6 subsetores com pesos de VAB 2020; ancoragem anual por Denton</td>
+</tr>
+<tr>
+<td>Deflação</td>
+<td>Deflator trimestral do VAB</td>
+<td>Denton-Cholette do deflator anual implícito, usando IPCA trimestral como indicador temporal</td>
+</tr>
+<tr>
+<td>Impostos</td>
+<td>ILP trimestral</td>
+<td>Denton-Cholette do ILP anual, usando ICMS total trimestral como indicador; PIB nominal = VAB nominal + ILP</td>
+</tr>
+</tbody>
+</table>
+<h2 id="gráficos-comparativos-das-proxies-por-atividade">Gráficos comparativos das proxies por atividade </h2>
+<h3 id="agropecuária">Agropecuária </h3>
+<p><img src="../../data/output/diagnostico_series_pipeline/agro_componentes.png" alt="Agropecuária - subsetores e índice final"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/agro_lavouras_proxies.png" alt="Agropecuária - lavouras: culturas individuais e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/agro_pecuaria_proxies.png" alt="Agropecuária - pecuária: proxies e índice"></p>
+<h3 id="administração-pública">Administração pública </h3>
+<p><img src="../../data/output/diagnostico_series_pipeline/aapp_componentes.png" alt="AAPP - componentes da folha e índice final"></p>
+<h3 id="indústria">Indústria </h3>
+<p><img src="../../data/output/diagnostico_series_pipeline/industria_subsetores.png" alt="Indústria - subsetores e índice final"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/industria_siup_proxy.png" alt="Indústria - SIUP: proxy e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/industria_construcao_proxy.png" alt="Indústria - construção: proxy e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/industria_transformacao_proxies.png" alt="Indústria - transformação: proxies e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/industria_extrativas.png" alt="Indústria - extrativas: índice final"></p>
+<h3 id="serviços">Serviços </h3>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_subsetores.png" alt="Serviços - subsetores e índice final"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_comercio.png" alt="Serviços - comércio: proxies e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_transportes.png" alt="Serviços - transportes: proxies e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_financeiro.png" alt="Serviços - financeiro: proxies e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_imobiliario.png" alt="Serviços - atividades imobiliárias: proxy e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_outros.png" alt="Serviços - outros serviços: proxies e índice"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/servicos_infocom.png" alt="Serviços - informação e comunicação: proxies e índice"></p>
+<h3 id="deflação-e-impostos">Deflação e impostos </h3>
+<p><img src="../../data/output/diagnostico_series_pipeline/deflacao_ipca_deflator.png" alt="Deflação"></p>
+<p><img src="../../data/output/diagnostico_series_pipeline/impostos_ilp_icms.png" alt="Impostos e ILP"></p>
+<h2 id="arquivos-auxiliares-gerados">Arquivos auxiliares gerados </h2>
+<ul>
+<li><code>data/output/diagnostico_series_pipeline/resumo_series.csv</code></li>
+<li><code>data/output/diagnostico_series_pipeline/combinacao_series.csv</code></li>
+<li>PNGs comparativos na mesma pasta.</li>
+</ul>
+<h2 id="observações-metodológicas-finais">Observações metodológicas finais </h2>
+<ul>
+<li>Este diagnóstico separa <code>NA literal</code> de <code>faltante de cobertura</code>. Em várias séries administrativas o problema real não é <code>NA</code> em célula, mas período ausente na grade esperada.</li>
+<li>O diagnóstico foi montado sobre a configuração vigente do projeto em 2026-04-19. Se os pesos operacionais ou as fontes mudarem, este relatório deve ser regenerado.</li>
+<li>O relatório não substitui a leitura dos scripts, mas ajuda a localizar rapidamente onde há risco de cobertura, redistribuição de pesos ou interpolação.</li>
+</ul>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>
