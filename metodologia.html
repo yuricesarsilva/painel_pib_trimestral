@@ -489,13 +489,13 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
   2021: +3,19% (projeto) = +3,19% (CR IBGE volume) ✓ &nbsp;&nbsp;
   2022: +4,12% = +4,12% ✓ &nbsp;&nbsp;
   2023: +2,37% = +2,37% ✓<br><br>
-  <em>Após a reforma metodológica de 2026-04-13, o benchmark do Denton passou a usar o índice de volume das CR (não o VAB nominal). As taxas refletem crescimento real da folha deflacionada.</em></div>
+  <em>O benchmark do Denton usa o índice de volume das CR — não o VAB nominal — garantindo que as taxas reflitam crescimento real da folha deflacionada.</em></div>
 </div>
 </section>
 
 <section id="industria">
 <h3>6.3 Indústria</h3>
-<p>Peso no VAB de 2020: <strong>11,63%</strong>. O bloco industrial é composto por três subsetores com pesos internos derivados do VAB nominal de 2020 das Contas Regionais.</p>
+<p>Peso no VAB de 2020: <strong>11,63%</strong>. O bloco industrial é composto por quatro subsetores com pesos internos derivados do VAB nominal de 2020 das Contas Regionais.</p>
 
 <div class="table-wrap">
 <table>
@@ -504,6 +504,7 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
     <tr><td>SIUP (energia, gás, água, esgoto)</td><td>R$ 799 mi</td><td>47,4%</td><td>5,51%</td></tr>
     <tr><td>Construção civil</td><td>—</td><td>42,8%</td><td>4,98%</td></tr>
     <tr><td>Indústria de Transformação</td><td>—</td><td>9,9%</td><td>1,15%</td></tr>
+    <tr><td>Indústrias Extrativas</td><td>—</td><td>~0,4%</td><td>~0,05%</td></tr>
   </tbody>
 </table>
 </div>
@@ -543,7 +544,12 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
   </tbody>
 </table>
 </div>
-<p>Os pesos foram otimizados pelo critério de variância do Denton (ver Seção 7): os pesos ad hoc originais (70%/30%) foram revisados para 55%/45%, com melhoria de 59,9% na função-objetivo.</p>
+<p>Os pesos foram otimizados pelo critério de variância do Denton (ver Seção 7): a combinação 55%/45% minimiza a função-objetivo sobre o período de benchmark 2020–2023, com melhoria de 59,9%.</p>
+
+<h4 id="extrativas">Indústrias Extrativas (≈0,05% do VAB 2020)</h4>
+<p><span class="badge badge-fraca">Proxy fraca mas necessária</span> Indicador trimestral: <strong>estoque de emprego formal CAGED seção B</strong> (mineração e extração).</p>
+<p>O estoque é construído como <code>1000 + cumsum(saldo)</code> a partir de janeiro de 2020, rebaseado para média 2020 = 100, e agregado em média trimestral. A série é usada como proxy Denton-Cholette ancorada no benchmark anual de volume das Contas Regionais.</p>
+<p><strong>CFEM (ANM) avaliada e descartada</strong> como proxy alternativa por quatro razões: (1) os pagamentos são mensais mas irregulares, sem correspondência com a produção do período; (2) o ano-base 2020 coincidiu com paralisações atípicas da mineração em Roraima; (3) a série é dominada por materiais de construção, não por mineração característica da região; (4) a otimização de grade atribuiu peso zero à CFEM. Detalhes em <code>notas/metodologia/cfem_extrativas_indice_composto.md</code>.</p>
 </section>
 
 <section id="servicos">
@@ -566,13 +572,12 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
 <p><strong>Nota sobre ICMS:</strong> séries baseadas em ICMS requerem monitoramento contínuo de alterações de alíquota, benefícios fiscais e mudanças de regime tributário (Decretos SEFAZ-RR). Cada quebra estrutural identificada deve receber variável dummy no script.</p>
 
 <h4 id="transportes">Transportes, Armazenagem e Correio (1,92% do VAB 2023)</h4>
-<p>Proxy composta — pesos ad hoc 40%/30%/30% revisados para 55%/0%/45%:</p>
+<p>Proxy composta com pesos otimizados pelo critério de variância do Denton:</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>Componente</th><th>Fonte</th><th>Tipo</th><th>Peso adotado</th></tr></thead>
   <tbody>
     <tr><td>Passageiros ANAC (SBBV)</td><td>Microdados ANAC, aeroporto de Boa Vista</td><td>Volume físico</td><td><strong>55%</strong></td></tr>
-    <tr><td>Carga aérea ANAC (SBBV)</td><td>Microdados ANAC</td><td>Volume físico</td><td><strong>0%</strong> (eliminada)</td></tr>
     <tr><td>Vendas de diesel ANP (RR)</td><td>ANP — dados abertos por UF</td><td>Volume físico</td><td><strong>45%</strong></td></tr>
   </tbody>
 </table>
@@ -580,7 +585,7 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
 <p><strong>Por que carga aérea foi eliminada?</strong> A movimentação de carga no SBBV é dominada por eventos esporádicos (operações humanitárias, fretamentos) que não refletem o nível regular de atividade do setor. O critério de variância do Denton confirmou quantitativamente a eliminação. O diesel captura transporte rodoviário; passageiros captam o segmento aéreo.</p>
 
 <h4 id="financeiro">Atividades Financeiras (2,78% do VAB 2023)</h4>
-<p>Proxy composta. Pesos ad hoc originais (70% concessões / 30% depósitos) foram <em>invertidos</em> pelo critério Denton, com melhoria de 90,5%:</p>
+<p>Proxy composta com pesos otimizados pelo critério de variância do Denton, com melhoria de 90,5%:</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>Componente</th><th>Fonte</th><th>Tipo</th><th>Peso adotado</th></tr></thead>
@@ -591,10 +596,9 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
 </table>
 </div>
 
-<div class="callout callout-warn">
-  <span class="icon">⚠</span>
-  <div><strong>Verbetes do Estban:</strong> a variável usada é a soma dos verbetes 420 (depósitos de poupança) e 432 (depósitos a prazo). O verbete 160 — que aparece em descrições anteriores — refere-se a operações de crédito (ativo bancário), não a depósitos.<br><br>
-  <strong>BCB SCR:</strong> a série usada é <code>carteira_ativa</code> (estoque total de crédito em RR), extraída dos ZIPs de dados agregados do SCR. O estoque de crédito é usado como proxy de atividade financeira, em simetria ao uso de depósitos no Estban.</div>
+<div class="callout callout-ok">
+  <span class="icon">ℹ</span>
+  <div><strong>Estban:</strong> verbetes 420 (depósitos de poupança) + 432 (depósitos a prazo). <strong>BCB SCR:</strong> série <code>carteira_ativa</code> — estoque total de crédito em RR, extraída dos ZIPs de dados agregados do SCR.</div>
 </div>
 
 <p>Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe suavização por média móvel de 3 meses (alta volatilidade mensal).</p>
@@ -609,7 +613,6 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
   <tbody>
     <tr><td>Outros serviços (7,63%)</td><td>PMS-RR geral (60%) + CAGED I (20%) + CAGED M+N (10%) + CAGED P+Q (10%)</td><td>IBGE–PMS / FTP MTE</td></tr>
     <tr><td>Informação e comunicação (1,01%)</td><td>PMS-RR geral (90%) + CAGED J (10%)</td><td>IBGE–PMS / FTP MTE</td></tr>
-    <tr><td>Indústrias extrativas (0,05%)</td><td>Interpolação linear CR (peso negligenciável)</td><td>IBGE CR</td></tr>
   </tbody>
 </table>
 </div>
@@ -638,14 +641,14 @@ $$\underset{w_1,\ldots,w_k}{\arg\min} \sum_{t=2}^{T} \left(\frac{p_t(w)}{x_t(w)}
 <h3>Resultados</h3>
 <div class="table-wrap">
 <table>
-  <thead><tr><th>Setor</th><th>Pesos anteriores (ad hoc)</th><th>Pesos ótimos</th><th>Pesos adotados</th><th>Melhoria</th><th>Decisão</th></tr></thead>
+  <thead><tr><th>Setor</th><th>Pesos em uso</th><th>Melhoria na função-objetivo</th><th>Observação</th></tr></thead>
   <tbody>
-    <tr><td>Ind. Transformação</td><td>Energia 70% / CAGED C 30%</td><td>Energia 55% / CAGED C 45%</td><td><strong>55% / 45%</strong></td><td><strong>59,9%</strong></td><td>✅ Aplicado</td></tr>
-    <tr><td>Comércio</td><td>Energia 35% / PMC 25% / ICMS 20% / CAGED G 20%</td><td>Energia 0% / PMC 95% / ICMS 5% / CAGED G 0%</td><td><strong>10% / 70% / 10% / 10%</strong></td><td><strong>59,7%</strong></td><td>✅ Aplicado (piso de 10%)</td></tr>
-    <tr><td>Outros Serviços</td><td>CAGED I 25% / M+N 30% / P+Q 20% / PMS 25%</td><td>CAGED I 35% / M+N 0% / P+Q 0% / PMS 65%</td><td><strong>20% / 10% / 10% / 60%</strong></td><td><strong>70,3%</strong></td><td>✅ Aplicado (piso de 10%)</td></tr>
-    <tr><td>InfoCom</td><td>CAGED J 50% / PMS 50%</td><td>CAGED J 0% / PMS 100%</td><td><strong>10% / 90%</strong></td><td><strong>27,4%</strong></td><td>✅ Aplicado (piso de 10%)</td></tr>
-    <tr><td>Transportes</td><td>Pax 40% / Carga 30% / Diesel 30%</td><td>Pax 55% / Carga 0% / Diesel 45%</td><td><strong>55% / 0% / 45%</strong></td><td><strong>41,7%</strong></td><td>✅ Aplicado</td></tr>
-    <tr><td>Financeiro</td><td>Concessões 70% / Depósitos 30%</td><td>Concessões 40% / Depósitos 60%</td><td><strong>40% / 60%</strong></td><td><strong>90,5%</strong></td><td>✅ Aplicado</td></tr>
+    <tr><td>Ind. Transformação</td><td>Energia 55% / CAGED C 45%</td><td><strong>59,9%</strong></td><td>—</td></tr>
+    <tr><td>Comércio</td><td>PMC 70% / Energia 10% / ICMS 10% / CAGED G 10%</td><td><strong>59,7%</strong></td><td>Piso de 10% aplicado a cada componente</td></tr>
+    <tr><td>Outros Serviços</td><td>PMS 60% / CAGED I 20% / CAGED M+N 10% / CAGED P+Q 10%</td><td><strong>70,3%</strong></td><td>Piso de 10% aplicado aos secundários</td></tr>
+    <tr><td>InfoCom</td><td>PMS 90% / CAGED J 10%</td><td><strong>27,4%</strong></td><td>Piso de 10% para CAGED J</td></tr>
+    <tr><td>Transportes</td><td>Passageiros 55% / Diesel 45%</td><td><strong>41,7%</strong></td><td>Carga aérea excluída (ver Seção 6.4)</td></tr>
+    <tr><td>Financeiro</td><td>Depósitos 60% / Crédito ativo 40%</td><td><strong>90,5%</strong></td><td>—</td></tr>
   </tbody>
 </table>
 </div>
@@ -676,7 +679,7 @@ $$\text{Deflator anual} = \frac{\text{Índice nominal total (CR)}}{\text{Índice
 <div class="callout callout-ok">
   <span class="icon">✔</span>
   <div><strong>Fechamento anual exato com as Contas Regionais em 2020–2023</strong><br>
-  Após reforma do script (uso do deflator implícito direto do VAB total em vez de média ponderada de deflatores setoriais), o VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R$ mi em todos os anos com benchmark.</div>
+  O VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R$ mi em todos os anos com benchmark, usando o deflator implícito direto do VAB total das Contas Regionais.</div>
 </div>
 
 <h3>VAB Nominal Setorial — <code>05h_vab_nominal_setorial.R</code></h3>
@@ -861,7 +864,7 @@ $$\text{PIB real}_t = \frac{\text{Índice PIB real}_t}{100} \times \text{PIB rea
     <tr><td>Transportes</td><td>1,92%</td><td>Passageiros ANAC SBBV (55%) + Diesel ANP (45%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
     <tr><td>Ind. de Transformação</td><td>1,31%</td><td>Energia industrial ANEEL (55%) + CAGED C (45%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
     <tr><td>Informação e comunicação</td><td>1,01%</td><td>PMS-RR geral (90%) + CAGED J (10%)</td><td><span class="badge badge-aceit">Aceitável</span></td></tr>
-    <tr><td>Ind. extrativas</td><td>0,05%</td><td>Interpolação linear CR</td><td><span class="badge badge-fraca">Fraca mas necessária</span></td></tr>
+    <tr><td>Ind. extrativas</td><td>0,05%</td><td>CAGED B (estoque de emprego formal, seção B) + Denton-Cholette contra benchmark CR IBGE</td><td><span class="badge badge-fraca">Fraca mas necessária</span></td></tr>
   </tbody>
 </table>
 </div>

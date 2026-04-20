@@ -204,7 +204,7 @@ O benchmark anual utiliza o **índice encadeado de volume** das Contas Regionais
 | Transporte, armazenagem e correio | 1,92% | Passageiros ANAC (55%) + diesel ANP (45%) | ANAC / ANP |
 | Indústrias de transformação | 1,31% | Energia industrial ANEEL (55%) + emprego CAGED C (45%) | ANEEL (SAMP) / MTE–CAGED |
 | Informação e comunicação | 1,01% | PMS-RR geral (90%) + CAGED J (10%) | IBGE–PMS / MTE–CAGED |
-| Indústrias extrativas | 0,05% | Benchmark anual CR IBGE com distribuição trimestral por Denton-Cholette, compondo o bloco da indústria | IBGE – CR |
+| Indústrias extrativas | 0,05% | CAGED B (estoque de emprego formal, seção B) + Denton-Cholette contra benchmark CR IBGE | MTE–CAGED / IBGE – CR |
 
 ¹ Participações de referência informativa (CR IBGE 2023). Os **pesos efetivos do índice** usam participações de 2020 (ano base Laspeyres), calculados dinamicamente de `contas_regionais_RR_serie.csv`.
 
@@ -327,7 +327,7 @@ Salvas em `data/output/` (não versionadas — disponíveis mediante solicitaç�
 | STN / SICONFI | Folha municipal — RREO Anexo 06, 15 entes de RR | API pública `apidatalake.tesouro.gov.br` (sem autenticação) |
 | ANEEL (SAMP) | Consumo de energia elétrica por classe — Roraima Energia S.A. (sistema isolado) | API CKAN `dadosabertos.aneel.gov.br` — download automático |
 | MTE / CAGED | Microdados de emprego formal por seção CNAE (UF=14) | FTP MTE `ftp.mtps.gov.br` — download automático (~2,5 GB) |
-| ANAC | Passageiros e carga aérea — aeroporto de Boa Vista (SBBV) | Download manual de ZIPs mensais; `bases_baixadas_manualmente/microdados_anac_mensal_.../` |
+| ANAC | Passageiros — aeroporto de Boa Vista (SBBV) | Download manual de ZIPs mensais; `bases_baixadas_manualmente/microdados_anac_mensal_.../` |
 | ANP | Vendas de diesel por UF | Download automático — CSV dados abertos `gov.br/anp` |
 | BCB Estban | Depósitos bancários em RR — poupança (verbete 420) + depósitos a prazo (verbete 432) | Download manual de ZIPs; `bases_baixadas_manualmente/dados_estban_bcb/` |
 | BCB SCR | Carteira de crédito ativa em RR (dados abertos agregados) | Download manual de ZIPs; `bases_baixadas_manualmente/dados_bcb_src_2020_2025/` |

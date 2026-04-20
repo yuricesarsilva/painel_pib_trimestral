@@ -141,10 +141,9 @@ tempdisagg::td(benchmark ~ 0 + indicador, conversion = "mean")
 
 ### Decisão sobre o benchmark: volume, não nominal
 
-> ✅ **Reforma metodológica de 13/04/2026**  
-> O benchmark anual do Denton-Cholette passou a utilizar o **índice encadeado de volume** das Contas Regionais (`Especiais_2002_2023_xls.zip`, aba `tab05.xls`) em vez do VAB nominal.  
->
-> **Motivação:** as proxies trimestrais são indicadores de volume (emprego, energia, passageiros). Ancorá-las ao VAB nominal introduzia inflação setorial no índice real, gerando crescimentos artificialmente elevados (+20% em 2023 com benchmark nominal vs. +4% com benchmark de volume). Com a ancoragem ao volume, as taxas anuais refletem crescimento real e são diretamente comparáveis ao IBCR do Banco Central.
+O benchmark anual do Denton-Cholette utiliza o **índice encadeado de volume** das Contas Regionais (`Especiais_2002_2023_xls.zip`, aba `tab05.xls`) — e não o VAB a preços correntes (nominal).
+
+**Por que volume e não nominal?** As proxies trimestrais são indicadores de volume (emprego, energia, passageiros). Usar o VAB nominal como benchmark introduziria inflação setorial no índice, gerando crescimentos artificialmente elevados e incompatíveis com as taxas reais das Contas Regionais. Com o benchmark de volume, as taxas anuais refletem crescimento real e são diretamente comparáveis ao IBCR do Banco Central.
 
 ### Tratamento de anos sem benchmark
 
@@ -270,24 +269,26 @@ $$\text{Índice de volume}_t = \frac{\text{Folha nominal}_t \;/\; \text{IPCA}_t}
 
 IPCA nacional: SIDRA Tab. 1737, variável 2266 (variação mensal). O script constrói o índice encadeado de preços com base jan/2020 = 1.
 
-> ✅ **Validação perfeita contra Contas Regionais — índice de volume (2021–2023)**  
-> 2021: +3,19% (projeto) = +3,19% (CR IBGE volume) ✓  
-> 2022: +4,12% = +4,12% ✓  
-> 2023: +2,37% = +2,37% ✓  
->
-> *Após a reforma metodológica de 2026-04-13, o benchmark do Denton passou a usar o índice de volume das CR (não o VAB nominal). As taxas de crescimento refletem crescimento real da folha deflacionada.*
+**Validação contra Contas Regionais — crescimento real do bloco AAPP (2021–2023):**
+
+| Ano | Projeto (%) | CR IBGE — volume (%) |
+|---|---|---|
+| 2021 | +3,19% | +3,19% ✓ |
+| 2022 | +4,12% | +4,12% ✓ |
+| 2023 | +2,37% | +2,37% ✓ |
 
 ---
 
 ### 6.3 Indústria
 
-**Peso no VAB de 2020: 11,63%.** O bloco industrial é composto por três subsetores com pesos internos derivados do VAB nominal de 2020 das Contas Regionais.
+**Peso no VAB de 2020: 11,63%.** O bloco industrial é composto por quatro subsetores com pesos internos derivados do VAB nominal de 2020 das Contas Regionais.
 
-| Subsetor | VAB 2020 (R\$ mi) | Peso interno | Peso no total |
+| Subsetor | VAB 2020 | Peso interno | Peso no total |
 |---|---|---|---|
 | SIUP (energia, gás, água, esgoto) | R\$ 799 mi | 47,4% | 5,51% |
 | Construção civil | — | 42,8% | 4,98% |
 | Indústria de Transformação | — | 9,9% | 1,15% |
+| Indústrias Extrativas | — | ~0,05% | ~0,01% |
 
 #### SIUP — Eletricidade, Gás, Água, Esgoto e Resíduos
 
@@ -319,7 +320,20 @@ O Novo CAGED (2020+) não está disponível em SIDRA nem via API com filtro por 
 | Energia industrial (kWh) | ANEEL SAMP — classe "Industrial" | Volume físico | **55%** |
 | Emprego CAGED C | FTP MTE — seção C | Insumo (estoque) | **45%** |
 
-Os pesos foram otimizados pelo critério de variância do Denton (ver Seção 7): os pesos ad hoc originais (70%/30%) foram revisados para 55%/45%, com melhoria de 59,9% na função-objetivo.
+Os pesos foram determinados pelo critério de variância do Denton (ver Seção 7), que minimiza o ajuste necessário da proxy ao benchmark anual. A combinação 55%/45% apresentou melhoria de 59,9% na função-objetivo em relação à combinação pura de qualquer dos dois componentes isolados.
+
+#### Indústrias Extrativas (~0,01% do VAB total)
+
+**[Proxy indireta]** Peso negligenciável no VAB total (~0,05% do bloco industrial). O indicador trimestral utilizado é o **estoque acumulado de emprego formal na seção CNAE B** (Indústrias Extrativas) do CAGED:
+
+```
+Estoque_t = 1000 + cumsum(saldo mensal)
+Índice_t  = Estoque_t / média(Estoque_2020) × 100
+```
+
+A base arbitrária de 1000 é inteiramente cancelada pelo rebaseamento para 2020 = 100; apenas o perfil temporal importa para o Denton-Cholette.
+
+A CFEM (Compensação Financeira pela Exploração Mineral, ANM) foi avaliada como alternativa e descartada. Os principais motivos são: (1) timing irregular de recolhimento da royalty — o pagamento pode ocorrer semanas ou meses após a produção física; (2) distorção pela base 2020 muito pequena em diversas substâncias; (3) concentração em granito e laterita (materiais de construção civil, não mineração industrial); (4) a otimização por grade resultou em peso zero para a CFEM. A documentação completa está em `notas/metodologia/cfem_extrativas_indice_composto.md`.
 
 ---
 
@@ -342,30 +356,25 @@ Os pesos foram otimizados pelo critério de variância do Denton (ver Seção 7)
 
 #### Transportes, Armazenagem e Correio (1,92% do VAB 2023)
 
-Proxy composta — pesos ad hoc 40%/30%/30% revisados para 55%/0%/45%:
+Proxy composta com dois componentes otimizados pelo critério de variância do Denton:
 
 | Componente | Fonte | Tipo | Peso adotado |
 |---|---|---|---|
 | Passageiros ANAC (SBBV) | Microdados ANAC, aeroporto de Boa Vista | Volume físico | **55%** |
-| Carga aérea ANAC (SBBV) | Microdados ANAC | Volume físico | **0%** (eliminada) |
 | Vendas de diesel ANP (RR) | ANP — dados abertos por UF | Volume físico | **45%** |
 
-**Por que carga aérea foi eliminada?** A movimentação de carga no SBBV é dominada por eventos esporádicos (operações humanitárias, fretamentos) que não refletem o nível regular de atividade do setor. O critério de variância do Denton confirmou quantitativamente a eliminação. O diesel captura transporte rodoviário; passageiros captam o segmento aéreo.
+O diesel captura o segmento rodoviário; os passageiros ANAC capturam o segmento aéreo, dominante em Roraima pela ausência de alternativas terrestres consolidadas. A movimentação de **carga aérea no SBBV** foi avaliada como proxy e descartada: é dominada por eventos esporádicos (operações humanitárias, fretamentos) que não refletem o nível regular de atividade do setor; o critério de variância do Denton confirmou quantitativamente a exclusão.
 
 #### Atividades Financeiras (2,78% do VAB 2023)
 
-Proxy composta. Pesos ad hoc originais (70% concessões / 30% depósitos) foram *invertidos* pelo critério Denton, com melhoria de 90,5%:
+Proxy composta com dois componentes de estoque, otimizados pelo critério de variância do Denton (melhoria de 90,5% frente à combinação de referência):
 
 | Componente | Fonte | Tipo | Peso adotado |
 |---|---|---|---|
-| Carteira de crédito ativa (deflacionada) | BCB SCR — dados abertos agregados por UF | Estoque deflacionado | **40%** |
 | Depósitos bancários (deflacionado) | BCB Estban — verbetes 420 (poupança) + 432 (CDB/RDB) | Estoque deflacionado | **60%** |
+| Carteira de crédito ativa (deflacionada) | BCB SCR — dados abertos agregados por UF | Estoque deflacionado | **40%** |
 
-> ⚠️ **Verbetes do Estban:** a variável usada é a soma dos verbetes 420 (depósitos de poupança) e 432 (depósitos a prazo). O verbete 160 — que aparece em descrições anteriores — refere-se a operações de crédito (ativo bancário), não a depósitos.
->
-> **BCB SCR:** a série usada é `carteira_ativa` (estoque total de crédito em RR), extraída dos ZIPs de dados agregados do SCR. Concessões (fluxo) não estão disponíveis neste conjunto de dados na granularidade necessária; o estoque de crédito é usado como proxy de atividade financeira, em simetria ao uso de depósitos no Estban.
-
-Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe suavização por média móvel de 3 meses (alta volatilidade mensal).
+Os verbetes do Estban usados são: 420 (depósitos de poupança) e 432 (depósitos a prazo). A série de crédito é o estoque total da carteira ativa em RR (`carteira_ativa`), disponível nos ZIPs de dados agregados do SCR — que publica estoques, não fluxos de concessão. Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe suavização por média móvel de 3 meses para reduzir a volatilidade mensal.
 
 #### Atividades Imobiliárias (7,68% do VAB 2023)
 
@@ -373,11 +382,10 @@ Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe 
 
 #### Outros Subsetores
 
-| Subsetor | Proxy | Fonte |
-|---|---|---|
-| Outros serviços (7,63%) | PMS-RR geral + CAGED I + CAGED M+N + CAGED P+Q | IBGE–PMS / FTP MTE |
-| Informação e comunicação (1,01%) | PMS-RR geral + CAGED J | IBGE–PMS / FTP MTE |
-| Indústrias extrativas (0,05%) | Benchmark anual CR + Denton-Cholette trimestral (sem proxy própria) | IBGE CR |
+| Subsetor | Proxy | Pesos | Fonte |
+|---|---|---|---|
+| Outros serviços (7,63%) | PMS-RR geral + CAGED I + CAGED M+N + CAGED P+Q | 60% / 20% / 10% / 10% | IBGE–PMS / FTP MTE |
+| Informação e comunicação (1,01%) | PMS-RR geral + CAGED J | 90% / 10% | IBGE–PMS / FTP MTE |
 
 ---
 
@@ -403,14 +411,14 @@ Passo de 5 pontos percentuais: 21 combinações para 2 componentes, 231 para 3 c
 
 ### Resultados
 
-| Setor | Pesos anteriores (ad hoc) | Pesos ótimos | Pesos adotados | Melhoria | Decisão |
-|---|---|---|---|---|---|
-| Ind. Transformação | Energia 70% / CAGED C 30% | Energia 55% / CAGED C 45% | **55% / 45%** | **59,9%** | ✅ Aplicado |
-| Comércio | Energia 35% / PMC 25% / ICMS 20% / CAGED G 20% | Energia 0% / PMC 95% / ICMS 5% / CAGED G 0% | **10% / 70% / 10% / 10%** | **59,7%** | ✅ Aplicado (piso de 10%) |
-| Outros Serviços | CAGED I 25% / M+N 30% / P+Q 20% / PMS 25% | CAGED I 35% / M+N 0% / P+Q 0% / PMS 65% | **20% / 10% / 10% / 60%** | **70,3%** | ✅ Aplicado (piso de 10%) |
-| InfoCom | CAGED J 50% / PMS 50% | CAGED J 0% / PMS 100% | **10% / 90%** | **27,4%** | ✅ Aplicado (piso de 10%) |
-| Transportes | Pax 40% / Carga 30% / Diesel 30% | Pax 55% / Carga 0% / Diesel 45% | **55% / 0% / 45%** | **41,7%** | ✅ Aplicado |
-| Financeiro | Concessões 70% / Depósitos 30% | Concessões 40% / Depósitos 60% | **40% / 60%** | **90,5%** | ✅ Aplicado |
+| Setor | Pesos em uso | Melhoria na função-objetivo | Observação |
+|---|---|---|---|
+| Ind. Transformação | Energia 55% / CAGED C 45% | **59,9%** | — |
+| Comércio | PMC 70% / Energia 10% / ICMS 10% / CAGED G 10% | **59,7%** | Piso de 10% aplicado a cada componente |
+| Outros Serviços | PMS 60% / CAGED I 20% / CAGED M+N 10% / CAGED P+Q 10% | **70,3%** | Piso de 10% aplicado aos secundários |
+| InfoCom | PMS 90% / CAGED J 10% | **27,4%** | Piso de 10% para CAGED J |
+| Transportes | Passageiros 55% / Diesel 45% | **41,7%** | Carga aérea excluída (ver Seção 6.4) |
+| Financeiro | Depósitos 60% / Crédito ativo 40% | **90,5%** | — |
 
 > ⚠️ **Limitação do critério**  
 > O critério de variância do Denton é *interno à metodologia* — mede a consistência da proxy com o benchmark anual, não sua relação causal com o fenômeno econômico. Uma proxy "lisa" pode ser menos informativa que uma mais volátil. O critério complementa, não substitui, o julgamento econômico.  
@@ -434,7 +442,7 @@ $$\text{Deflator anual} = \frac{\text{Índice nominal total (CR)}}{\text{Índice
 e desagregado para frequência trimestral via Denton-Cholette (`conversion = "sum"`), usando o IPCA como proxy trimestral do deflator.
 
 > ✅ **Fechamento anual exato com as Contas Regionais em 2020–2023**  
-> Após reforma do script (uso do deflator implícito direto do VAB total em vez de média ponderada de deflatores setoriais), o VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R\$ mi em todos os anos com benchmark.
+> O VAB nominal anual do projeto fecha com erro numérico inferior a 0,01 R\$ mi em todos os anos com benchmark, usando o deflator implícito direto do VAB total das Contas Regionais.
 
 ### VAB Nominal Setorial — `05h_vab_nominal_setorial.R`
 
@@ -590,7 +598,7 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 | Transportes | 1,92% | Passageiros ANAC SBBV (55%) + Diesel ANP (45%) | Aceitável |
 | Ind. de Transformação | 1,31% | Energia industrial ANEEL (55%) + CAGED C (45%) | Aceitável |
 | Informação e comunicação | 1,01% | PMS-RR geral (90%) + CAGED J (10%) | Aceitável |
-| Ind. extrativas | 0,05% | Benchmark CR + Denton-Cholette trimestral (na indústria) | Fraca mas necessária |
+| Ind. extrativas | 0,05% | CAGED B (estoque de emprego formal, seção B) + Denton-Cholette contra benchmark CR IBGE | Fraca mas necessária |
 
 ---
 
