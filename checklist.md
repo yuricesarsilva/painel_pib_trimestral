@@ -311,13 +311,12 @@
 - [x] Pesos intra-bloco calibrados por `05b_sensibilidade_pesos.R`
 - [x] Denton-Cholette contra VAB Outros Serviços das Contas Regionais (2020–2023)
 
-### 4.6 Informação e comunicação / Extrativas
+### 4.6 Informação e comunicação
 - [x] Info e Com: PMS-RR geral integrada; CAGED J mantido na grade de teste
-- [x] Extrativas (0,05%): interpolação linear CR (mesma lógica do Imobiliário)
 
 ### 4.7 Índice composto de serviços privados
 - [x] Script `R/04_servicos.R` criado e revisado
-- [x] Laspeyres setorial com pesos dos subsetores derivados do VAB 2020 (7 subsetores)
+- [x] Laspeyres setorial com pesos dos subsetores derivados do VAB 2020 (serviços com 6 subsetores; extrativas na indústria)
 - [x] Coluna de saída: `indice_servicos` + subíndices por setor
 - [x] **Executar** `R/04_servicos.R` e verificar outputs
 - [x] Validar: comparar variações anuais com Contas Regionais IBGE (2020–2023)

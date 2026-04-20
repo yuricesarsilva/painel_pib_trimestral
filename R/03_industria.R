@@ -13,6 +13,9 @@
 #   manual — usado como componente adicional se arquivo presente.
 #   Indústria de Transformação (1,15% do VAB em 2020): energia
 #   industrial ANEEL (peso 0,55) + emprego CAGED C (peso 0,45).
+#   Indústrias extrativas (0,05% do VAB em 2020): sem proxy própria
+#   operacional; série trimestral construída por interpolação/Denton
+#   a partir do benchmark anual das Contas Regionais do IBGE.
 #   Pesos otimizados por minimização da variância do Denton (2026-04-15).
 #   Todos os subsetores aplicam Denton-Cholette contra VAB
 #   anual das Contas Regionais IBGE (benchmarks 2020–2023).
@@ -62,6 +65,7 @@ for (d in c(dir_raw, dir_processed, dir_output, dir_aneel, dir_caged)) {
 }
 
 arq_aneel_out  <- file.path(dir_aneel, "aneel_energia_rr.csv")
+arq_aneel_consumidores_resid <- file.path(dir_aneel, "aneel_consumidores_residenciais_rr.csv")
 arq_caged_out  <- file.path(dir_caged, "caged_rr_mensal.csv")
 arq_snic       <- file.path(dir_raw,   "snic_cimento_rr.csv")
 arq_cr_serie   <- file.path(dir_processed, "contas_regionais_RR_serie.csv")
@@ -92,7 +96,8 @@ aneel_resource_ids <- list(
 # Distribuidor de RR na ANEEL SAMP
 aneel_distribuidora <- "BOA VISTA"
 aneel_tipo_mercado  <- "Sistema Isolado - Regular"
-aneel_detalhe       <- "Energia TE (kWh)"
+aneel_detalhe_energia <- "Energia TE (kWh)"
+aneel_detalhe_consumidores <- "Número de consumidores"
 
 # CAGED: intervalo de coleta
 caged_ano_inicio <- 2020
@@ -132,7 +137,7 @@ baixar_aneel_api <- function(resource_id, ano) {
   filtros  <- list(
     SigAgenteDistribuidora = aneel_distribuidora,
     NomTipoMercado         = aneel_tipo_mercado,
-    DscDetalheMercado      = aneel_detalhe
+    DscDetalheMercado      = aneel_detalhe_energia
   )
   filtros_json <- jsonlite::toJSON(filtros, auto_unbox = TRUE)
 
@@ -180,13 +185,15 @@ baixar_aneel_api <- function(resource_id, ano) {
 
   df <- bind_rows(paginas) |>
     mutate(
-      data      = as.Date(DatCompetencia),
-      classe    = DscClasseConsumoMercado,
-      # VlrMercado vem como string com decimal vírgula (formato brasileiro)
+      data        = as.Date(DatCompetencia),
+      classe      = DscClasseConsumoMercado,
       energia_kwh = as.numeric(gsub(",", ".", VlrMercado))
     ) |>
     group_by(data, classe) |>
-    summarise(energia_kwh = sum(energia_kwh, na.rm = TRUE), .groups = "drop") |>
+    summarise(
+      energia_kwh  = sum(energia_kwh,  na.rm = TRUE),
+      .groups = "drop"
+    ) |>
     arrange(data, classe)
 
   write_csv(df, arq_cache)
@@ -216,6 +223,110 @@ write_csv(aneel_energia, arq_aneel_out)
 message(sprintf("\nANEEL — total: %d obs. de %s a %s",
                 nrow(aneel_energia),
                 min(aneel_energia$data), max(aneel_energia$data)))
+
+# A coleta da ANEEL já traz NrConsumidores junto com a energia. Salvamos
+# uma série mensal dedicada da classe Residencial para testar depois como
+# proxy potencial do subsetor imobiliário.
+baixar_aneel_consumidores_resid_api <- function(resource_id, ano) {
+  arq_cache <- file.path(dir_aneel, sprintf("aneel_consumidores_residenciais_rr_%d.csv", ano))
+
+  if (file.exists(arq_cache)) {
+    message(sprintf("  ANEEL consumidores residenciais %d: cache local encontrado â€” pulando download.", ano))
+    return(read_csv(arq_cache, show_col_types = FALSE))
+  }
+
+  message(sprintf("  ANEEL consumidores residenciais %d: consultando API CKAN...", ano))
+
+  base_url <- "https://dadosabertos.aneel.gov.br/api/3/action/datastore_search"
+  campos   <- "DatCompetencia,VlrMercado"
+  filtros  <- list(
+    SigAgenteDistribuidora  = aneel_distribuidora,
+    NomTipoMercado          = aneel_tipo_mercado,
+    DscClasseConsumoMercado = "Residencial",
+    DscDetalheMercado       = aneel_detalhe_consumidores
+  )
+  filtros_json <- jsonlite::toJSON(filtros, auto_unbox = TRUE)
+
+  limit   <- 500
+  offset  <- 0
+  paginas <- list()
+
+  repeat {
+    resp <- tryCatch(
+      request(base_url) |>
+        req_url_query(
+          resource_id = resource_id,
+          filters     = filtros_json,
+          fields      = campos,
+          limit       = limit,
+          offset      = offset
+        ) |>
+        req_timeout(60) |>
+        req_perform(),
+      error = function(e) {
+        message(sprintf("    Erro na API ANEEL consumidores residenciais %d (offset=%d): %s", ano, offset, e$message))
+        NULL
+      }
+    )
+    if (is.null(resp)) break
+
+    dados <- fromJSON(resp_body_string(resp))
+    registros <- dados$result$records
+
+    if (is.null(registros) || nrow(registros) == 0) break
+
+    paginas <- c(paginas, list(registros))
+    message(sprintf("    %d/%d registros baixados...",
+                    min(offset + nrow(registros), dados$result$total),
+                    dados$result$total))
+
+    if (nrow(registros) < limit) break
+    offset <- offset + limit
+  }
+
+  if (length(paginas) == 0) {
+    message(sprintf("  AVISO: Nenhum registro de consumidores residenciais retornado para %d.", ano))
+    return(NULL)
+  }
+
+  df <- bind_rows(paginas) |>
+    mutate(
+      data = as.Date(DatCompetencia),
+      consumidores_residenciais = as.numeric(gsub(",", ".", VlrMercado))
+    ) |>
+    group_by(data) |>
+    summarise(
+      consumidores_residenciais = sum(consumidores_residenciais, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(
+      ano = lubridate::year(data),
+      mes = lubridate::month(data)
+    ) |>
+    arrange(data)
+
+  write_csv(df, arq_cache)
+  message(sprintf("  ANEEL consumidores residenciais %d: %d registros salvos em %s", ano, nrow(df), arq_cache))
+  return(df)
+}
+
+lista_aneel_consumidores_resid <- lapply(names(aneel_resource_ids), function(ano_str) {
+  tryCatch(
+    baixar_aneel_consumidores_resid_api(aneel_resource_ids[[ano_str]], as.integer(ano_str)),
+    error = function(e) {
+      message(sprintf("  ERRO em ANEEL consumidores residenciais %s: %s", ano_str, e$message))
+      NULL
+    }
+  )
+})
+
+aneel_consumidores_resid <- bind_rows(Filter(Negate(is.null), lista_aneel_consumidores_resid)) |>
+  arrange(data)
+
+write_csv(aneel_consumidores_resid, arq_aneel_consumidores_resid)
+message(sprintf("ANEEL consumidores residenciais — %d obs. salvas em %s",
+                nrow(aneel_consumidores_resid),
+                arq_aneel_consumidores_resid))
 
 # ============================================================
 # ETAPA 3.2 — CAGED Microdata (FTP/MTE)
@@ -651,6 +762,7 @@ vol_serie <- read.csv(arq_vol_serie, stringsAsFactors = FALSE)  # benchmark volu
 atividade_siup    <- "Eletricidade, gás, água, esgoto e resíduos (SIUP)"
 atividade_const   <- "Construção"
 atividade_transf  <- "Indústrias de transformação"
+atividade_extr    <- "Indústrias extrativas"
 
 # Função auxiliar: aplicar Denton a um data frame trimestral
 # vol_serie: contas_regionais_RR_volume.csv (vab_volume_rebased, base 2020=100)
@@ -732,9 +844,123 @@ transf_trim_d <- aplicar_denton(transf_trim, "indice_transf_raw",
   rename(indice_transformacao = indice_denton)
 
 # ============================================================
+# ETAPA 3.6b — EXTRATIVAS
+# Proxy: estoque acumulado de emprego formal CNAE B (CAGED),
+# mesmo padrão metodológico dos demais subsetores industriais.
+# Alternativa CFEM (ANM) foi avaliada e descartada — ver nota
+# notas/metodologia/cfem_extrativas_indice_composto.md.
+# ============================================================
+
+message("\n--- Extrativas ---")
+
+anos_industria <- sort(unique(c(
+  siup_trim$ano,
+  const_trim$ano,
+  transf_trim_d$ano
+)))
+
+# --- Proxy: CAGED B (estoque de emprego formal em extrativas) ---
+caged_b_mensal <- caged_rr |>
+  filter(secao == "B") |>
+  transmute(ano, mes, saldo)
+
+ano_max_caged <- max(caged_rr$ano, na.rm = TRUE)
+mes_max_caged <- max(caged_rr$mes[caged_rr$ano == ano_max_caged], na.rm = TRUE)
+
+grade_b <- tidyr::expand_grid(
+  ano = 2020L:ano_max_caged,
+  mes = 1:12
+) |>
+  filter(ano < ano_max_caged | mes <= mes_max_caged)
+
+caged_b_mensal <- grade_b |>
+  left_join(caged_b_mensal, by = c("ano", "mes")) |>
+  mutate(
+    saldo   = tidyr::replace_na(saldo, 0L),
+    estoque = cumsum(saldo) + 1000L
+  )
+
+caged_b_trim <- caged_b_mensal |>
+  mutate(trimestre = ceiling(mes / 3L)) |>
+  group_by(ano, trimestre) |>
+  summarise(estoque_medio = mean(estoque, na.rm = TRUE), .groups = "drop")
+
+base_b_2020 <- mean(caged_b_trim$estoque_medio[caged_b_trim$ano == 2020], na.rm = TRUE)
+caged_b_trim <- caged_b_trim |>
+  mutate(indice_caged_b = estoque_medio / base_b_2020 * 100)
+
+message(sprintf("  CAGED B: %d trimestres (base 2020=100, estoque 1000+cumsum)",
+                nrow(caged_b_trim)))
+
+# --- Benchmark anual e Denton ---
+bench_extr <- vol_serie |>
+  filter(atividade == atividade_extr) |>
+  select(ano, vab_volume_rebased) |>
+  arrange(ano)
+
+if (nrow(bench_extr) == 0) {
+  warning("Benchmark anual de Extrativas não encontrado. Subsetor ficará fora do bloco industrial.")
+  extr_trim_d <- data.frame(
+    ano = integer(), trimestre = integer(), indice_extrativas = numeric()
+  )
+} else {
+  ano_max_ind <- max(anos_industria, na.rm = TRUE)
+  bench_extr_ext <- estender_benchmark(
+    bench_extr$ano,
+    bench_extr$vab_volume_rebased,
+    ano_max = ano_max_ind,
+    n_ref = 2
+  )
+
+  anos_extr     <- bench_extr_ext$ano
+  anos_completos_b <- caged_b_trim |>
+    count(ano) |>
+    filter(n == 4L) |>
+    pull(ano)
+  anos_denton <- intersect(anos_extr, anos_completos_b)
+
+  ind_b <- caged_b_trim |>
+    filter(ano %in% anos_denton) |>
+    arrange(ano, trimestre) |>
+    pull(indice_caged_b)
+
+  bench_d <- bench_extr_ext |>
+    filter(ano %in% anos_denton) |>
+    arrange(ano)
+
+  indice_extr_denton <- tryCatch(
+    denton(
+      indicador_trim  = ind_b,
+      benchmark_anual = bench_d$bench,
+      ano_inicio      = min(anos_denton),
+      metodo          = "denton-cholette"
+    ),
+    error = function(e) {
+      message(sprintf("  Denton Extrativas falhou: %s — usando CAGED B sem ancoragem.", e$message))
+      ind_b
+    }
+  )
+
+  extr_trim_d <- tidyr::expand_grid(ano = anos_denton, trimestre = 1:4) |>
+    mutate(indice_extrativas = indice_extr_denton) |>
+    filter(ano %in% anos_industria)
+
+  base_extr_2020 <- extr_trim_d |>
+    filter(ano == 2020) |>
+    summarise(base = mean(indice_extrativas, na.rm = TRUE)) |>
+    pull(base)
+
+  extr_trim_d <- extr_trim_d |>
+    mutate(indice_extrativas = indice_extrativas / base_extr_2020 * 100)
+
+  message(sprintf("Extrativas: %d trimestres (CAGED B + Denton-Cholette CR).",
+                  nrow(extr_trim_d)))
+}
+
+# ============================================================
 # ETAPA 3.7 — Índice composto da Indústria
 # Pesos: participação no VAB total de RR (Contas Regionais 2020)
-# SIUP 5,51% + Construção 4,98% + Transformação 1,15% = 11,64%
+# SIUP + Construção + Transformação + Extrativas
 # ============================================================
 
 message("\n=== ETAPA 3.7: Índice composto da Indústria ===\n")
@@ -744,29 +970,34 @@ message("\n=== ETAPA 3.7: Índice composto da Indústria ===\n")
 vab_siup    <- cr_serie |> filter(atividade == atividade_siup,  ano == 2020) |> pull(vab_mi)
 vab_const   <- cr_serie |> filter(atividade == atividade_const, ano == 2020) |> pull(vab_mi)
 vab_transf  <- cr_serie |> filter(atividade == atividade_transf, ano == 2020) |> pull(vab_mi)
+vab_extr    <- cr_serie |> filter(atividade == atividade_extr,   ano == 2020) |> pull(vab_mi)
 
-vab_industria <- sum(c(vab_siup, vab_const, vab_transf), na.rm = TRUE)
+vab_industria <- sum(c(vab_siup, vab_const, vab_transf, vab_extr), na.rm = TRUE)
 if (vab_industria == 0) stop("VAB industrial total = 0. Verificar Contas Regionais.")
 
 peso_siup   <- vab_siup   / vab_industria
 peso_const  <- vab_const  / vab_industria
 peso_transf <- vab_transf / vab_industria
+peso_extr   <- vab_extr   / vab_industria
 
 message(sprintf("Pesos internos (Contas Regionais 2020):"))
 message(sprintf("  SIUP:          %.1f%%", peso_siup   * 100))
 message(sprintf("  Construção:    %.1f%%", peso_const  * 100))
 message(sprintf("  Transformação: %.1f%%", peso_transf * 100))
+message(sprintf("  Extrativas:    %.1f%%", peso_extr   * 100))
 
-# Juntar os três índices por trimestre
+# Juntar os quatro índices por trimestre
 industria_trim <- siup_trim |>
   select(ano, trimestre, indice_siup) |>
   left_join(select(const_trim,     ano, trimestre, indice_construcao),  by = c("ano", "trimestre")) |>
   left_join(select(transf_trim_d,  ano, trimestre, indice_transformacao), by = c("ano", "trimestre")) |>
-  filter(!is.na(indice_siup) & !is.na(indice_construcao) & !is.na(indice_transformacao)) |>
+  left_join(select(extr_trim_d,    ano, trimestre, indice_extrativas), by = c("ano", "trimestre")) |>
+  filter(!is.na(indice_siup) & !is.na(indice_construcao) & !is.na(indice_transformacao) & !is.na(indice_extrativas)) |>
   mutate(
     indice_industria = peso_siup   * indice_siup          +
                        peso_const  * indice_construcao    +
-                       peso_transf * indice_transformacao
+                       peso_transf * indice_transformacao +
+                       peso_extr   * indice_extrativas
   ) |>
   arrange(ano, trimestre)
 
@@ -784,6 +1015,7 @@ message("\n=== ETAPA 3.8: Validação e exportação ===\n")
 validar_serie(siup_trim$indice_siup,          "indice_siup",     n_min = 4)
 validar_serie(const_trim$indice_construcao,   "indice_construcao", n_min = 4)
 validar_serie(transf_trim_d$indice_transformacao, "indice_transformacao", n_min = 4)
+validar_serie(extr_trim_d$indice_extrativas, "indice_extrativas", n_min = 4)
 validar_serie(industria_trim$indice_industria, "indice_industria", n_min = 4)
 
 # Calcular variações anuais (média das 4 médias trimestrais por ano)
@@ -798,7 +1030,7 @@ print(var_anual)
 # Montar saída final
 saida <- industria_trim |>
   select(ano, trimestre, indice_industria,
-         indice_siup, indice_construcao, indice_transformacao)
+         indice_siup, indice_construcao, indice_transformacao, indice_extrativas)
 
 write.csv(saida, arq_indice, row.names = FALSE)
 message(sprintf("\nÍndice salvo em: %s (%d observações)", arq_indice, nrow(saida)))

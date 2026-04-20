@@ -110,7 +110,7 @@ Os pesos são calculados a partir do **VAB nominal de 2020** (ano-base do índic
 | Agropecuária | Lavouras + pecuária | 6,89% |
 | Administração Pública | AAPP, defesa, saúde e educação públicas, seguridade social | 45,01% |
 | Indústria | SIUP + construção + ind. de transformação + ind. extrativas | 11,63% |
-| Serviços Privados | Comércio, transportes, financeiro, imobiliário, outros serviços | 36,46% |
+| Serviços Privados | Comércio, transportes, financeiro, imobiliário, outros serviços, informação e comunicação | 36,46% |
 
 > ℹ️ **Distinção entre pesos contábeis e técnicos**  
 > Os pesos *contábeis* (participação no VAB de 2020) são usados na agregação entre setores e subsetores, derivados das Contas Regionais. Os pesos *técnicos* — que definem como múltiplas proxies são combinadas dentro de um mesmo subsetor (ex.: 55% energia + 45% emprego na indústria de transformação) — foram otimizados pelo critério de variância do Denton (ver Seção 7).
@@ -369,7 +369,7 @@ Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe 
 
 #### Atividades Imobiliárias (7,68% do VAB 2023)
 
-**[Proxy fraca mas necessária]** Em grande parte representa **aluguel imputado de imóveis próprios** nas Contas Nacionais — variável sem proxy observável de alta frequência. Tratada como tendência linear interpolada entre os benchmarks anuais das Contas Regionais, com extrapolação de tendência para 2024–2025.
+**[Proxy ainda indireta, mas melhorada]** Em grande parte representa **aluguel imputado de imóveis próprios** nas Contas Nacionais — variável sem proxy observável perfeita de alta frequência. No desenho atual, o subsetor usa **número de consumidores residenciais da ANEEL** como indicador temporal e aplica **Denton-Cholette** contra os benchmarks anuais das Contas Regionais.
 
 #### Outros Subsetores
 
@@ -377,7 +377,7 @@ Ambas as séries são deflacionadas pelo IPCA nacional. A carteira ativa recebe 
 |---|---|---|
 | Outros serviços (7,63%) | PMS-RR geral + CAGED I + CAGED M+N + CAGED P+Q | IBGE–PMS / FTP MTE |
 | Informação e comunicação (1,01%) | PMS-RR geral + CAGED J | IBGE–PMS / FTP MTE |
-| Indústrias extrativas (0,05%) | Interpolação linear CR (peso negligenciável) | IBGE CR |
+| Indústrias extrativas (0,05%) | Benchmark anual CR + Denton-Cholette trimestral (sem proxy própria) | IBGE CR |
 
 ---
 
@@ -582,7 +582,7 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 | Adm. Pública | 46,21% | Folha observada de pessoal (SIAPE + estadual + municipal) | **Forte** |
 | Comércio | 12,25% | PMC-RR (70%) + energia comercial (10%) + ICMS comércio (10%) + CAGED G (10%) | Aceitável |
 | Agropecuária | 8,87% | PAM/LSPA + coef. de colheita + abate + ovos | **Forte** |
-| Atividades imobiliárias | 7,68% | Interpolação linear CR IBGE | Fraca mas necessária |
+| Atividades imobiliárias | 7,68% | Consumidores residenciais ANEEL + Denton-Cholette | Fraca mas melhorada |
 | Outros serviços | 7,63% | PMS-RR geral (60%) + CAGED I (20%) + CAGED M+N (10%) + CAGED P+Q (10%) | Aceitável |
 | SIUP | 5,40% | Energia elétrica total distribuída (kWh), ANEEL SAMP | **Forte** |
 | Construção | 4,89% | Estoque acumulado CAGED F | Aceitável |
@@ -590,7 +590,7 @@ A diferença residual em 2022–2023 é compatível com a operação em blocos t
 | Transportes | 1,92% | Passageiros ANAC SBBV (55%) + Diesel ANP (45%) | Aceitável |
 | Ind. de Transformação | 1,31% | Energia industrial ANEEL (55%) + CAGED C (45%) | Aceitável |
 | Informação e comunicação | 1,01% | PMS-RR geral (90%) + CAGED J (10%) | Aceitável |
-| Ind. extrativas | 0,05% | Interpolação linear CR | Fraca mas necessária |
+| Ind. extrativas | 0,05% | Benchmark CR + Denton-Cholette trimestral (na indústria) | Fraca mas necessária |
 
 ---
 

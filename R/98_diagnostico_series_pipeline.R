@@ -266,7 +266,43 @@ estadual <- read_csv2_safe(file.path(dir_raw, "folha_estadual_rr_mensal.csv")) |
 municipal <- read_csv2_safe(file.path(dir_raw, "folha_municipal_rr.csv")) |>
   mutate(periodo = sprintf("%04dB%d", ano, bimestre))
 
-municipal_diag <- read_csv2_safe(file.path("tmp_aapp_diagnostico", "aapp_na_municipal_por_municipio_janela_2020_2025.csv"))
+municipios_col <- names(municipal)[grepl("municip", names(municipal), ignore.case = TRUE)][1]
+municipal_diag <- if (!is.na(municipios_col)) {
+  grade_bim_ref <- periodo_bimestral_seq(2020, 1, 2025, 6)
+
+  municipal |>
+    mutate(municipio = .data[[municipios_col]]) |>
+    group_by(municipio) |>
+    summarise(
+      primeiro_periodo_observado = if (all(is.na(periodo))) NA_character_ else min(periodo, na.rm = TRUE),
+      ultimo_periodo_observado = if (all(is.na(periodo))) NA_character_ else max(periodo, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    rowwise() |>
+    mutate(
+      n_observacoes_janela_2020_2025 = sum(
+        municipal$periodo[municipal[[municipios_col]] == municipio] %in% grade_bim_ref,
+        na.rm = TRUE
+      ),
+      n_faltantes_janela_2020_2025 = length(grade_bim_ref) - n_observacoes_janela_2020_2025,
+      periodos_faltantes = paste(
+        grade_bim_ref[
+          !grade_bim_ref %in% municipal$periodo[municipal[[municipios_col]] == municipio]
+        ],
+        collapse = ", "
+      )
+    ) |>
+    ungroup()
+} else {
+  tibble(
+    municipio = character(),
+    primeiro_periodo_observado = character(),
+    ultimo_periodo_observado = character(),
+    n_observacoes_janela_2020_2025 = integer(),
+    n_faltantes_janela_2020_2025 = integer(),
+    periodos_faltantes = character()
+  )
+}
 
 ipca <- parse_ipca_mensal(read_csv2_safe(file.path(dir_raw, "ipca_mensal.csv")))
 pmc <- parse_sidra_mensal(read_csv2_safe(file.path(dir_raw_sidra, "pmc_rr.csv")))
@@ -513,6 +549,20 @@ diag_tbl <- bind_rows(
       tratamento_na = "Deflação pelo IPCA; se faltar, pesos são redistribuídos",
       uso_no_indice = "Componente da média ponderada do financeiro"
     ),
+  contar_cobertura(
+    read_csv2_safe(file.path(dir_raw, "aneel", "aneel_consumidores_residenciais_rr.csv")) |>
+      mutate(periodo = sprintf("%04dM%02d", ano, mes)),
+    "periodo", "consumidores_residenciais", grade_mensal_2020_2025
+  ) |>
+    mutate(
+      bloco = "Serviços",
+      atividade = "Imobiliário",
+      serie = "ANEEL consumidores residenciais",
+      arquivo = "data/raw/aneel/aneel_consumidores_residenciais_rr.csv",
+      periodicidade = "Mensal",
+      tratamento_na = "Sem imputação; usado como indicador temporal no Denton do subsetor",
+      uso_no_indice = "Indicador temporal do índice de atividades imobiliárias"
+    ),
   contar_cobertura(caged |> filter(secao == "I"), "periodo", "saldo", grade_mensal_2020_2025) |>
     mutate(
       bloco = "Serviços",
@@ -593,6 +643,17 @@ diag_tbl <- bind_rows(
       tratamento_na = "Meses ausentes são completados com saldo=0 no código",
       uso_no_indice = "Proxy única da construção na configuração atual"
     ),
+  contar_cobertura(indice_ind |> mutate(periodo = sprintf("%04dT%d", ano, trimestre)),
+                   "periodo", "indice_extrativas", grade_trimestral_2020_2025) |>
+    mutate(
+      bloco = "Indústria",
+      atividade = "Extrativas",
+      serie = "Índice extrativas",
+      arquivo = "data/output/indice_industria.csv",
+      periodicidade = "Trimestral",
+      tratamento_na = "Sem proxy própria; distribuição trimestral suave a partir do benchmark anual CR via Denton",
+      uso_no_indice = "Componente do índice industrial com peso de VAB 2020"
+    ),
   contar_cobertura(indice_nom, "periodo", "deflator_trimestral", grade_trimestral_2020_2025) |>
     mutate(
       bloco = "Deflação",
@@ -646,15 +707,15 @@ composicao_tbl <- tibble::tribble(
   "Indústria", "SIUP", "Proxy única baseada na energia elétrica total distribuída pela ANEEL; depois Denton-Cholette contra benchmark anual",
   "Indústria", "Transformação", "Média ponderada entre energia industrial ANEEL e CAGED C",
   "Indústria", "Construção", "Proxy única baseada em CAGED F na configuração atual",
-  "Indústria", "Índice industrial", "Média ponderada entre SIUP, Construção e Transformação com pesos de VAB 2020",
+  "Indústria", "Extrativas", "Sem proxy própria de mercado; série trimestral distribuída a partir do benchmark anual das Contas Regionais via Denton-Cholette",
+  "Indústria", "Índice industrial", "Média ponderada entre SIUP, Construção, Transformação e Extrativas com pesos de VAB 2020",
   "Serviços", "Comércio", "Média ponderada entre energia comercial, PMC, ICMS comércio e CAGED G",
   "Serviços", "Transportes", "Média ponderada entre passageiros ANAC e diesel ANP; carga ANAC permanece só no diagnóstico",
   "Serviços", "Financeiro", "Média ponderada entre concessões BCB e depósitos Estban, ambos deflacionados",
-  "Serviços", "Imobiliário", "Interpolação linear entre benchmarks anuais das Contas Regionais",
+  "Serviços", "Imobiliário", "Denton-Cholette entre benchmarks anuais das Contas Regionais, usando consumidores residenciais da ANEEL como indicador temporal",
   "Serviços", "Outros serviços", "Média ponderada entre CAGED I, CAGED M+N, CAGED P+Q e PMS",
   "Serviços", "Informação e comunicação", "Média ponderada entre CAGED J e PMS",
-  "Serviços", "Extrativas", "Interpolação linear entre benchmarks anuais das Contas Regionais; sem proxy específica de mercado",
-  "Serviços", "Índice de serviços", "Média ponderada entre 7 subsetores com pesos de VAB 2020; ancoragem anual por Denton",
+  "Serviços", "Índice de serviços", "Média ponderada entre 6 subsetores com pesos de VAB 2020; ancoragem anual por Denton",
   "Deflação", "Deflator trimestral do VAB", "Denton-Cholette do deflator anual implícito, usando IPCA trimestral como indicador temporal",
   "Impostos", "ILP trimestral", "Denton-Cholette do ILP anual, usando ICMS total trimestral como indicador; PIB nominal = VAB nominal + ILP"
 )
@@ -765,6 +826,7 @@ ind_subset <- indice_ind |>
     `Índice SIUP`          = indice_siup,
     `Índice construção`    = indice_construcao,
     `Índice transformação` = indice_transformacao,
+    `Índice extrativas`    = indice_extrativas,
     `Índice indústria`     = indice_industria
   ) |>
   pivot_longer(-periodo, names_to = "serie", values_to = "indice")
@@ -821,6 +883,15 @@ ind_transf <- bind_rows(
 )
 salvar_grafico_trimestral(ind_transf, "Transformação: proxies e índice final", "industria_transformacao_proxies.png")
 
+ind_extr <- indice_ind |>
+  filter(ano >= 2020, ano <= 2025) |>
+  transmute(
+    periodo = sprintf("%04dT%d", ano, trimestre),
+    indice = indice_extrativas,
+    serie = "Índice extrativas"
+  )
+salvar_grafico_trimestral(ind_extr, "Extrativas: índice final", "industria_extrativas.png")
+
 # --- Serviços ------------------------------------------------------------
 
 serv_subset <- indice_serv |>
@@ -833,7 +904,6 @@ serv_subset <- indice_serv |>
     `Índice imobiliário`     = indice_imobiliario,
     `Índice outros serviços` = indice_outros_servicos,
     `Índice InfoCom`         = indice_infocom,
-    `Índice extrativas`      = indice_extrativas,
     `Índice serviços`        = indice_servicos
   ) |>
   pivot_longer(-periodo, names_to = "serie", values_to = "indice")
@@ -881,6 +951,35 @@ serv_fin <- bind_rows(
     transmute(periodo = sprintf("%04dT%d", ano, trimestre), indice = indice_financeiro, serie = "Índice financeiro")
 )
 salvar_grafico_trimestral(serv_fin, "Serviços - Financeiro: proxies e índice", "servicos_financeiro.png")
+
+consumidores_resid <- read_csv2_safe(file.path(dir_raw, "aneel", "aneel_consumidores_residenciais_rr.csv")) |>
+  mutate(
+    data = as.Date(data),
+    ano = as.integer(format(data, "%Y")),
+    mes = as.integer(format(data, "%m")),
+    trimestre = ceiling(mes / 3)
+  ) |>
+  group_by(ano, trimestre) |>
+  summarise(consumidores_residenciais = mean(consumidores_residenciais, na.rm = TRUE), .groups = "drop")
+
+base_cons_resid_2020 <- consumidores_resid |>
+  filter(ano == 2020) |>
+  summarise(base = mean(consumidores_residenciais, na.rm = TRUE)) |>
+  pull(base)
+
+serv_imob <- bind_rows(
+  consumidores_resid |>
+    filter(ano >= 2020, ano <= 2025) |>
+    transmute(
+      periodo = sprintf("%04dT%d", ano, trimestre),
+      `Consumidores residenciais (ANEEL)` = consumidores_residenciais / base_cons_resid_2020 * 100
+    ) |>
+    pivot_longer(-periodo, names_to = "serie", values_to = "indice"),
+  indice_serv |>
+    filter(ano >= 2020, ano <= 2025) |>
+    transmute(periodo = sprintf("%04dT%d", ano, trimestre), indice = indice_imobiliario, serie = "Ãndice imobiliÃ¡rio")
+)
+salvar_grafico_trimestral(serv_imob, "ServiÃ§os - Atividades imobiliÃ¡rias: proxy e Ã­ndice", "servicos_imobiliario.png")
 
 serv_outros <- bind_rows(
   proxies_serv |>
@@ -1052,6 +1151,8 @@ txt <- c(
   "",
   "![Indústria - transformação: proxies e índice](../../data/output/diagnostico_series_pipeline/industria_transformacao_proxies.png)",
   "",
+  "![Indústria - extrativas: índice final](../../data/output/diagnostico_series_pipeline/industria_extrativas.png)",
+  "",
   "### Serviços",
   "",
   "![Serviços - subsetores e índice final](../../data/output/diagnostico_series_pipeline/servicos_subsetores.png)",
@@ -1061,6 +1162,8 @@ txt <- c(
   "![Serviços - transportes: proxies e índice](../../data/output/diagnostico_series_pipeline/servicos_transportes.png)",
   "",
   "![Serviços - financeiro: proxies e índice](../../data/output/diagnostico_series_pipeline/servicos_financeiro.png)",
+  "",
+  "![Serviços - atividades imobiliárias: proxy e índice](../../data/output/diagnostico_series_pipeline/servicos_imobiliario.png)",
   "",
   "![Serviços - outros serviços: proxies e índice](../../data/output/diagnostico_series_pipeline/servicos_outros.png)",
   "",
@@ -1089,4 +1192,3 @@ writeLines(txt, arq_relatorio, useBytes = TRUE)
 
 message("Relatório salvo em: ", arq_relatorio)
 message("Arquivos auxiliares em: ", dir_output)
-

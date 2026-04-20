@@ -77,7 +77,8 @@ ativ_aapp <- c("Adm., defesa, educacao e saude publicas e seguridade social")
 ativ_ind <- c(
   "Eletricidade, gas, agua, esgoto e residuos (SIUP)",
   "Construcao",
-  "Industrias de transformacao"
+  "Industrias de transformacao",
+  "Industrias extrativas"
 )
 ativ_serv <- c(
   "Comercio e reparacao de veiculos automotores",
@@ -85,8 +86,7 @@ ativ_serv <- c(
   "Atividades financeiras, de seguros e servicos relacionados",
   "Atividades imobiliarias",
   "Outros servicos",
-  "Informacao e comunicacao",
-  "Industrias extrativas"
+  "Informacao e comunicacao"
 )
 
 mapa_setores <- tibble(

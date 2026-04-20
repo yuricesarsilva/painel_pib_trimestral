@@ -5,9 +5,7 @@
 A SEPLAN/RR precisa de um indicador da produção trimestral de Roraima como proxy do PIB estadual,
 ancorado metodologicamente nas Contas Regionais do IBGE. Os principais obstáculos são a ausência de
 PIM-PF, ausência de IPCA estadual em qualquer período, e cobertura limitada das pesquisas do IBGE
-para estados pequenos (sem PIM-PF regional e com cobertura parcial de conjuntura). A solução é construir um **índice encadeado de volume**
-(sem unidade monetária) — convergente com a metodologia do IBCR do Banco Central — usando proxies
-disponíveis para Roraima e ancorando os totais anuais às Contas Regionais do IBGE via Denton-Cholette.
+para estados pequenos (sem PIM-PF regional e com cobertura parcial de conjuntura). A solução é construir um **índice encadeado de volume** (sem unidade monetária) — convergente com a metodologia do IBCR do Banco Central — usando proxies disponíveis para Roraima e ancorando os totais anuais às Contas Regionais do IBGE via Denton-Cholette.
 
 - **Produto**: Índice de atividade econômica trimestral + nota técnica periódica + dashboard interativo (com download CSV/XLSX)
 - **Ferramenta**: R
@@ -402,8 +400,9 @@ saúde e educação privadas, artes, cultura e esporte, serviços domésticos.
 
 ### 12. Indústrias extrativas (0,05% do VAB — negligenciável)
 
-Peso inferior a 0,1% — absorvida no componente "Outros" ou mantida com interpolação linear
-entre benchmarks anuais do IBGE. Não justifica proxy específico.
+Peso inferior a 0,1%, mas mantida explicitamente **dentro do bloco da indústria** para respeitar
+a classificação das Contas Regionais do IBGE. No desenho atual, segue sem proxy específica e usa
+o benchmark anual das CR com distribuição trimestral suave por Denton-Cholette.
 
 ---
 
@@ -417,7 +416,7 @@ publicação IBGE out/2025). VAB total = R\$ 23,0 bilhões.
 | Adm., defesa, educação e saúde públicas | 46,21% | 10.629 | Alta (folha estadual via FIPLAN, municipal via SICONFI e federal observada) | **2ª fase** ✅ |
 | Comércio e reparação de veículos | 12,25% | 2.817 | Média-alta (ICMS + CAGED + energia comercial) | 4ª fase |
 | Agropecuária | 8,87% | 2.040 | Alta (PAM/LSPA + Censo 2006 + abate + ovos) | **1ª fase** ✅ |
-| Atividades imobiliárias | 7,68% | 1.767 | Baixa (tendência suavizada) | 4ª fase |
+| Atividades imobiliárias | 7,68% | 1.767 | Baixa-média (ANEEL residencial + Denton) | 4ª fase |
 | Outros serviços | 7,63% | 1.756 | Média (CAGED por subgrupo CNAE) | 4ª fase |
 | SIUP | 5,40% | 1.243 | Alta (ANEEL SAMP por classe — energia TE, kWh) | 3ª fase ✅ |
 | Construção | 4,89% | 1.125 | Média-alta (CAGED F acumulado + SNIC condicional) | 3ª fase ✅ |
@@ -425,7 +424,7 @@ publicação IBGE out/2025). VAB total = R\$ 23,0 bilhões.
 | Transporte, armazenagem e correio | 1,92% | 441 | Média (ANAC passag./carga + diesel ponderado) | 4ª fase |
 | Indústrias de transformação | 1,31% | 301 | Média (energia industrial 70% + CAGED C 30%) | 3ª fase ✅ |
 | Informação e comunicação | 1,01% | 233 | Média (PMS-RR geral como principal, CAGED J complementar) | 4ª fase |
-| Indústrias extrativas | 0,05% | 12 | — (negligenciável) | Absorvida |
+| Indústrias extrativas | 0,05% | 12 | Baixa (benchmark CR + Denton, sem proxy própria) | 3ª/4ª fase |
 
 ---
 
@@ -569,10 +568,10 @@ PMC-RR e ICMS por atividade econômica da SEFAZ-RR estão integrados nesta vers�
   - BCB SCR concessões: 7 ZIPs baixados manualmente, pasta `bases_baixadas_manualmente/dados_bcb_src_2020_2025/`
   - IPCA: variável SIDRA 2266 = nível do índice (base dez/1993=100); deflator calculado como
     `indice_preco = indice_nivel / indice_nivel[jan/2020]`
-- Imobiliário: interpolação linear entre benchmarks CR anuais + extrapolação tendência 2024–2025
+- Imobiliário: consumidores residenciais ANEEL + Denton-Cholette contra benchmark anual das CR
 - Outros serviços: PMS-RR geral 60% + CAGED I 20% + M+N 10% + P+Q 10% — Denton
 - Informação e comunicação: PMS-RR geral 90% + CAGED J 10%
-- Extrativas (0,05%): interpolação linear CR (sem proxy específico)
+- Extrativas (0,05%): benchmark anual CR + Denton-Cholette trimestral, compondo o bloco da indústria
 - Composto final: Laspeyres com pesos dos subsetores calculados a partir do VAB nominal de 2020
   (ano-base do índice geral), preservando coerência com a base do sistema
 

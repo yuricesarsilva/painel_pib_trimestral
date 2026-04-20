@@ -17,14 +17,12 @@
 #   Financeiro (2,78%): depósitos BCB Estban (60%) +
 #     concessões de crédito BCB (40%), ambos deflacionados pelo IPCA.
 #     Pesos otimizados por minimização da variância do Denton (2026-04-15).
-#   Imobiliário (7,68%): tendência linear interpolada entre
-#     benchmarks anuais das Contas Regionais IBGE.
+#   Imobiliário (7,68%): consumidores residenciais ANEEL como
+#     indicador temporal + Denton-Cholette contra benchmark anual.
 #   Outros serviços (7,63%): CAGED I (aloj./alim.) + M+N (prof./
 #     admin.) + P+Q (educação/saúde privada) + PMS-RR geral.
 #   Informação e comunicação (1,01%): CAGED J (TI/telecom) +
 #     PMS-RR geral.
-#   Indústrias extrativas (0,05%): interpolação linear CR (peso
-#     negligenciável, sem proxy específico).
 #
 #   Todos os subsetores com proxy de volume aplicam Denton-Cholette
 #   contra VAB anual das Contas Regionais IBGE (2020–2023).
@@ -91,6 +89,7 @@ for (d in c(dir_raw, dir_processed, dir_output,
 }
 
 arq_aneel_cache    <- file.path(dir_aneel, "aneel_energia_rr.csv")
+arq_aneel_consumidores_resid <- file.path(dir_aneel, "aneel_consumidores_residenciais_rr.csv")
 arq_caged_cache    <- file.path(dir_caged, "caged_rr_mensal.csv")
 arq_anac_out       <- file.path(dir_anac,  "anac_bvb_mensal.csv")
 arq_anp_out        <- file.path(dir_anp,   "anp_diesel_rr_mensal.csv")
@@ -502,6 +501,9 @@ if (file.exists(arq_anac_out)) {
   }
 }
 
+anos_completos <- ano_inicio:ano_atual
+trimestres_grid <- expand_grid(ano = anos_completos, trimestre = 1:4) |>
+  arrange(ano, trimestre)
 
 # ============================================================
 # ETAPA 4.4 — ANP: vendas de diesel por UF (Roraima)
@@ -1237,8 +1239,7 @@ pesos_setoriais <- c(
   financeiro  = somar_vab("Atividades financeiras", "financeiro"),
   imobiliario = somar_vab("Atividades imobili", "imobiliario"),
   outros_serv = somar_vab("^Outros servi", "outros_serv"),
-  info_com    = somar_vab("Informa", "info_com"),
-  extrativas  = somar_vab("extrativas", "extrativas")
+  info_com    = somar_vab("Informa", "info_com")
 )
 
 message("Pesos do bloco de serviços (base 2020, % do VAB total RR):")
@@ -1574,69 +1575,68 @@ if (!tem_concessoes && !tem_depositos) {
 
 # ============================================================
 # ETAPA 4.11 — IMOBILIÁRIO (7,68% do VAB)
-# Tendência linear interpolada entre benchmarks anuais CR IBGE
-# Sem proxy de mercado (aluguel imputado ≠ transações imobiliárias)
-# Tipo: tendência | Qualidade: fraca mas necessária
+# Proxy temporal: número de consumidores residenciais da ANEEL
+# Denton-Cholette contra benchmark anual CR IBGE
+# Tipo: estoque/escala de mercado | Qualidade: teste promissor
 # ============================================================
 
-message("\n=== ETAPA 4.11: Imobiliário — interpolação linear CR ===\n")
+message("\n=== ETAPA 4.11: Imobiliário — ANEEL consumidores residenciais + Denton ===\n")
 
-bench_imob <- vol_all |>
-  filter(grepl("imobili", atividade, ignore.case = TRUE),
-         ano %in% anos_cr) |>
-  arrange(ano) |>
-  pull(vab_volume_rebased)
-
-# Interpolar anualmente de 2020 a (ano_atual), extrapolando a tendência
-# Tendência de longo prazo: inclinação média dos últimos 2 anos CR
-n_bench <- length(bench_imob)
-slope_imob <- if (n_bench >= 2) (bench_imob[n_bench] - bench_imob[n_bench - 1]) else 0
-
-# Série anual completa (CR + extrapolação linear)
-anos_completos <- ano_inicio:ano_atual
-vab_imob_serie <- numeric(length(anos_completos))
-for (i in seq_along(anos_completos)) {
-  ano_i <- anos_completos[i]
-  if (ano_i %in% anos_cr) {
-    vab_imob_serie[i] <- bench_imob[which(anos_cr == ano_i)]
-  } else {
-    # Extrapolar: usar tendência linear do último benchmark
-    anos_extra <- ano_i - max(anos_cr)
-    vab_imob_serie[i] <- bench_imob[n_bench] + slope_imob * anos_extra
-  }
+if (!file.exists(arq_aneel_consumidores_resid)) {
+  stop("Arquivo ANEEL de consumidores residenciais não encontrado: ", arq_aneel_consumidores_resid,
+       "\n  Execute R/03_industria.R antes deste script.")
 }
 
-# Distribuição intra-anual: linear entre anos adjacentes, média anual = benchmark
-# Usar Denton com indicador constante (uniforme) = interpolação linear suave
-ind_plano <- rep(1, length(anos_completos) * 4)
-bench_imob_completo <- vab_imob_serie
+aneel_consumidores_resid <- read_csv(arq_aneel_consumidores_resid, show_col_types = FALSE)
 
-imob_trim_vals <- tryCatch(
-  denton(ind_plano, bench_imob_completo,
-         ano_inicio = ano_inicio, metodo = "denton-cholette"),
+consumidores_resid_trim <- aneel_consumidores_resid |>
+  filter(ano >= ano_inicio) |>
+  mutate(trimestre = ceiling(mes / 3L)) |>
+  group_by(ano, trimestre) |>
+  summarise(consumidores_residenciais = mean(consumidores_residenciais, na.rm = TRUE),
+            n_meses = n(), .groups = "drop") |>
+  filter(n_meses == 3L) |>
+  arrange(ano, trimestre)
+
+base_cons_resid_2020 <- consumidores_resid_trim |>
+  filter(ano == 2020) |>
+  pull(consumidores_residenciais) |>
+  mean(na.rm = TRUE)
+
+consumidores_resid_trim <- consumidores_resid_trim |>
+  mutate(indice_imobiliario_raw = consumidores_residenciais / base_cons_resid_2020 * 100)
+
+bench_imob_raw <- vol_all |>
+  filter(grepl("imobili", atividade, ignore.case = TRUE),
+         ano %in% anos_cr) |>
+  arrange(ano)
+
+bench_imob_ext <- estender_benchmark(
+  bench_ano = bench_imob_raw$ano,
+  bench_val = bench_imob_raw$vab_volume_rebased,
+  ano_max   = max(consumidores_resid_trim$ano),
+  n_ref     = 3
+)
+
+ind_imob_para_denton <- consumidores_resid_trim |>
+  filter(ano >= min(bench_imob_ext$ano)) |>
+  pull(indice_imobiliario_raw)
+
+indice_imob_denton <- tryCatch(
+  denton(ind_imob_para_denton, bench_imob_ext$bench,
+         ano_inicio = min(bench_imob_ext$ano), metodo = "denton-cholette"),
   error = function(e) {
-    message(sprintf("  Denton Imobiliário falhou: %s — usando tendência linear.", e$message))
-    # Fallback: repetir cada valor anual 4 vezes e normalizar
-    rep(bench_imob_completo, each = 4)
+    message(sprintf("  Denton Imobiliário falhou: %s — usando proxy ANEEL raw.", e$message))
+    ind_imob_para_denton
   }
 )
 
-# Criar data.frame estruturado
-trimestres_grid <- expand_grid(ano = anos_completos, trimestre = 1:4) |>
-  arrange(ano, trimestre)
+imobiliario_trim_completo <- consumidores_resid_trim |>
+  filter(ano >= min(bench_imob_ext$ano)) |>
+  mutate(indice_imobiliario = indice_imob_denton)
 
-imobiliario_trim_completo <- trimestres_grid |>
-  mutate(valor_imob = imob_trim_vals) |>
-  filter(ano >= ano_inicio)
-
-# Normalizar 2020=100
-base_imob_2020 <- imobiliario_trim_completo |> filter(ano == 2020) |>
-  pull(valor_imob) |> mean()
-imobiliario_trim_completo <- imobiliario_trim_completo |>
-  mutate(indice_imobiliario = valor_imob / base_imob_2020 * 100)
-
-message(sprintf("Imobiliário — %d trimestres (interpolação linear CR, extrapolado para %.0f)",
-                nrow(imobiliario_trim_completo), ano_atual))
+message(sprintf("Imobiliário — %d trimestres (ANEEL consumidores residenciais + Denton)",
+                nrow(imobiliario_trim_completo)))
 
 
 # ============================================================
@@ -1853,60 +1853,8 @@ if (!infocom_disp && !pms_infocom_disp) {
 
 
 # ============================================================
-# ETAPA 4.14 — EXTRATIVAS (0,05% do VAB)
-# Peso negligenciável — interpolação linear entre benchmarks CR
-# Mesma lógica do Imobiliário, com tendência dos últimos 2 anos
-# ============================================================
-
-message("\n=== ETAPA 4.14: Extrativas — interpolação linear CR ===\n")
-
-bench_extr <- vol_all |>
-  filter(grepl("extrativ", atividade, ignore.case = TRUE),
-         ano %in% anos_cr) |>
-  arrange(ano) |>
-  pull(vab_volume_rebased)
-
-n_extr <- length(bench_extr)
-# Para setores voláteis/pequenos, não extrapolar tendência negativa — usar último benchmark
-slope_extr <- if (n_extr >= 2) max(0, bench_extr[n_extr] - bench_extr[n_extr - 1]) else 0
-
-vab_extr_serie <- numeric(length(anos_completos))
-for (i in seq_along(anos_completos)) {
-  ano_i <- anos_completos[i]
-  if (ano_i %in% anos_cr) {
-    vab_extr_serie[i] <- bench_extr[which(anos_cr == ano_i)]
-  } else {
-    anos_extra <- ano_i - max(anos_cr)
-    vab_extr_serie[i] <- max(bench_extr[n_extr] + slope_extr * anos_extra,
-                             bench_extr[n_extr] * 0.5)  # piso: 50% do último benchmark
-  }
-}
-
-ind_plano_extr <- rep(1, length(anos_completos) * 4)
-extr_trim_vals <- tryCatch(
-  denton(ind_plano_extr, vab_extr_serie,
-         ano_inicio = ano_inicio, metodo = "denton-cholette"),
-  error = function(e) {
-    message(sprintf("  Denton Extrativas falhou: %s — usando tendência linear.", e$message))
-    rep(vab_extr_serie, each = 4)
-  }
-)
-
-extrativas_trim_completo <- trimestres_grid |>
-  mutate(valor_extr = extr_trim_vals) |>
-  filter(ano >= ano_inicio)
-
-base_extr_2020 <- extrativas_trim_completo |> filter(ano == 2020) |>
-  pull(valor_extr) |> mean()
-extrativas_trim_completo <- extrativas_trim_completo |>
-  mutate(indice_extrativas = valor_extr / base_extr_2020 * 100)
-
-message(sprintf("Extrativas — %d trimestres (interpolação linear CR)", nrow(extrativas_trim_completo)))
-
-
-# ============================================================
 # ETAPA 4.15 — ÍNDICE COMPOSTO DE SERVIÇOS (Laspeyres setorial)
-# Agrega os 7 subsetores com pesos de 2020 (ano-base do índice)
+# Agrega os 6 subsetores de serviços com pesos de 2020 (ano-base do índice)
 # Trimestres disponíveis: 2020T1–(ano_atual)T4
 # ============================================================
 
@@ -2022,9 +1970,7 @@ indice_wide <- grade_trim |>
     else
       data.frame(ano = integer(), trimestre = integer(), indice_infocom = numeric()),
     by = c("ano", "trimestre")
-  ) |>
-  left_join(select(extrativas_trim_completo, ano, trimestre, indice_extrativas),
-            by = c("ano", "trimestre"))
+  )
 
 # Calcular índice composto ponderado (Laspeyres com pesos VAB 2020)
 # Pesos normalizados apenas com o que está disponível em cada trimestre
@@ -2038,8 +1984,7 @@ indice_wide <- indice_wide |>
         indice_financeiro,
         indice_imobiliario,
         indice_outros,
-        indice_infocom,
-        indice_extrativas
+        indice_infocom
       )
       pesos <- pesos_setoriais
       ok    <- !is.na(vals)
@@ -2100,8 +2045,7 @@ resultado_final <- indice_wide |>
     indice_financeiro,
     indice_imobiliario,
     indice_outros_servicos  = indice_outros,
-    indice_infocom,
-    indice_extrativas
+    indice_infocom
   )
 
 # Validar série principal

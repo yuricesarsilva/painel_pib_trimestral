@@ -450,7 +450,7 @@ Periodicidade operacional atual: anual, usada como benchmark de séries trimestr
 
 Especificação exata no código: `data/processed/contas_regionais_RR_volume.csv`, com benchmarks anuais para comércio, transportes, atividades financeiras, informação e comunicação, outros serviços e imobiliário.
 
-O que é feito com ela: aplica Denton-Cholette aos subsetores trimestrais antes da agregação do bloco serviços.
+O que é feito com ela: aplica Denton-Cholette aos subsetores trimestrais antes da agregação do bloco serviços. As extrativas não entram mais aqui; foram realocadas para a indústria, em linha com as Contas Regionais.
 
 Output gerado: `data/output/indice_servicos.csv`.
 
