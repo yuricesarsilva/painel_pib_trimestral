@@ -416,7 +416,7 @@ diag_tbl <- bind_rows(
       serie = "SICONFI RREO Anexo 06",
       arquivo = "data/raw/folha_municipal_rr.csv",
       periodicidade = "Bimestral acumulada",
-      tratamento_na = "Conversão acumulado->incremental; há municípios com cobertura incompleta; ausência entra como 0 na soma final",
+      tratamento_na = "Conversão acumulado->incremental; municípios com gap final > 1 bimestre são excluídos automaticamente (regra derivada de config/release.R); único bimestre final faltante é preenchido com carry-forward; Amajari e Caracaraí excluídos na fase 2025T4",
       uso_no_indice = "Convertida para trimestral e somada à folha estadual e federal"
     ),
   contar_cobertura(ipca, "periodo", "valor", grade_mensal_2020_2025) |>
@@ -643,6 +643,16 @@ diag_tbl <- bind_rows(
       tratamento_na = "Meses ausentes são completados com saldo=0 no código",
       uso_no_indice = "Proxy única da construção na configuração atual"
     ),
+  contar_cobertura(caged |> filter(secao == "B"), "periodo", "saldo", grade_mensal_2020_2025) |>
+    mutate(
+      bloco = "Indústria",
+      atividade = "Extrativas",
+      serie = "CAGED B (estoque)",
+      arquivo = "data/raw/caged/caged_rr_mensal.csv",
+      periodicidade = "Mensal",
+      tratamento_na = "Meses ausentes são completados com saldo=0 no código; estoque = 1000 + cumsum(saldo), rebaseado 2020=100",
+      uso_no_indice = "Indicador trimestral da Denton-Cholette de extrativas (proxy de emprego formal)"
+    ),
   contar_cobertura(indice_ind |> mutate(periodo = sprintf("%04dT%d", ano, trimestre)),
                    "periodo", "indice_extrativas", grade_trimestral_2020_2025) |>
     mutate(
@@ -651,7 +661,7 @@ diag_tbl <- bind_rows(
       serie = "Índice extrativas",
       arquivo = "data/output/indice_industria.csv",
       periodicidade = "Trimestral",
-      tratamento_na = "Sem proxy própria; distribuição trimestral suave a partir do benchmark anual CR via Denton",
+      tratamento_na = "CAGED B como indicador trimestral; Denton-Cholette ancora ao benchmark anual das Contas Regionais",
       uso_no_indice = "Componente do índice industrial com peso de VAB 2020"
     ),
   contar_cobertura(indice_nom, "periodo", "deflator_trimestral", grade_trimestral_2020_2025) |>
@@ -707,7 +717,7 @@ composicao_tbl <- tibble::tribble(
   "Indústria", "SIUP", "Proxy única baseada na energia elétrica total distribuída pela ANEEL; depois Denton-Cholette contra benchmark anual",
   "Indústria", "Transformação", "Média ponderada entre energia industrial ANEEL e CAGED C",
   "Indústria", "Construção", "Proxy única baseada em CAGED F na configuração atual",
-  "Indústria", "Extrativas", "Sem proxy própria de mercado; série trimestral distribuída a partir do benchmark anual das Contas Regionais via Denton-Cholette",
+  "Indústria", "Extrativas", "CAGED B (estoque de emprego formal) como indicador trimestral; Denton-Cholette ancora ao benchmark anual das Contas Regionais; CFEM (ANM) avaliada e descartada — ver notas/metodologia/cfem_extrativas_indice_composto.md",
   "Indústria", "Índice industrial", "Média ponderada entre SIUP, Construção, Transformação e Extrativas com pesos de VAB 2020",
   "Serviços", "Comércio", "Média ponderada entre energia comercial, PMC, ICMS comércio e CAGED G",
   "Serviços", "Transportes", "Média ponderada entre passageiros ANAC e diesel ANP; carga ANAC permanece só no diagnóstico",
@@ -883,14 +893,28 @@ ind_transf <- bind_rows(
 )
 salvar_grafico_trimestral(ind_transf, "Transformação: proxies e índice final", "industria_transformacao_proxies.png")
 
-ind_extr <- indice_ind |>
-  filter(ano >= 2020, ano <= 2025) |>
-  transmute(
-    periodo = sprintf("%04dT%d", ano, trimestre),
-    indice = indice_extrativas,
-    serie = "Índice extrativas"
-  )
-salvar_grafico_trimestral(ind_extr, "Extrativas: índice final", "industria_extrativas.png")
+caged_b_diag <- caged |>
+  filter(secao == "B") |>
+  mutate(trimestre = ceiling(mes / 3L)) |>
+  group_by(ano, trimestre) |>
+  summarise(saldo = sum(saldo, na.rm = TRUE), .groups = "drop") |>
+  arrange(ano, trimestre) |>
+  mutate(estoque = cumsum(saldo) + 1000L) |>
+  filter(ano >= 2020, ano <= 2025)
+base_b_diag <- mean(caged_b_diag$estoque[caged_b_diag$ano == 2020], na.rm = TRUE)
+
+ind_extr <- bind_rows(
+  caged_b_diag |>
+    transmute(periodo = sprintf("%04dT%d", ano, trimestre),
+              indice  = estoque / base_b_diag * 100,
+              serie   = "CAGED B (estoque)"),
+  indice_ind |>
+    filter(ano >= 2020, ano <= 2025) |>
+    transmute(periodo = sprintf("%04dT%d", ano, trimestre),
+              indice  = indice_extrativas,
+              serie   = "Índice extrativas")
+)
+salvar_grafico_trimestral(ind_extr, "Extrativas: proxy CAGED B e índice Denton", "industria_extrativas.png")
 
 # --- Serviços ------------------------------------------------------------
 
@@ -1080,9 +1104,10 @@ txt <- c(
   "## Leitura rápida",
   "",
   "- A maior parte das séries operacionais do núcleo 2020–2025 já está sem NAs literais, mas ainda existem problemas relevantes de cobertura em alguns insumos manuais e administrativos.",
-  "- O caso mais sensível continua sendo a folha municipal: o arquivo não está cheio de `NA`, mas há faltantes de cobertura na grade bimestral e também valores trimestrais negativos na reconstrução.",
-  "- No SIAPE, o tratamento de faltantes existe e está explícito: o código interpola meses ausentes. O cache federal já foi corrigido na rodada atual.",
+  "- A folha municipal passou a ter regra explícita de exclusão: municípios com mais de 1 bimestre final ausente são excluídos automaticamente, com base no trimestre publicado em `config/release.R`. Na fase 2025T4, Amajari e Caracaraí foram excluídos; Iracema foi mantida com carry-forward do último bimestre observado (2025B5).",
+  "- No SIAPE, o tratamento de faltantes existe e está explícito: o código interpola meses ausentes linearmente.",
   "- No CAGED, o padrão do projeto é completar meses ausentes com `saldo = 0` antes de construir o estoque acumulado.",
+  "- Extrativas passou a usar CAGED B (estoque de emprego formal) como indicador trimestral na Denton-Cholette. A CFEM (ANM) foi avaliada e descartada — documentação completa em `notas/metodologia/cfem_extrativas_indice_composto.md`.",
   "- Em serviços, quando uma proxy falta, o código redistribui os pesos apenas entre as proxies disponíveis do mesmo subsetor.",
   "- Em impostos, o ILP trimestral usa Denton-Cholette com ICMS total como indicador temporal.",
   "",
@@ -1184,7 +1209,7 @@ txt <- c(
   "## Observações metodológicas finais",
   "",
   "- Este diagnóstico separa `NA literal` de `faltante de cobertura`. Em várias séries administrativas o problema real não é `NA` em célula, mas período ausente na grade esperada.",
-  "- O diagnóstico foi montado sobre a configuração vigente do projeto em 2026-04-19. Se os pesos operacionais ou as fontes mudarem, este relatório deve ser regenerado.",
+  sprintf("- O diagnóstico foi montado sobre a configuração vigente do projeto em %s. Se os pesos operacionais ou as fontes mudarem, este relatório deve ser regenerado.", format(Sys.Date(), "%Y-%m-%d")),
   "- O relatório não substitui a leitura dos scripts, mas ajuda a localizar rapidamente onde há risco de cobertura, redistribuição de pesos ou interpolação."
 )
 

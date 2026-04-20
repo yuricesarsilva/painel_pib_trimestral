@@ -1,6 +1,6 @@
 # Diagnóstico das séries utilizadas no pipeline
 
-Gerado em 2026-04-19 18:45:09 pelo script `R/98_diagnostico_series_pipeline.R`.
+Gerado em 2026-04-19 20:55:26 pelo script `R/98_diagnostico_series_pipeline.R`.
 
 ## Escopo
 
@@ -17,9 +17,10 @@ Foram incluídas também as séries de deflação e o bloco de impostos/ILP.
 ## Leitura rápida
 
 - A maior parte das séries operacionais do núcleo 2020–2025 já está sem NAs literais, mas ainda existem problemas relevantes de cobertura em alguns insumos manuais e administrativos.
-- O caso mais sensível continua sendo a folha municipal: o arquivo não está cheio de `NA`, mas há faltantes de cobertura na grade bimestral e também valores trimestrais negativos na reconstrução.
-- No SIAPE, o tratamento de faltantes existe e está explícito: o código interpola meses ausentes. O cache federal já foi corrigido na rodada atual.
+- A folha municipal passou a ter regra explícita de exclusão: municípios com mais de 1 bimestre final ausente são excluídos automaticamente, com base no trimestre publicado em `config/release.R`. Na fase 2025T4, Amajari e Caracaraí foram excluídos; Iracema foi mantida com carry-forward do último bimestre observado (2025B5).
+- No SIAPE, o tratamento de faltantes existe e está explícito: o código interpola meses ausentes linearmente.
 - No CAGED, o padrão do projeto é completar meses ausentes com `saldo = 0` antes de construir o estoque acumulado.
+- Extrativas passou a usar CAGED B (estoque de emprego formal) como indicador trimestral na Denton-Cholette. A CFEM (ANM) foi avaliada e descartada — documentação completa em `notas/metodologia/cfem_extrativas_indice_composto.md`.
 - Em serviços, quando uma proxy falta, o código redistribui os pesos apenas entre as proxies disponíveis do mesmo subsetor.
 - Em impostos, o ILP trimestral usa Denton-Cholette com ICMS total como indicador temporal.
 
@@ -27,7 +28,7 @@ Foram incluídas também as séries de deflação e o bloco de impostos/ILP.
 
 | bloco | atividade | serie | na_valor | faltantes_grade | tratamento_na |
 | --- | --- | --- | --- | --- | --- |
-| AAPP | Folha municipal | SICONFI RREO Anexo 06 | 0 | 32 | Conversão acumulado->incremental; há municípios com cobertura incompleta; ausência entra como 0 na soma final |
+| AAPP | Folha municipal | SICONFI RREO Anexo 06 | 0 | 32 | Conversão acumulado->incremental; municípios com gap final > 1 bimestre são excluídos automaticamente (regra derivada de config/release.R); único bimestre final faltante é preenchido com carry-forward; Amajari e Caracaraí excluídos na fase 2025T4 |
 | AAPP | Folha federal | SIAPE | 0 |  3 | Interpolação linear de meses ausentes no código |
 | AAPP | Folha estadual | FIPLAN FIP855 | 0 |  0 | Sem correção específica; ausência entra como 0 na soma final |
 | Agropecuária | Lavouras | Índice de lavouras | 0 |  0 | PAM e LSPA são combinadas; sem imputação direta por NA |
@@ -48,7 +49,7 @@ A tabela abaixo resume o diagnóstico das principais séries efetivamente usadas
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | AAPP | Folha estadual | FIPLAN FIP855 | Mensal | 0 | 0 | 2020M01 | 2025M12 | Sem correção específica; ausência entra como 0 na soma final | Somada à folha federal e municipal; depois deflacionada |
 | AAPP | Folha federal | SIAPE | Mensal | 0 | 3 | 2020M01 | 2026M02 | Interpolação linear de meses ausentes no código | Somada à folha estadual e municipal; depois deflacionada |
-| AAPP | Folha municipal | SICONFI RREO Anexo 06 | Bimestral acumulada | 0 | 32 | 2020B1 | 2026B1 | Conversão acumulado->incremental; há municípios com cobertura incompleta; ausência entra como 0 na soma final | Convertida para trimestral e somada à folha estadual e federal |
+| AAPP | Folha municipal | SICONFI RREO Anexo 06 | Bimestral acumulada | 0 | 32 | 2020B1 | 2026B1 | Conversão acumulado->incremental; municípios com gap final > 1 bimestre são excluídos automaticamente (regra derivada de config/release.R); único bimestre final faltante é preenchido com carry-forward; Amajari e Caracaraí excluídos na fase 2025T4 | Convertida para trimestral e somada à folha estadual e federal |
 | Agropecuária | Lavouras | Índice de lavouras | Trimestral | 0 | 0 | 2020T1 | 2026T4 | PAM e LSPA são combinadas; sem imputação direta por NA | Média ponderada de 10 culturas com pesos de VBP e calendário |
 | Agropecuária | Pecuária | Abate bovino | Trimestral | 0 | 0 | 2006T3 | 2025T4 | Sem fallback; completude é exigida na janela operacional | Média ponderada com ovos na proxy de pecuária |
 | Agropecuária | Pecuária | Ovos | Trimestral | 0 | 0 | 2006T1 | 2025T4 | Sem fallback; completude é exigida na janela operacional | Média ponderada com abate bovino na proxy de pecuária |
@@ -58,7 +59,8 @@ A tabela abaixo resume o diagnóstico das principais séries efetivamente usadas
 | Impostos | ILP / impostos | ICMS total trimestral | Trimestral | 0 | 0 | 2020T1 | 2026T1 | No PIB nominal, faltantes do indicador entram como 0 no Denton do ILP | Indicador temporal do ILP trimestral |
 | Impostos | ILP / impostos | ILP trimestral | Trimestral | 0 | 0 | 2020T1 | 2025T4 | Denton-Cholette com benchmark anual e ICMS como indicador | Somado ao VAB nominal para formar o PIB nominal |
 | Indústria | Construção | CAGED F | Mensal | 0 | 0 | 2020M01 | 2025M12 | Meses ausentes são completados com saldo=0 no código | Proxy única da construção na configuração atual |
-| Indústria | Extrativas | Índice extrativas | Trimestral | 0 | 0 | 2020T1 | 2025T4 | Sem proxy própria; distribuição trimestral suave a partir do benchmark anual CR via Denton | Componente do índice industrial com peso de VAB 2020 |
+| Indústria | Extrativas | CAGED B (estoque) | Mensal | 0 | 0 | 2020M01 | 2025M12 | Meses ausentes são completados com saldo=0 no código; estoque = 1000 + cumsum(saldo), rebaseado 2020=100 | Indicador trimestral da Denton-Cholette de extrativas (proxy de emprego formal) |
+| Indústria | Extrativas | Índice extrativas | Trimestral | 0 | 0 | 2020T1 | 2025T4 | CAGED B como indicador trimestral; Denton-Cholette ancora ao benchmark anual das Contas Regionais | Componente do índice industrial com peso de VAB 2020 |
 | Indústria | Transformação | ANEEL industrial | Mensal | 0 | 0 | 2020M01 | 2026M02 | Sem imputação; se faltar, transformação usa proxy remanescente | Componente da média ponderada da transformação |
 | Indústria | Transformação | CAGED C | Mensal | 0 | 0 | 2020M01 | 2025M12 | Meses ausentes são completados com saldo=0 no código | Componente da média ponderada da transformação |
 | Serviços | Comércio | ANEEL comercial | Mensal | 0 | 0 | 2020M01 | 2026M02 | Sem imputação; se faltar, peso é redistribuído | Componente da média ponderada do comércio |
@@ -89,7 +91,7 @@ A tabela abaixo resume a regra de combinação usada hoje no código.
 | Indústria | SIUP | Proxy única baseada na energia elétrica total distribuída pela ANEEL; depois Denton-Cholette contra benchmark anual |
 | Indústria | Transformação | Média ponderada entre energia industrial ANEEL e CAGED C |
 | Indústria | Construção | Proxy única baseada em CAGED F na configuração atual |
-| Indústria | Extrativas | Sem proxy própria de mercado; série trimestral distribuída a partir do benchmark anual das Contas Regionais via Denton-Cholette |
+| Indústria | Extrativas | CAGED B (estoque de emprego formal) como indicador trimestral; Denton-Cholette ancora ao benchmark anual das Contas Regionais; CFEM (ANM) avaliada e descartada — ver notas/metodologia/cfem_extrativas_indice_composto.md |
 | Indústria | Índice industrial | Média ponderada entre SIUP, Construção, Transformação e Extrativas com pesos de VAB 2020 |
 | Serviços | Comércio | Média ponderada entre energia comercial, PMC, ICMS comércio e CAGED G |
 | Serviços | Transportes | Média ponderada entre passageiros ANAC e diesel ANP; carga ANAC permanece só no diagnóstico |
