@@ -537,6 +537,112 @@ if (!file.exists(arq_municipal)) {
 }
 
 # ============================================================
+# ETAPA 2.3b — Filtro e imputação de municípios com cobertura insuficiente
+# ============================================================
+#
+# Regra: município é mantido apenas se seu último bimestre observado
+# estiver a no máximo `max_gap_trailing_mun` bimestre(s) do bimestre de
+# referência da fase de entrega atual (derivado de `trimestre_publicado`).
+# Dados além do bimestre de referência são ignorados (ex.: 2026B1 não conta
+# se a entrega é 2025T4).
+# O(s) bimestre(s) faltante(s) permitido(s) é preenchido com carry-forward
+# (repetição do último valor observado).
+#
+# Parâmetro único — alterar aqui para ajustar o critério:
+max_gap_trailing_mun <- 1L   # bimestres finais faltando → 0 = exige série completa;
+                              # 1 = tolera falta do último bimestre; etc.
+
+# Bimestre de referência: último bimestre necessário para cobrir o trimestre
+# publicado. T1→B2, T2→B3 (até jun), T3→B5 (até out), T4→B6 (até dez).
+# Fórmula: ceil(trimestre * 3 / 2) — cobre o último mês do trimestre.
+if (!is.null(folha_mun_bim) && nrow(folha_mun_bim) > 0) {
+
+  source("config/release.R")   # garante trimestre_publicado disponível
+  ano_fase  <- as.integer(substr(trimestre_publicado, 1L, 4L))
+  trim_fase <- as.integer(substr(trimestre_publicado, 6L, 6L))
+  bim_ref   <- ceiling(trim_fase * 3L / 2L)                    # B2/B3/B5/B6
+  bim_max_serie <- (ano_fase - 2020L) * 6L + bim_ref           # índice de referência
+
+  message(sprintf(
+    "\nFolha municipal — fase %s → referência = %dB%d (idx=%d)",
+    trimestre_publicado, ano_fase, bim_ref, bim_max_serie))
+
+  folha_mun_bim <- (function(df, bim_max, max_gap) {
+
+    df <- df |>
+      mutate(bim_idx = (ano - 2020L) * 6L + bimestre) |>
+      filter(bim_idx <= bim_max)   # ignora dados além da fase de entrega atual
+
+    # Último bimestre observado por município (dentro da janela de referência)
+    ultimo <- df |>
+      group_by(municipio, cod_ibge) |>
+      summarise(ultimo_idx = max(bim_idx), .groups = "drop") |>
+      mutate(gap = bim_max - ultimo_idx)
+
+    # Municípios excluídos
+    excl <- ultimo |> filter(gap > max_gap)
+    if (nrow(excl) > 0) {
+      message(sprintf(
+        "\nFolha municipal — EXCLUÍDOS (gap final > %d bimestre(s)):", max_gap))
+      for (i in seq_len(nrow(excl))) {
+        ano_ult  <- 2020L + (excl$ultimo_idx[i] - 1L) %/% 6L
+        bim_ult  <- (excl$ultimo_idx[i] - 1L) %% 6L + 1L
+        message(sprintf("  ✗ %-22s último bimestre: %dB%d  (lacuna = %d bim.)",
+                        excl$municipio[i], ano_ult, bim_ult, excl$gap[i]))
+      }
+    }
+
+    # Municípios retidos
+    ret <- ultimo |> filter(gap <= max_gap)
+    message(sprintf(
+      "\nFolha municipal — MANTIDOS: %d município(s) de %d",
+      nrow(ret), nrow(ultimo)))
+
+    df <- df |> filter(municipio %in% ret$municipio)
+
+    # Carry-forward: preencher bimestres finais faltando com o último valor
+    df <- df |>
+      left_join(ret |> select(municipio, cod_ibge, ultimo_idx, gap),
+                by = c("municipio", "cod_ibge"))
+
+    novas <- lapply(seq_len(nrow(ret)), function(i) {
+      r <- ret[i, ]
+      if (r$gap == 0L) return(NULL)
+      # último valor observado para esse município
+      ult_row <- df |>
+        filter(municipio == r$municipio, bim_idx == r$ultimo_idx) |>
+        slice(1)
+      lapply(seq_len(r$gap), function(g) {
+        novo_idx <- r$ultimo_idx + g
+        novo_ano <- 2020L + (novo_idx - 1L) %/% 6L
+        novo_bim <- (novo_idx - 1L) %% 6L + 1L
+        message(sprintf(
+          "  ↳ carry-forward  %-22s %dB%d → rep. valor de %dB%d (R$ %.0f)",
+          r$municipio, novo_ano, novo_bim,
+          2020L + (r$ultimo_idx - 1L) %/% 6L,
+          (r$ultimo_idx - 1L) %% 6L + 1L,
+          ult_row$valor_bim))
+        data.frame(municipio  = r$municipio,
+                   cod_ibge   = r$cod_ibge,
+                   ano        = novo_ano,
+                   bimestre   = novo_bim,
+                   valor_acum = NA_real_,
+                   valor_bim  = ult_row$valor_bim,
+                   bim_idx    = novo_idx,
+                   ultimo_idx = r$ultimo_idx,
+                   gap        = r$gap,
+                   stringsAsFactors = FALSE)
+      })
+    })
+    novas <- do.call(rbind, Filter(Negate(is.null), unlist(novas, recursive = FALSE)))
+
+    df_final <- if (!is.null(novas) && nrow(novas) > 0) bind_rows(df, novas) else df
+    df_final |> select(municipio, cod_ibge, ano, bimestre, valor_acum, valor_bim)
+
+  })(folha_mun_bim, bim_max_serie, max_gap_trailing_mun)
+}
+
+# ============================================================
 # ETAPA 2.4 — Série de volume + Denton-Cholette
 # ============================================================
 

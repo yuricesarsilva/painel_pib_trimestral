@@ -911,6 +911,7 @@ if (nrow(bench_extr) == 0) {
     ano_max = ano_max_ind,
     n_ref = 2
   )
+  bench_extr_ext <- data.frame(ano = bench_extr_ext$ano, bench = bench_extr_ext$bench)
 
   anos_extr     <- bench_extr_ext$ano
   anos_completos_b <- caged_b_trim |>
